@@ -1,4 +1,16 @@
-                    GNU GENERAL PUBLIC LICENSE
+ ## 许可证
+
+本项目基于GNU General Public License v3.0许可证发布。
+
+### 作者声明
+虽然GPL v3允许商业使用，但作为作者，我恳请使用者遵守以下原则：
+- 🔒 **非商业使用**：请勿将此工具用于商业盈利目的
+- 📜 **遵守游戏规则**：请尊重《原神》游戏的相关规定和用户协议
+- 🤝 **共享改进**：欢迎提交改进，但请保持开源精神
+
+请注意，这只是作者的道德请求，法律上仍遵循GPL v3条款。
+
+                      GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
