@@ -1,31 +1,16 @@
-# BetterGI_Macro
-BetterGI 键鼠自动循环脚本生成器（BetterGI Macro）是基于Python语言开发的专用软件，主要为BetterGI（一款《原神》自动化辅助工具）提供键鼠脚本生成功能。通过可视化界面，用户可以创建复杂的自动化操作序列，提升游戏体验和效率。
+# BetterGI 星轨（BetterGI StellTrack）
+亲爱的旅行者，欢迎来到 BetterGI 星轨 的官方主页。
 
-Here is the English translation of your software description:
+BetterGI 星轨是一款由 AI 大模型驱动、基于 Python 开发的创新软件，专为 BetterGI（一款《原神》自动化辅助工具）打造，致力于生成强大的键鼠自动化脚本。
 
-BetterGI Macro - Keyboard and Mouse Auto-loop Script Generator
+通过其直观的可视化界面，您可以轻松构建复杂的自动化操作流程，从而显著提升游戏体验与效率。
 
-BetterGI Macro is a specialized software developed in Python, primarily designed to provide keyboard and mouse script generation functionality for BetterGI (an automation assistant tool for Genshin Impact). Through its visual interface, users can create complex automated operation sequences to enhance gaming experience and efficiency.
+自 2.0 版本起，本项目由原先的 BetterGI Macro 正式更名为 BetterGI 星轨，开启全新篇章。
 
-Alternative shorter version:
-BetterGI Macro - Auto-loop Script Generator
+Dear Traveler, welcome to the official homepage of BetterGI StellTrack.
 
-A Python-based specialized tool that creates keyboard and mouse automation scripts for BetterGI (a Genshin Impact assistant). Features a visual interface for building complex automated sequences to improve gaming efficiency and experience.
+BetterGI StellTrack is an innovative software powered by a large AI model and developed with Python. It is specially crafted for BetterGI, an automation assistant for *Genshin Impact*, and is dedicated to generating powerful keyboard and mouse automation scripts.
 
-Key points preserved in the translation:
+Through its intuitive visual interface, you can easily build complex automation sequences, significantly enhancing your gaming experience and efficiency.
 
-BetterGI Macro as the product name
-
-Python development
-
-Keyboard and mouse automation
-
-Visual interface
-
-Complex operation sequences
-
-Gaming experience and efficiency improvement
-
-Genshin Impact context
-
-Choose the version that best fits your needs!
+Starting with version 2.0, this project has been officially renamed from its former title, BetterGI Macro, to BetterGI StellTrack, marking the beginning of a new chapter.
