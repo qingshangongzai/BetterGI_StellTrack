@@ -1319,16 +1319,24 @@ class ModernComboBox(QComboBox):
         super().__init__(parent)
         if width:
             self.setFixedWidth(width)
-        self.setStyleSheet(StyleHelper.get_combo_box_style())
+        
+        # 结合原有样式表并添加文本居中样式
+        combo_style = StyleHelper.get_combo_box_style() + "\n"
+        combo_style += "QComboBox {\n"
+        combo_style += "    text-align: center;\n"
+        combo_style += "    padding-left: 15px; /* 调整文本位置使其居中 */\n"
+        combo_style += "}\n"
+        self.setStyleSheet(combo_style)
         
         # 获取下拉列表视图并设置样式
         view = self.view()
         if view:
-            # 增加下拉列表项的高度
+            # 增加下拉列表项的高度并设置居中
             view.setStyleSheet("""
                  QListView::item {
                      padding: 6px 8px;
                      min-height: 20px;
+                     text-align: center;
                  }
              """)
         

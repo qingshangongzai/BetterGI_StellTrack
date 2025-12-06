@@ -25,6 +25,8 @@ from event_dialogs import EventEditDialog, PasteOptionsDialog, SimpleCoordinateC
 from debug_tools import PasswordDialog, DebugWindow, get_global_debug_logger
 # 导入新拆分的模块
 from panels import SettingsPanel, OperationsPanel, StatsPanel
+# 导入事件时间分析模块
+from time_analysis import EventTimeAnalyzerDialog
 # 导入版本管理器
 from utils import get_current_version, get_current_app_info
 
@@ -545,8 +547,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             'recalculate': paste_recalculate_action
         }
         
+        # 分析菜单
         # 工具菜单
         tools_menu = menubar.addMenu('工具')
+        
+        # 事件时间分析工具
+        time_analysis_action = QAction('事件时间分析', self)
+        time_analysis_action.setShortcut('Ctrl+T')
+        time_analysis_action.triggered.connect(self.on_event_time_analysis)
+        tools_menu.addAction(time_analysis_action)
+        
+        # 添加分隔线
+        tools_menu.addSeparator()
         
         # 调试工具
         debug_action = QAction('调试工具', self)
@@ -741,6 +753,17 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             
         except Exception as e:
             error_msg = f"打开使用说明失败: {str(e)}"
+            self.debug_logger.log_error(error_msg)
+            ChineseMessageBox.show_error(self, "错误", error_msg)
+    
+    def on_event_time_analysis(self):
+        """打开事件时间分析对话框"""
+        try:
+            dialog = EventTimeAnalyzerDialog(self, self.events_table)
+            dialog.exec()
+            self.debug_logger.log_info("事件时间分析对话框已打开")
+        except Exception as e:
+            error_msg = f"打开事件时间分析对话框失败: {str(e)}"
             self.debug_logger.log_error(error_msg)
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
