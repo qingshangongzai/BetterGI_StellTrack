@@ -866,17 +866,92 @@ class UnifiedStyleHelper:
     
     def get_splitter_style(self):
         """获取分割器样式"""
-        return f"""
-            QSplitter::handle {{
-                background-color: {self.COLORS['border']};
+        return """
+            QSplitter::handle {
+                background-color: %s;
                 width: 6px;
                 height: 6px;
                 border-radius: 3px;
+            }
+            QSplitter::handle:hover {
+                background-color: %s;
+            }
+        """ % (self.COLORS['border'], self.COLORS['primary'])
+    
+    def get_search_container_style(self):
+        """获取搜索容器样式"""
+        return """
+            QWidget {
+                background-color: #f8f9fa;
+                border: 1px solid %s;
+                border-radius: 8px;
+                %s
+            }
+        """ % (self.COLORS['border'], self.SHADOWS['small'])
+    
+    def get_search_input_style(self):
+        """获取搜索输入框样式"""
+        return """
+            QLineEdit {{ 
+                border: 1px solid %s;
+                border-radius: 6px;
+                padding: 6px 8px;
+                background-color: white;
+                font-size: 11px;
+                selection-background-color: %s;
+                %s
+                min-height: 30px;
+                max-height: 30px;
             }}
-            QSplitter::handle:hover {{
-                background-color: {self.COLORS['primary']};
+            QLineEdit:focus {{ 
+                border-color: %s;
+                background-color: #fafafa;
             }}
-        """
+            QLineEdit:hover {{ 
+                border-color: #a0a0a0;
+            }}
+        """ % (self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
+    
+    def get_filter_combo_style(self):
+        """获取过滤组合框样式"""
+        return """
+            QComboBox {{ 
+                border: 1px solid %s;
+                border-radius: 6px;
+                padding: 6px 8px;
+                background-color: white;
+                font-size: 11px;
+                min-width: 80px;
+                %s
+                min-height: 30px;
+                max-height: 30px;
+            }}
+            QComboBox::drop-down {{ 
+                border: none;
+                width: 20px;
+            }}
+            QComboBox::down-arrow {{ 
+                width: 12px;
+                height: 12px;
+                border: none;
+            }}
+            QComboBox QAbstractItemView {{ 
+                border: 1px solid %s; 
+                border-radius: 6px; 
+                background-color: white; 
+                selection-background-color: %s; 
+                selection-color: white; 
+                font-size: 11px; 
+                padding: 4px;
+                %s 
+            }}
+            QComboBox:hover {{ 
+                border-color: #a0a0a0;
+            }}
+            QComboBox:focus {{ 
+                border-color: %s;
+            }}
+        """ % (self.COLORS['border'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
 
 # 保持向后兼容性的StyleHelper类
 class StyleHelper:
@@ -1049,6 +1124,21 @@ class StyleHelper:
     def get_splitter_style():
         """获取分割器样式"""
         return UnifiedStyleHelper.get_instance().get_splitter_style()
+    
+    @staticmethod
+    def get_search_container_style():
+        """获取搜索容器样式"""
+        return UnifiedStyleHelper.get_instance().get_search_container_style()
+    
+    @staticmethod
+    def get_search_input_style():
+        """获取搜索输入框样式"""
+        return UnifiedStyleHelper.get_instance().get_search_input_style()
+    
+    @staticmethod
+    def get_filter_combo_style():
+        """获取过滤组合框样式"""
+        return UnifiedStyleHelper.get_instance().get_filter_combo_style()
     
     @staticmethod
     def get_status_bar_white_style():
