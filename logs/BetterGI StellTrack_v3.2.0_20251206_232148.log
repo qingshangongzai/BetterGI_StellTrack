@@ -1,0 +1,67 @@
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - 安全调试日志系统初始化完成
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - 应用名称: BetterGI 星轨 v3.2.0
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - 日志文件路径: d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\logs\BetterGI StellTrack_v3.2.0_20251206_232148.log
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - 安全输出捕获系统已启动
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - [DEBUG] 全局日志记录初始化成功
+2025-12-06 23:21:48,188 - BetterGI StellTrack_Debug - INFO - [DEBUG] 设置全局异常处理器
+2025-12-06 23:21:48,191 - BetterGI StellTrack_Debug - INFO - [DEBUG] 全局异常处理器已设置
+2025-12-06 23:21:48,191 - BetterGI StellTrack_Debug - INFO - [DEBUG] 初始化应用程序监控器
+2025-12-06 23:21:48,192 - BetterGI StellTrack_Debug - INFO - [DEBUG] 应用程序监控已启动
+2025-12-06 23:21:48,193 - BetterGI StellTrack_Debug - INFO - [DEBUG] 应用程序监控器已启动
+2025-12-06 23:21:48,193 - BetterGI StellTrack_Debug - INFO - BetterGI 星轨应用程序启动
+2025-12-06 23:21:48,193 - BetterGI StellTrack_Debug - INFO - 版本: 3.2.0
+2025-12-06 23:21:48,283 - BetterGI StellTrack_Debug - INFO - 系统信息:
+=== 系统信息 ===
+应用程序: BetterGI 星轨 v3.2.0
+版本详情: 3.2.0.0
+操作系统: Windows 11
+系统版本: 10.0.26220
+处理器: AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD
+架构: 64bit
+Python版本: 3.13.9
+总内存: 13 GB
+可用内存: 2 GB
+内存使用率: 79.2%
+总磁盘空间: 550 GB
+可用磁盘空间: 102 GB
+磁盘使用率: 81.4%
+2025-12-06 23:21:48,283 - BetterGI StellTrack_Debug - INFO - [DEBUG] 应用程序初始化完成
+2025-12-06 23:21:48,283 - BetterGI StellTrack_Debug - INFO - [DEBUG] 开始检查用户协议
+2025-12-06 23:21:48,284 - BetterGI StellTrack_Debug - INFO - [DEBUG] 开始检查用户协议
+2025-12-06 23:21:48,284 - BetterGI StellTrack_Debug - INFO - [DEBUG] 检查协议文件: d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\BetterGI StellTrack_agreement_accepted.txt
+2025-12-06 23:21:48,284 - BetterGI StellTrack_Debug - INFO - [DEBUG] 协议文件存在: True
+2025-12-06 23:21:48,285 - BetterGI StellTrack_Debug - INFO - [DEBUG] 当前协议文件哈希: ad0096a2a9557fa631dfa3ecb8939e36
+2025-12-06 23:21:48,286 - BetterGI StellTrack_Debug - INFO - [DEBUG] 协议内容未变化，无需重新确认
+2025-12-06 23:21:48,286 - BetterGI StellTrack_Debug - INFO - [DEBUG] 用户已同意过当前版本的协议，直接返回
+2025-12-06 23:21:48,286 - BetterGI StellTrack_Debug - INFO - [DEBUG] 用户协议检查通过
+2025-12-06 23:21:48,286 - BetterGI StellTrack_Debug - INFO - [DEBUG] 创建主窗口
+2025-12-06 23:21:48,372 - BetterGI StellTrack_Debug - INFO - 窗口图标设置成功
+2025-12-06 23:21:48,391 - BetterGI StellTrack_Debug - INFO - 全局字体管理器：成功加载得意黑字体: Smiley Sans from d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\SmileySans-Oblique.ttf
+2025-12-06 23:21:49,526 - BetterGI StellTrack_Debug - INFO - 使用默认时间逻辑设置
+2025-12-06 23:21:49,527 - BetterGI StellTrack_Debug - INFO - 程序状态已加载
+2025-12-06 23:21:49,528 - BetterGI StellTrack_Debug - INFO - 主窗口初始化完成
+2025-12-06 23:21:49,528 - BetterGI StellTrack_Debug - INFO - [DEBUG] 主窗口创建完成
+2025-12-06 23:21:49,528 - BetterGI StellTrack_Debug - INFO - [DEBUG] 显示主窗口
+2025-12-06 23:21:50,303 - BetterGI StellTrack_Debug - INFO - [DEBUG] 应用程序启动耗时: 2.28 秒
+2025-12-06 23:21:50,304 - BetterGI StellTrack_Debug - INFO - 主窗口已显示
+2025-12-06 23:21:50,304 - BetterGI StellTrack_Debug - INFO - 应用程序启动完成，总耗时: 2.28 秒
+2025-12-06 23:21:50,304 - BetterGI StellTrack_Debug - INFO - [DEBUG] 主窗口显示完成
+2025-12-06 23:21:50,304 - BetterGI StellTrack_Debug - INFO - 应用程序启动完成，耗时 2.28 秒
+2025-12-06 23:21:50,304 - BetterGI StellTrack_Debug - INFO - [DEBUG] 进入应用程序主循环
+2025-12-06 23:21:50,448 - BetterGI StellTrack_Debug - INFO - [DEBUG] 任务栏图标修复成功: d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\logo.ico
+2025-12-06 23:21:50,448 - BetterGI StellTrack_Debug - INFO - 任务栏图标修复完成
+2025-12-06 23:21:50,451 - BetterGI StellTrack_Debug - INFO - 程序状态已保存
+2025-12-06 23:21:50,461 - BetterGI StellTrack_Debug - INFO - [DEBUG] 任务栏图标修复成功: d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\logo.ico
+2025-12-06 23:21:50,461 - BetterGI StellTrack_Debug - INFO - 任务栏图标修复完成
+2025-12-06 23:22:03,578 - BetterGI StellTrack_Debug - INFO - 打开关于窗口
+2025-12-06 23:22:03,684 - BetterGI StellTrack_Debug - INFO - [DEBUG] 任务栏图标修复成功: d:\青山公仔\应用\Py测试\git\BetterGI_StellTrack\logo.ico
+2025-12-06 23:22:12,076 - BetterGI StellTrack_Debug - INFO - 主窗口关闭中...
+2025-12-06 23:22:12,078 - BetterGI StellTrack_Debug - INFO - 程序状态已保存
+2025-12-06 23:22:12,078 - BetterGI StellTrack_Debug - INFO - 程序正常关闭
+2025-12-06 23:22:12,101 - BetterGI StellTrack_Debug - INFO - 应用程序退出，返回码: 0
+2025-12-06 23:22:12,102 - BetterGI StellTrack_Debug - INFO - [DEBUG] 开始清理应用程序资源
+2025-12-06 23:22:12,102 - BetterGI StellTrack_Debug - INFO - [DEBUG] 正在停止应用程序监控...
+2025-12-06 23:22:13,282 - BetterGI StellTrack_Debug - INFO - [DEBUG] 应用程序监控已停止
+2025-12-06 23:22:13,282 - BetterGI StellTrack_Debug - INFO - [DEBUG] 监控器已停止
+2025-12-06 23:22:13,282 - BetterGI StellTrack_Debug - INFO - 输出流已恢复
+2025-12-06 23:22:13,282 - BetterGI StellTrack_Debug - INFO - 应用程序资源清理完成

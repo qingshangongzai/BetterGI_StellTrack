@@ -1354,11 +1354,6 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.PlusMinus)
         self.setStyleSheet(StyleHelper.get_double_spin_box_style())
 
-class ModernButton(QPushButton):
-    """现代化的按钮，自动应用样式"""
-    def __init__(self, text="", parent=None, accent=False, disabled=False):
-        super().__init__(text, parent)
-        self.setStyleSheet(StyleHelper.get_button_style(accent, disabled))
 
 class CenteredComboBox(QComboBox):
     """完全居中的组合框"""
@@ -1434,28 +1429,6 @@ class TimeOffsetSpinBox(QSpinBox):
                 max-height: 20px;
             }
         """
-        self.setStyleSheet(enhanced_style)
-
-class EventEditButton(QPushButton):
-    """事件编辑对话框专用按钮"""
-    def __init__(self, text, accent=False, parent=None, fixed_width=None):
-        super().__init__(text, parent)
-        
-        # 设置固定高度
-        self.setFixedHeight(20)
-        
-        # 设置固定宽度（如果提供）
-        if fixed_width:
-            self.setFixedWidth(fixed_width)
-        
-        # 获取基础按钮样式并添加显式的高度控制
-        base_style = StyleHelper.get_button_style(accent)
-        # 添加显式的高度控制样式，确保与其他UI元素高度一致
-        enhanced_style = base_style + "\n"
-        enhanced_style += "QPushButton {\n"
-        enhanced_style += "    min-height: 20px;\n"
-        enhanced_style += "    max-height: 20px;\n"
-        enhanced_style += "}"
         self.setStyleSheet(enhanced_style)
 
 class DialogFactory:
@@ -1615,3 +1588,110 @@ class ChineseMessageBox:
         print(f"[DEBUG] 用户选择: {user_choice}")
         
         return msg_box.clickedButton() == yes_button
+
+
+# =============================================================================
+# 带动画效果的按钮控件
+# =============================================================================
+
+class AnimatedButton(QPushButton):
+    """带动画效果的按钮控件"""
+    
+    def __init__(self, text="", parent=None, accent=False, disabled=False):
+        super().__init__(text, parent)
+        self.accent = accent
+        self.disabled = disabled
+        self.pressed_color = None  # 按下时的颜色
+        self.animation_duration = 100  # 动画持续时间(ms)
+        
+        # 设置基础样式
+        self.setStyleSheet(StyleHelper.get_button_style(accent, disabled))
+        
+        # 保存原始样式用于恢复
+        self.original_style = StyleHelper.get_button_style(accent, disabled)
+        
+        # 连接鼠标事件
+        self.pressed.connect(self._on_pressed)
+        self.released.connect(self._on_released)
+    
+    def _on_pressed(self):
+        """按钮按下时的处理"""
+        if not self.disabled:
+            # 根据按钮类型应用不同的按下效果
+            if self.accent:
+                # 主要按钮使用更深的颜色
+                pressed_style = f"""
+                    QPushButton {{
+                        background-color: {COLORS['primary_pressed']};
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 8px 12px;
+                        font-weight: bold;
+                        font-size: 11px;
+                        {SHADOWS['small']}
+                    }}
+                    QPushButton:hover {{
+                        background-color: {COLORS['primary_pressed']};
+                    }}
+                """
+            else:
+                # 普通按钮使用 slightly darker 颜色
+                pressed_style = f"""
+                    QPushButton {{
+                        background-color: {COLORS['secondary_pressed']};
+                        color: {COLORS['text']};
+                        border: 1px solid {COLORS['border']};
+                        border-radius: 6px;
+                        padding: 8px 12px;
+                        font-size: 11px;
+                        {SHADOWS['small']}
+                    }}
+                    QPushButton:hover {{
+                        background-color: {COLORS['secondary_pressed']};
+                    }}
+                """
+            self.setStyleSheet(pressed_style)
+    
+    def _on_released(self):
+        """按钮释放时的处理"""
+        # 恢复原始样式
+        self.setStyleSheet(self.original_style)
+
+
+# =============================================================================
+# 更新现有控件以使用动画效果
+# =============================================================================
+
+# 更新ModernButton以继承自AnimatedButton
+class ModernButton(AnimatedButton):
+    """现代化的按钮，带有动画效果"""
+    def __init__(self, text="", parent=None, accent=False, disabled=False):
+        super().__init__(text, parent, accent, disabled)
+
+
+# 更新EventEditButton以继承自AnimatedButton
+class EventEditButton(AnimatedButton):
+    """事件编辑对话框专用按钮，带有动画效果"""
+    def __init__(self, text, accent=False, parent=None, fixed_width=None):
+        super().__init__(text, parent, accent, False)  # disabled参数设为False
+        
+        # 设置固定高度
+        self.setFixedHeight(20)
+        
+        # 设置固定宽度（如果提供）
+        if fixed_width:
+            self.setFixedWidth(fixed_width)
+        
+        # 获取基础按钮样式并添加显式的高度控制
+        base_style = StyleHelper.get_button_style(accent)
+        # 添加显式的高度控制样式，确保与其他UI元素高度一致
+        enhanced_style = base_style + "\n"
+        enhanced_style += "QPushButton {\n"
+        enhanced_style += "    min-height: 20px;\n"
+        enhanced_style += "    max-height: 20px;\n"
+        enhanced_style += "}"
+        self.setStyleSheet(enhanced_style)
+        
+        # 更新原始样式以包含高度控制
+        self.original_style = enhanced_style
