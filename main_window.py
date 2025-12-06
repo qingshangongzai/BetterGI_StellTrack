@@ -14,7 +14,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
 # 导入共享模块
-from styles import StyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, StyledMainWindow, StyledDialog
+from styles import StyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog
 from styles import WindowIconMixin, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_num_to_str_with_button, generate_key_event_name, load_icon_universal, load_logo
 # 导入关于窗口模块
@@ -41,6 +41,121 @@ SORT_TIP_TEXT = "💡 提示：为避免计算出现异常，若添加事件、�
 # 自定义输入对话框
 # =============================================================================
 
+
+
+class BatchEditDialog(StyledDialog):
+    """批量编辑对话框"""
+    
+    def __init__(self, parent=None, selected_rows=None):
+        super().__init__(parent)
+        self.selected_rows = selected_rows or []
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """设置UI界面"""
+        self.setWindowTitle("批量编辑事件")
+        self.setFixedSize(450, 350)  # 调整窗口大小，使其与其他窗口保持一致
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 15, 20, 15)
+        
+        # 标题区域
+        title_label = QLabel("批量编辑事件")
+        StyleHelper.set_smiley_font(title_label, 16, QFont.Weight.Bold)
+        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-bottom: 10px;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+        
+        # 操作选项组
+        operation_group = ModernGroupBox("操作选项")
+        operation_layout = QGridLayout(operation_group)  # 使用GridLayout确保精确对齐
+        operation_layout.setSpacing(10)
+        operation_layout.setContentsMargins(15, 15, 15, 15)
+        
+        # 1. 增减偏移时间
+        offset_label = QLabel("增减偏移时间:")
+        offset_label.setFixedWidth(120)
+        self.offset_input = ModernDoubleSpinBox()
+        self.offset_input.setMinimum(-999999)
+        self.offset_input.setMaximum(999999)
+        self.offset_input.setValue(0)
+        self.offset_input.setDecimals(0)
+        self.offset_input.setSingleStep(100)  # 设置上下按钮变化幅度为100
+        self.offset_input.setFixedWidth(100)
+        offset_label_unit = QLabel("ms")
+        offset_label_unit.setFixedWidth(20)
+        offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        operation_layout.addWidget(offset_label, 0, 0)
+        operation_layout.addWidget(self.offset_input, 0, 1)
+        operation_layout.addWidget(offset_label_unit, 0, 2)
+        operation_layout.setColumnStretch(3, 1)
+        
+        # 2. 统一相对时间
+        rel_time_label = QLabel("统一相对时间:")
+        rel_time_label.setFixedWidth(120)
+        self.rel_time_input = ModernDoubleSpinBox()
+        self.rel_time_input.setMinimum(0)
+        self.rel_time_input.setMaximum(999999)
+        self.rel_time_input.setValue(0)
+        self.rel_time_input.setDecimals(0)
+        self.rel_time_input.setSingleStep(100)  # 设置上下按钮变化幅度为100
+        self.rel_time_input.setFixedWidth(100)
+        rel_time_label_unit = QLabel("ms")
+        rel_time_label_unit.setFixedWidth(20)
+        rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        operation_layout.addWidget(rel_time_label, 1, 0)
+        operation_layout.addWidget(self.rel_time_input, 1, 1)
+        operation_layout.addWidget(rel_time_label_unit, 1, 2)
+        
+        # 3. 事件类型替换
+        type_label = QLabel("事件类型替换:")
+        type_label.setFixedWidth(120)
+        self.old_type_combo = ModernComboBox()
+        self.old_type_combo.addItem("不替换类型")
+        self.old_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.old_type_combo.setFixedWidth(100)
+        type_arrow_label = QLabel("→")
+        type_arrow_label.setFixedWidth(20)
+        type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.new_type_combo = ModernComboBox()
+        self.new_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.new_type_combo.setFixedWidth(100)
+        
+        operation_layout.addWidget(type_label, 2, 0)
+        operation_layout.addWidget(self.old_type_combo, 2, 1)  # 与时间输入框同一列
+        operation_layout.addWidget(type_arrow_label, 2, 2)
+        operation_layout.addWidget(self.new_type_combo, 2, 3)
+        
+        layout.addWidget(operation_group)
+        
+        # 按钮区域
+        button_layout = DialogFactory.create_ok_cancel_buttons(
+            parent=self,
+            on_ok=self.accept,
+            on_cancel=self.reject,
+            ok_text="应用修改",
+            cancel_text="取消"
+        )
+        layout.addLayout(button_layout)
+    
+    def get_offset_adjustment(self):
+        """获取偏移调整值"""
+        return int(self.offset_input.value())
+    
+    def get_unified_rel_time(self):
+        """获取统一相对时间值"""
+        return int(self.rel_time_input.value())
+    
+    def get_type_replacement(self):
+        """获取类型替换信息"""
+        old_type = self.old_type_combo.currentText()
+        new_type = self.new_type_combo.currentText()
+        if old_type == "不替换类型":
+            return None, None
+        return old_type, new_type
 
 
 class CustomInputDialog(StyledDialog):
@@ -347,6 +462,13 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         self.max_undo_steps = 50  # 最大撤销步骤数
         self._table_changing = False  # 防止表格变化时的递归调用
         self._batch_operation = False  # 批量操作标志
+        
+        # 撤销延迟保存相关
+        self._undo_save_timer = QTimer()
+        self._undo_save_timer.setSingleShot(True)
+        self._undo_save_timer.setInterval(500)  # 500ms延迟
+        self._undo_save_timer.timeout.connect(self._delayed_save_state)
+        self._pending_undo_save = False
         
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()
@@ -872,6 +994,9 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         group_layout.setSpacing(12)
         group_layout.setContentsMargins(15, 20, 15, 15)
         
+        # 搜索和过滤组件
+        self.create_search_filter_widgets(group_layout)
+        
         # 事件表格
         self.create_event_table(group_layout)
         
@@ -880,6 +1005,57 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         layout.addWidget(group)
         return parent
+    
+    def create_search_filter_widgets(self, parent_layout):
+        """创建搜索和过滤组件"""
+        # 创建搜索和过滤区域
+        search_container = QWidget()
+        search_container.setStyleSheet(StyleHelper.get_search_container_style())
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setSpacing(8)
+        search_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # 搜索标签
+        search_label = QLabel("🔍 搜索:")
+        search_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']}; font-size: 12px;")
+        search_layout.addWidget(search_label)
+        
+        # 搜索输入框
+        self.search_input = ModernLineEdit()
+        self.search_input.setPlaceholderText("按事件名称、类型、键码搜索...")
+        self.search_input.setStyleSheet(StyleHelper.get_search_input_style())
+        search_layout.addWidget(self.search_input)
+        
+        # 事件类型过滤
+        self.filter_type_combo = ModernComboBox()
+        self.filter_type_combo.addItem("全部事件类型")
+        self.filter_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.filter_type_combo.setStyleSheet(StyleHelper.get_filter_combo_style())
+        self.filter_type_combo.setFixedWidth(150)
+        search_layout.addWidget(self.filter_type_combo)
+        
+        # 搜索按钮
+        search_btn = QPushButton("搜索")
+        search_btn.setFixedHeight(30)
+        search_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        search_btn.setFixedWidth(70)
+        search_layout.addWidget(search_btn)
+        
+        # 重置按钮
+        reset_btn = QPushButton("重置")
+        reset_btn.setFixedHeight(30)
+        reset_btn.setStyleSheet(StyleHelper.get_button_style())
+        reset_btn.setFixedWidth(70)
+        search_layout.addWidget(reset_btn)
+        
+        parent_layout.addWidget(search_container)
+        
+        # 连接信号
+        # 移除实时过滤，只在点击搜索按钮时过滤
+        # self.search_input.textChanged.connect(self.on_search_filter_changed)
+        # self.filter_type_combo.currentTextChanged.connect(self.on_search_filter_changed)
+        search_btn.clicked.connect(self.on_search_filter_changed)
+        reset_btn.clicked.connect(self.on_reset_search_filter)
     
     def create_event_table(self, parent_layout):
         """创建事件表格"""
@@ -1009,6 +1185,9 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         """显示事件表格的右键菜单"""
         context_menu = QMenu(self)
         
+        # 获取选中的行
+        selected_rows = self.events_table.selectionModel().selectedRows()
+        
         # 添加复制事件菜单项
         copy_action = QAction("📋 复制事件", self)
         copy_action.setShortcut("Ctrl+C")
@@ -1029,6 +1208,12 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         context_menu.addSeparator()
         
+        # 添加批量编辑菜单项（如果有选中行）
+        if selected_rows:
+            batch_edit_action = QAction("🔧 批量编辑", self)
+            batch_edit_action.triggered.connect(self.on_batch_edit)
+            context_menu.addAction(batch_edit_action)
+        
         # 添加删除事件菜单项
         delete_action = QAction("🗑️ 删除事件", self)
         delete_action.setShortcut("Delete")
@@ -1045,6 +1230,187 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         # 显示菜单
         context_menu.exec(self.events_table.viewport().mapToGlobal(position))
+    
+    def on_search_filter_changed(self):
+        """搜索过滤条件改变时调用"""
+        search_text = self.search_input.text().lower()
+        filter_type = self.filter_type_combo.currentText()
+        
+        # 保存当前的行高
+        row_height = self.events_table.rowHeight(0) if self.events_table.rowCount() > 0 else 32
+        
+        # 获取原始数据（如果不存在则从当前表格获取）
+        if not hasattr(self, 'original_events_data') or self.original_events_data is None:
+            # 保存原始数据
+            self.original_events_data = []
+            for row in range(self.events_table.rowCount()):
+                row_data = []
+                for col in range(self.events_table.columnCount()):
+                    item = self.events_table.item(row, col)
+                    row_data.append(item.text() if item else "")
+                self.original_events_data.append(row_data)
+        
+        # 使用原始数据进行过滤
+        all_rows = self.original_events_data.copy()
+        
+        # 清除表格
+        self.events_table.setRowCount(0)
+        
+        # 过滤并重新添加行
+        for row_data in all_rows:
+            # 搜索条件匹配
+            matches_search = True
+            if search_text:
+                # 检查事件名称、类型、键码是否包含搜索文本
+                event_name = row_data[1].lower()
+                event_type = row_data[2].lower()
+                key_code = row_data[3].lower()
+                if search_text not in event_name and search_text not in event_type and search_text not in key_code:
+                    matches_search = False
+            
+            # 类型过滤匹配
+            matches_type = True
+            if filter_type != "全部事件类型":
+                if row_data[2] != filter_type:
+                    matches_type = False
+            
+            # 如果匹配所有条件，则添加行
+            if matches_search and matches_type:
+                self.add_table_row(row_data)
+        
+        # 恢复行高
+        for row in range(self.events_table.rowCount()):
+            self.events_table.setRowHeight(row, row_height)
+        
+        # 更新统计信息
+        self.update_stats()
+    
+    def on_reset_search_filter(self):
+        """重置搜索过滤条件"""
+        self.search_input.clear()
+        self.filter_type_combo.setCurrentIndex(0)
+        
+        # 清除表格
+        self.events_table.setRowCount(0)
+        
+        # 清除原始数据缓存
+        if hasattr(self, 'original_events_data'):
+            # 重新加载所有事件
+            for row_data in self.original_events_data:
+                self.add_table_row(row_data)
+            # 清除原始数据缓存
+            self.original_events_data = None
+        
+        # 更新统计信息
+        self.update_stats()
+        
+        # 显示状态消息
+        self.status_bar.showMessage("✅ 搜索过滤已重置")
+    
+    def on_batch_edit(self):
+        """批量编辑事件"""
+        # 获取选中的行
+        selected_rows = self.events_table.selectionModel().selectedRows()
+        if not selected_rows:
+            ChineseMessageBox.show_info(self, "提示", "请先选择要编辑的事件")
+            return
+        
+        # 保存选中的行
+        self.selected_rows = selected_rows
+        
+        # 打开批量编辑对话框
+        dialog = BatchEditDialog(self, selected_rows)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # 应用批量编辑
+            self.apply_batch_edit(dialog)
+            
+            # 更新统计信息
+            self.update_stats()
+            
+            # 记录操作
+            self.debug_logger.log_info(f"已批量编辑 {len(selected_rows)} 个事件")
+    
+    def apply_batch_edit(self, dialog):
+        """应用批量编辑"""
+        # 获取编辑参数
+        offset = dialog.get_offset_adjustment()
+        unified_rel_time = dialog.get_unified_rel_time()
+        old_type, new_type = dialog.get_type_replacement()
+        
+        # 获取选中的行索引
+        selected_row_indices = [row.row() for row in self.selected_rows]
+        selected_row_indices.sort()  # 从小到大排序，确保后续事件时间计算正确
+        
+        # 保存当前状态到撤销栈
+        self.save_state_to_undo_stack()
+        
+        # 开始批量操作
+        self._batch_operation = True
+        
+        try:
+            # 处理每个选中的事件
+            for row_idx in selected_row_indices:
+                # 1. 处理增减偏移时间
+                if offset != 0:
+                    # 调整绝对偏移时间
+                    abs_time_item = self.events_table.item(row_idx, 7)
+                    if abs_time_item:
+                        abs_time = int(abs_time_item.text()) if abs_time_item.text().isdigit() else 0
+                        new_abs_time = abs_time + offset
+                        abs_time_item.setText(str(new_abs_time))
+                
+                # 2. 处理事件类型替换
+                if old_type and new_type:
+                    type_item = self.events_table.item(row_idx, 2)
+                    if type_item and type_item.text() == old_type:
+                        type_item.setText(new_type)
+                        
+                        # 更新事件名称以反映新的事件类型
+                        name_item = self.events_table.item(row_idx, 1)
+                        if name_item:
+                            event_name = name_item.text()
+                            if "按下" in event_name:
+                                new_name = event_name.replace("按下", "释放") if "释放" in event_name else event_name.replace("释放", "按下")
+                                name_item.setText(new_name)
+            
+            # 3. 处理统一相对时间
+            if unified_rel_time > 0:
+                # 对每个选中的事件设置统一的相对时间
+                for row_idx in selected_row_indices:
+                    # 设置相对时间
+                    rel_time_item = self.events_table.item(row_idx, 6)
+                    rel_time_item.setText(str(unified_rel_time))
+                    
+                    # 根据相对时间重新计算当前事件的绝对时间
+                    if row_idx > 0:
+                        prev_abs_time_item = self.events_table.item(row_idx - 1, 7)
+                        prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item.text().isdigit() else 0
+                    else:
+                        prev_abs_time = 0
+                    
+                    new_abs_time = prev_abs_time + unified_rel_time
+                    abs_time_item = self.events_table.item(row_idx, 7)
+                    abs_time_item.setText(str(new_abs_time))
+            
+            # 如果涉及时间修改，只重新计算相对时间，保持后续事件绝对时间不变
+            if offset != 0 or unified_rel_time > 0:
+                # 重新计算所有相对时间，保持绝对时间不变
+                self.recalculate_relative_times()
+            
+            # 清除撤销栈
+            self.redo_stack.clear()
+            
+            # 更新统计信息
+            self.update_stats()
+            
+            # 更新状态栏消息
+            self.status_bar.showMessage(f"✅ 已批量编辑 {len(self.selected_rows)} 个事件")
+            
+            # 立即更新预计总时间
+            self.on_calculate_total_time()
+        finally:
+            # 结束批量操作
+            self._batch_operation = False
     
     def add_sample_data(self):
         """添加示例数据用于测试"""
@@ -1076,6 +1442,75 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         """更新统计信息 - 调用面板的方法"""
         if hasattr(self, 'stats_panel'):
             self.stats_panel.update_stats()
+    
+    def sort_events_by_absolute_time(self):
+        """按绝对时间对事件进行排序"""
+        # 获取所有事件数据
+        events = []
+        for row in range(self.events_table.rowCount()):
+            event_data = []
+            for col in range(self.events_table.columnCount()):
+                item = self.events_table.item(row, col)
+                event_data.append(item.text() if item else "")
+            events.append(event_data)
+        
+        # 按绝对时间排序
+        events.sort(key=lambda x: int(x[7]) if x[7].isdigit() else 0)
+        
+        # 清空表格
+        self.events_table.setRowCount(0)
+        
+        # 重新添加排序后的事件
+        for event_data in events:
+            self.add_table_row(event_data)
+    
+    def recalculate_all_times(self):
+        """重新计算所有事件的相对时间和绝对时间"""
+        if self.events_table.rowCount() == 0:
+            return
+        
+        # 第一个事件的绝对时间为0
+        first_abs_time_item = self.events_table.item(0, 7)
+        first_abs_time_item.setText("0")
+        
+        # 从第二个事件开始，根据相对时间重新计算绝对时间
+        prev_abs_time = 0
+        for i in range(0, self.events_table.rowCount()):
+            # 获取相对时间
+            rel_time_item = self.events_table.item(i, 6)
+            rel_time = int(rel_time_item.text()) if rel_time_item.text().isdigit() else 0
+            
+            # 计算当前事件的绝对时间
+            curr_abs_time = prev_abs_time + rel_time
+            
+            # 更新绝对时间
+            abs_time_item = self.events_table.item(i, 7)
+            abs_time_item.setText(str(curr_abs_time))
+            
+            # 更新前一个绝对时间
+            prev_abs_time = curr_abs_time
+    
+    def recalculate_relative_times(self):
+        """重新计算所有事件的相对时间，保持绝对时间不变"""
+        if self.events_table.rowCount() == 0:
+            return
+        
+        # 从第二个事件开始，根据绝对时间计算相对时间
+        for i in range(1, self.events_table.rowCount()):
+            # 获取前一个事件的绝对时间
+            prev_abs_time_item = self.events_table.item(i-1, 7)
+            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item.text().isdigit() else 0
+            
+            # 获取当前事件的绝对时间
+            curr_abs_time_item = self.events_table.item(i, 7)
+            curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item.text().isdigit() else 0
+            
+            # 计算相对时间
+            rel_time = curr_abs_time - prev_abs_time
+            
+            # 更新相对时间
+            rel_time_item = self.events_table.item(i, 6)
+            rel_time_item.setText(str(rel_time))
     
     def get_screen_resolution(self):
         """获取屏幕分辨率（参考原代码实现）"""
@@ -2304,14 +2739,22 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         if item.column() == 0:
             self.update_row_numbers()
         
-        # 保存状态到撤销栈
-        self.save_state_to_undo_stack()
+        # 延迟保存状态到撤销栈，将连续的单元格变化合并为一个撤销状态
+        self._pending_undo_save = True
+        self._undo_save_timer.start()
         
         self.update_stats()
         self._table_changing = False
         
         # 立即更新预计总时间
         self.on_calculate_total_time()
+    
+    def _delayed_save_state(self):
+        """延迟保存状态到撤销栈"""
+        if self._pending_undo_save:
+            self.save_state_to_undo_stack()
+            self._pending_undo_save = False
+            self.debug_logger.log_debug("延迟保存撤销状态")
     
     def _recalculate_times_from_index(self, start_index, start_absolute_time):
         """从指定索引开始重新计算所有事件的相对时间和绝对时间"""
