@@ -679,6 +679,12 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         time_analysis_action.triggered.connect(self.on_event_time_analysis)
         tools_menu.addAction(time_analysis_action)
         
+        # 事件时间轴工具
+        timeline_action = QAction('事件时间轴', self)
+        timeline_action.setShortcut('Ctrl+L')
+        timeline_action.triggered.connect(self.on_event_timeline)
+        tools_menu.addAction(timeline_action)
+        
         # 添加分隔线
         tools_menu.addSeparator()
         
@@ -886,6 +892,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_info("事件时间分析对话框已打开")
         except Exception as e:
             error_msg = f"打开事件时间分析对话框失败: {str(e)}"
+            self.debug_logger.log_error(error_msg)
+            ChineseMessageBox.show_error(self, "错误", error_msg)
+    
+    def on_event_timeline(self):
+        """打开事件时间轴对话框"""
+        try:
+            from event_timeline import EventTimelineDialog
+            dialog = EventTimelineDialog(self, self.events_table)
+            dialog.exec()
+            self.debug_logger.log_info("事件时间轴对话框已打开")
+        except Exception as e:
+            error_msg = f"打开事件时间轴对话框失败: {str(e)}"
             self.debug_logger.log_error(error_msg)
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
