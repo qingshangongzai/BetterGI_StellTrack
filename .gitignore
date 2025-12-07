@@ -45,3 +45,6 @@ __pycache__/main_window.cpython-313.pyc
 *.pyc
 BetterGI StellTrack_agreement_accepted.txt
 BetterGI_StellTrack_state.json
+/logs
+/.trae
+logo.png.bak
