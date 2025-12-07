@@ -251,11 +251,14 @@ class EventTimelineDialog(StyledDialog):
             
             # 保存图片
             if pixmap.save(file_path):
-                QMessageBox.information(self, "成功", f"时间轴已成功导出到: {file_path}")
+                from styles import ChineseMessageBox
+                ChineseMessageBox.show_info(self, "成功", f"时间轴已成功导出到: {file_path}")
             else:
-                QMessageBox.error(self, "错误", "导出图片失败")
+                from styles import ChineseMessageBox
+                ChineseMessageBox.show_error(self, "错误", "导出图片失败")
         except Exception as e:
-            QMessageBox.error(self, "错误", f"导出图片时发生错误: {str(e)}")
+            from styles import ChineseMessageBox
+            ChineseMessageBox.show_error(self, "错误", f"导出图片时发生错误: {str(e)}")
 
 class TimelineWidget(QWidget):
     """时间轴绘制控件"""
@@ -426,55 +429,68 @@ class TimelineWidget(QWidget):
         painter.setPen(pen)
         painter.drawLine(rect.left(), base_y, rect.right(), base_y)
         
-        # 绘制事件连接线（虚线）
-        pen = QPen(QColor(self.dialog.colors['event_line']), 1, Qt.PenStyle.DashLine)
-        painter.setPen(pen)
-        
-        for i in range(len(self.dialog.events) - 1):
-            event1 = self.dialog.events[i]
-            event2 = self.dialog.events[i + 1]
-            
-            x1 = self.time_to_x(event1['absolute_time'], rect)
-            x2 = self.time_to_x(event2['absolute_time'], rect)
-            
-            # 绘制水平线连接两个事件点
-            painter.drawLine(x1, base_y, x2, base_y)
-        
-        # 绘制事件点和详细信息
+        # 先收集所有事件点的位置信息
+        event_positions = []
         for event in self.dialog.events:
             x = self.time_to_x(event['absolute_time'], rect)
             
             # 计算垂直偏移，处理同一时间点的多个事件
-            overlap_offset = 0
-            # 事件是字典类型，使用字典访问方式
             overlap_index = event.get('overlap_index', 0)
             overlap_count = event.get('overlap_count', 1)
             
+            overlap_offset = 0
             if overlap_count > 1:
                 # 计算垂直偏移，将同一时间点的事件上下排列
-                spacing = 70  # 增大垂直间距，避免重叠
+                spacing = 120  # 增大垂直间距到120px，确保文本不会重叠
                 total_height = (overlap_count - 1) * spacing
                 # 居中排列同一时间点的事件
                 overlap_offset = -total_height / 2 + overlap_index * spacing
                 
                 # 确保事件不会超出窗口边界
-                if overlap_offset < -200:
-                    overlap_offset = -200
-                elif overlap_offset > 200:
-                    overlap_offset = 200
+                max_offset = rect.height() / 3  # 限制最大偏移量为窗口高度的1/3
+                if overlap_offset < -max_offset:
+                    overlap_offset = -max_offset
+                elif overlap_offset > max_offset:
+                    overlap_offset = max_offset
             
-            # 计算y坐标并转换为整数，确保drawEllipse方法可以正确使用
+            # 计算y坐标并转换为整数
             y = int(base_y + overlap_offset)
-            
+            event_positions.append((x, y))
+        
+        # 绘制事件连接线（虚线）
+        pen = QPen(QColor(self.dialog.colors['event_line']), 1, Qt.PenStyle.DashLine)
+        painter.setPen(pen)
+        
+        # 只连接相邻但不同时间点的事件
+        prev_time = None
+        for i, event in enumerate(self.dialog.events):
+            curr_time = event['absolute_time']
+            if i > 0 and curr_time != prev_time:
+                # 只连接不同时间点的事件
+                x1, y1 = event_positions[i-1]
+                x2, y2 = event_positions[i]
+                # 绘制水平线连接两个相邻时间点的基础位置
+                painter.drawLine(x1, base_y, x2, base_y)
+            prev_time = curr_time
+        
+        # 绘制事件点、垂直线和详细信息
+        for i, (event, (x, y)) in enumerate(zip(self.dialog.events, event_positions)):
             # 选择颜色
             if event == self.dialog.selected_event:
                 point_color = QColor(self.dialog.colors['selected'])
+                line_color = QColor(self.dialog.colors['selected'])
                 text_color = QColor(self.dialog.colors['selected'])
                 point_size = 14
             else:
                 point_color = QColor(self.dialog.colors['event_point'])
+                line_color = QColor(self.dialog.colors['event_line'])
                 text_color = QColor(self.dialog.colors['text'])
                 point_size = 10
+            
+            # 绘制垂直线连接事件点和基础时间轴
+            pen = QPen(line_color, 1)
+            painter.setPen(pen)
+            painter.drawLine(x, base_y, x, y)
             
             # 绘制事件点
             painter.setBrush(QBrush(point_color))
@@ -523,9 +539,8 @@ class TimelineWidget(QWidget):
             # 鼠标事件：显示类型、坐标
             event_text = f"{event['type']}\n({event['x']}, {event['y']})"
         elif '按键' in event['type']:
-            # 按键事件：显示类型、转换后的按键名称
-            key_name = get_key_name(event['key_code'])
-            event_text = f"{event['type']}\n{key_name}"
+            # 按键事件：直接显示事件列表中的事件名称
+            event_text = event['name']
         else:
             # 其他事件：显示类型
             event_text = event['type']
@@ -536,14 +551,32 @@ class TimelineWidget(QWidget):
         event_font.setPointSize(9)
         event_font.setBold(True)
         
-        # 绘制事件文本（在时间轴上方，避免重叠）
+        # 绘制事件文本（根据事件点位置决定文本在上方或下方，避免被水平线穿过）
         painter.setFont(event_font)
         painter.setPen(QPen(text_color))
         
         # 分行绘制事件文本
         event_lines = event_text.split('\n')
         line_height = 18
-        start_y = y - 40
+        total_text_height = len(event_lines) * line_height
+        
+        # 计算文本起始位置，确保不被水平线穿过
+        # 计算基础时间轴位置
+        base_y = rect.top() + rect.height() // 2
+        
+        # 计算文本与水平线的最小距离
+        min_distance = 10
+        
+        # 根据事件点相对于水平线的位置，决定文本在上方还是下方
+        if y < base_y - min_distance:
+            # 事件点在水平线上方，文本绘制在事件点下方
+            start_y = y + 15
+        elif y > base_y + min_distance:
+            # 事件点在水平线下方，文本绘制在事件点上方
+            start_y = y - total_text_height - 15
+        else:
+            # 事件点接近水平线，文本绘制在事件点上方
+            start_y = y - total_text_height - 15
         
         for i, line in enumerate(event_lines):
             line_rect = painter.boundingRect(0, 0, 200, line_height, Qt.AlignmentFlag.AlignCenter, line)
@@ -554,9 +587,16 @@ class TimelineWidget(QWidget):
             elif text_x + line_rect.width() > rect.right():
                 text_x = rect.right() - line_rect.width()
             
+            # 确保文本不会超出窗口边界
+            current_y = start_y + i * line_height
+            if current_y < 0:
+                current_y = 0
+            elif current_y > rect.bottom():
+                current_y = rect.bottom()
+            
             painter.drawText(
                 text_x,
-                start_y + i * line_height,
+                current_y,
                 line
             )
     
@@ -644,32 +684,33 @@ class TimelineWidget(QWidget):
             text_y += text_rect.height() + 2
     
     def time_to_x(self, time, rect):
-        """将时间值转换为x坐标（固定比例，禁用缩放）"""
+        """将时间值转换为x坐标（应用缩放，禁用鼠标滚轮缩放）"""
         min_time = self.dialog.min_time
         max_time = self.dialog.max_time
         time_range = max_time - min_time
         if time_range <= 0:
             return rect.left()
         
-        # 固定比例，不应用缩放和偏移
-        # 直接将时间映射到x坐标
+        # 应用缩放和偏移（修正放大缩小逻辑）
         relative_pos = (time - min_time) / time_range
-        x = rect.left() + relative_pos * rect.width()
+        scaled_pos = (relative_pos - self.dialog.offset) * self.dialog.zoom_level
+        x = rect.left() + scaled_pos * rect.width()
         
         # 返回整数坐标
         return int(x)
     
     def x_to_time(self, x, rect):
-        """将x坐标转换为时间值（固定比例，禁用缩放）"""
+        """将x坐标转换为时间值（应用缩放，禁用鼠标滚轮缩放）"""
         min_time = self.dialog.min_time
         max_time = self.dialog.max_time
         time_range = max_time - min_time
         if time_range <= 0:
             return min_time
         
-        # 固定比例，不应用缩放和偏移
+        # 应用缩放和偏移（与time_to_x保持一致）
         relative_pos = (x - rect.left()) / rect.width()
-        time = min_time + relative_pos * time_range
+        scaled_pos = relative_pos / self.dialog.zoom_level + self.dialog.offset
+        time = min_time + scaled_pos * time_range
         
         return time
     
