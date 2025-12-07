@@ -34,7 +34,9 @@ VK_MAPPING = {
     0x6F: "Num /", 0x70: "F1", 0x71: "F2", 0x72: "F3", 0x73: "F4", 0x74: "F5", 0x75: "F6", 0x76: "F7", 0x77: "F8",
     0x78: "F9", 0x79: "F10", 0x7A: "F11", 0x7B: "F12",
     0x90: "Num Lock", 0x91: "Scroll Lock", 0xBA: ";", 0xBB: "=", 0xBC: ",", 0xBD: "-", 0xBE: ".",
-    0xBF: "/", 0xC0: "`", 0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'"
+    0xBF: "/", 0xC0: "`", 0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'",
+    0xA2: "Ctrl",  # 左Ctrl键
+    0xA3: "Ctrl"   # 右Ctrl键
 }
 
 # 中文按键名称映射
@@ -64,7 +66,9 @@ EVENT_TYPE_MAP = {
     "左键按下": 4,
     "左键释放": 5,
     "右键按下": 4,
-    "右键释放": 5
+    "右键释放": 5,
+    "中键按下": 4,
+    "中键释放": 5
 }
 
 # =============================================================================
@@ -76,17 +80,23 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
     
     Args:
         type_num: 事件类型数字
-        mouse_button: 鼠标按钮（"Left" 或 "Right"）
+        mouse_button: 鼠标按钮（"Left"、"Right" 或 "Middle"）
         
     Returns:
         str: 事件类型字符串
     """
+    # 处理滚轮事件
+    if type_num == 6:
+        return "鼠标滚轮"
+    
     if mouse_button:
         if type_num == 4:  # 按下
             if mouse_button == "Right":
                 return "右键按下"
             elif mouse_button == "Left":
                 return "左键按下"
+            elif mouse_button == "Middle":
+                return "中键按下"
             else:
                 return "左键按下"  # 默认左键
         elif type_num == 5:  # 释放
@@ -94,6 +104,8 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
                 return "右键释放"
             elif mouse_button == "Left":
                 return "左键释放"
+            elif mouse_button == "Middle":
+                return "中键释放"
             else:
                 return "左键释放"  # 默认左键
     
@@ -103,7 +115,8 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
         1: "按键释放", 
         2: "鼠标移动",
         4: "左键按下",   # 默认左键
-        5: "左键释放"    # 默认左键
+        5: "左键释放",   # 默认左键
+        6: "鼠标滚轮"    # 滚轮事件
     }
     return type_mapping.get(type_num, "未知事件")
 
@@ -130,8 +143,11 @@ def generate_key_event_name(event_type_str, keycode):
         except (ValueError, TypeError):
             # 如果键码不是数字，返回默认名称
             return event_type_str
+    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标移动", "鼠标滚轮"]:
+        # 鼠标事件，返回原名称
+        return event_type_str
     else:
-        # 非键盘事件，返回原名称
+        # 其他事件，返回原名称
         return event_type_str
 
 # =============================================================================

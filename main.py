@@ -620,7 +620,7 @@ class BetterGIApplication:
                 
                 # 使用日志记录器记录异常信息
                 if self.debug_logger:
-                    self.debug_logger.error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
+                    self.debug_logger.log_error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
                 else:
                     print(f"[ERROR] {error_msg}")
                     import traceback

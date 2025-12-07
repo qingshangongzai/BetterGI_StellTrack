@@ -115,13 +115,13 @@ class BatchEditDialog(StyledDialog):
         type_label.setFixedWidth(120)
         self.old_type_combo = ModernComboBox()
         self.old_type_combo.addItem("不替换类型")
-        self.old_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.old_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         self.old_type_combo.setFixedWidth(100)
         type_arrow_label = QLabel("→")
         type_arrow_label.setFixedWidth(20)
         type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.new_type_combo = ModernComboBox()
-        self.new_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.new_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         self.new_type_combo.setFixedWidth(100)
         
         operation_layout.addWidget(type_label, 2, 0)
@@ -1047,7 +1047,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         # 事件类型过滤
         self.filter_type_combo = ModernComboBox()
         self.filter_type_combo.addItem("全部事件类型")
-        self.filter_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.filter_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         self.filter_type_combo.setStyleSheet(StyleHelper.get_filter_combo_style())
         self.filter_type_combo.setFixedWidth(150)
         search_layout.addWidget(self.filter_type_combo)
@@ -1305,19 +1305,21 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
     
     def on_reset_search_filter(self):
         """重置搜索过滤条件"""
-        self.search_input.clear()
-        self.filter_type_combo.setCurrentIndex(0)
-        
-        # 清除表格
-        self.events_table.setRowCount(0)
-        
-        # 清除原始数据缓存
-        if hasattr(self, 'original_events_data'):
-            # 重新加载所有事件
+        # 只有在执行过搜索过滤后才需要恢复数据
+        if hasattr(self, 'original_events_data') and self.original_events_data is not None:
+            # 清除表格
+            self.events_table.setRowCount(0)
+            
+            # 重新加载所有原始事件
             for row_data in self.original_events_data:
                 self.add_table_row(row_data)
+            
             # 清除原始数据缓存
             self.original_events_data = None
+        
+        # 清空搜索输入和过滤类型
+        self.search_input.clear()
+        self.filter_type_combo.setCurrentIndex(0)
         
         # 更新统计信息
         self.update_stats()
@@ -1805,6 +1807,17 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                     issues.append(f"第{row+1}行: 右键未按下就释放")
                 else:
                     pressed_mouse_buttons.remove("Right")
+                    
+            elif event_type == "中键按下":
+                if "Middle" in pressed_mouse_buttons:
+                    issues.append(f"第{row+1}行: 中键重复按下")
+                else:
+                    pressed_mouse_buttons.add("Middle")
+            elif event_type == "中键释放":
+                if "Middle" not in pressed_mouse_buttons:
+                    issues.append(f"第{row+1}行: 中键未按下就释放")
+                else:
+                    pressed_mouse_buttons.remove("Middle")
         
         # 检查未释放的按键
         for key in pressed_keys:
