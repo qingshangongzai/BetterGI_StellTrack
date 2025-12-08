@@ -2378,6 +2378,34 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         
 
+        # 添加"添加事件"菜单项
+
+        add_action = QAction("➕ 添加事件", self)
+
+        add_action.triggered.connect(self.on_add_event)
+
+        context_menu.addAction(add_action)
+
+        
+
+        # 添加"编辑事件"菜单项（如果有选中行）
+
+        if selected_rows:
+
+            edit_action = QAction("✏️ 编辑事件", self)
+
+            edit_action.triggered.connect(self.on_edit_event)
+
+            context_menu.addAction(edit_action)
+
+            context_menu.addSeparator()
+
+        else:
+
+            context_menu.addSeparator()
+
+        
+
         # 添加复制事件菜单项
 
         copy_action = QAction("📋 复制事件", self)
@@ -4361,95 +4389,58 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         try:
 
-            # 获取删除前的事件数据，用于计算
-
-            all_events_before_delete = []
-
-            for row in range(self.events_table.rowCount()):
-
-                event_data = []
-
-                for col in range(8):  # 包括所有列
-
-                    item = self.events_table.item(row, col)
-
-                    if item:
-
-                        event_data.append(item.text())
-
-                    else:
-
-                        event_data.append("")
-
-                all_events_before_delete.append(event_data)
-
+            # 获取删除前的表行数和最后一行索引
+            rows_before_delete = self.events_table.rowCount()
+            last_row_before_delete = rows_before_delete - 1
             
-
-            # 找出第一个被删除事件的索引
-
+            # 找出第一个和最后一个被删除事件的索引
             first_deleted_index = min(selected_rows)
+            last_deleted_index = max(selected_rows)
 
-            
-
-            # 获取被删除事件之前的最后一个事件的绝对时间
-
-            prev_absolute_time = 0
-
-            if first_deleted_index > 0:
-
-                prev_event = all_events_before_delete[first_deleted_index - 1]
-
-                prev_absolute_time = int(prev_event[7]) if prev_event[7].isdigit() else 0
-
-            
+            # 检测是否删除的是末尾事件
+            is_deleting_end_events = last_deleted_index == last_row_before_delete
 
             # 执行删除
-
             for row in sorted(selected_rows, reverse=True):
-
                 self.events_table.removeRow(row)
 
-            
-
-            if time_option == "仅修改当前事件时间":
-
-                # 仅重新计算删除位置后一个事件的相对时间
-
-                next_row_index = first_deleted_index
-
-                if next_row_index < self.events_table.rowCount():
-
-                    # 获取删除位置后一个事件的原始绝对时间
-
-                    next_absolute_time = None
-
-                    for event in all_events_before_delete:
-
-                        if int(event[0]) > first_deleted_index + 1:  # 找到删除后的第一个事件
-
-                            next_absolute_time = int(event[7]) if event[7].isdigit() else 0
-
-                            break
-
+            # 只有当不是删除末尾事件时，才需要处理时间计算
+            if not is_deleting_end_events:
+                # 获取删除前的事件数据，用于计算（只收集必要的列）
+                all_events_before_delete = []
+                for row in range(rows_before_delete):
+                    event_data = []
+                    for col in [0, 7]:  # 只收集行号和绝对时间列
+                        item = self.events_table.item(row, col)
+                        event_data.append(item.text() if item else "")
+                    all_events_before_delete.append(event_data)
+                
+                # 获取被删除事件之前的最后一个事件的绝对时间
+                prev_absolute_time = 0
+                if first_deleted_index > 0:
+                    prev_event = all_events_before_delete[first_deleted_index - 1]
+                    prev_absolute_time = int(prev_event[1]) if prev_event[1].isdigit() else 0
+                
+                if time_option == "仅修改当前事件时间":
+                    # 仅重新计算删除位置后一个事件的相对时间
+                    next_row_index = first_deleted_index
+                    if next_row_index < self.events_table.rowCount():
+                        # 获取删除位置后一个事件的原始绝对时间
+                        next_absolute_time = None
+                        for event in all_events_before_delete:
+                            if event[0].isdigit() and int(event[0]) > first_deleted_index + 1:  # 找到删除后的第一个事件
+                                next_absolute_time = int(event[1]) if event[1].isdigit() else 0
+                                break
                     
-
                     if next_absolute_time is not None:
-
                         # 计算新的相对时间
-
                         new_relative_time = next_absolute_time - prev_absolute_time
-
                         next_relative_item = QTableWidgetItem(str(new_relative_time))
-
                         next_relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-
                         self.events_table.setItem(next_row_index, 6, next_relative_item)
-
-            else:
-
-                # 重新计算后续所有事件的绝对时间
-
-                self._recalculate_times_from_index(first_deleted_index, prev_absolute_time)
+                else:
+                    # 重新计算后续所有事件的绝对时间
+                    self._recalculate_times_from_index(first_deleted_index, prev_absolute_time)
 
             
 
@@ -5517,45 +5508,37 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
             current_absolute_time = start_absolute_time
 
+            # 临时禁用UI更新，减少卡顿
+            self.events_table.setUpdatesEnabled(False)
             
+            try:
+                for row in range(start_index, self.events_table.rowCount()):
 
-            for row in range(start_index, self.events_table.rowCount()):
-
-                # 获取当前行的相对时间
-
-                relative_time_item = self.events_table.item(row, 6)  # 相对时间列
-
-                if relative_time_item and relative_time_item.text().isdigit():
-
-                    relative_time = int(relative_time_item.text())
-
-                else:
-
+                    # 获取当前行的相对时间
+                    relative_time_item = self.events_table.item(row, 6)  # 相对时间列
                     relative_time = 0
+                    if relative_time_item and relative_time_item.text().isdigit():
+                        relative_time = int(relative_time_item.text())
 
+                    # 计算当前行的绝对时间
+                    current_absolute_time += relative_time
 
-
-                # 计算当前行的绝对时间
-
-                current_absolute_time += relative_time
-
-
-
-                # 更新绝对时间
-
-                absolute_time_item = QTableWidgetItem(str(current_absolute_time))
-
-                absolute_time_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-
-                self.events_table.setItem(row, 7, absolute_time_item)
-
-
+                    # 更新绝对时间
+                    absolute_time_item = QTableWidgetItem(str(current_absolute_time))
+                    absolute_time_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.events_table.setItem(row, 7, absolute_time_item)
+            finally:
+                # 重新启用UI更新并刷新
+                self.events_table.setUpdatesEnabled(True)
+                self.events_table.viewport().update()
 
         except Exception as e:
 
             error_msg = f"重新计算时间失败: {e}"
 
             self.debug_logger.log_error(error_msg)
+            # 确保UI更新被重新启用
+            self.events_table.setUpdatesEnabled(True)
 
     
 
