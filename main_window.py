@@ -94,11 +94,12 @@ class BatchEditDialog(StyledDialog):
 
     
 
-    def __init__(self, parent=None, selected_rows=None):
+    def __init__(self, parent=None, selected_rows=None, events_table=None):
 
         super().__init__(parent)
 
         self.selected_rows = selected_rows or []
+        self.events_table = events_table
 
         self.setup_ui()
 
@@ -228,25 +229,42 @@ class BatchEditDialog(StyledDialog):
 
         type_label.setFixedWidth(120)
 
+        # 提取所有按键事件（使用字典保存，事件名称为键，(event_type, keycode)为值）
+        self.key_events = {}
+        if self.events_table:
+            for row in range(self.events_table.rowCount()):
+                event_name_item = self.events_table.item(row, 1)
+                event_type_item = self.events_table.item(row, 2)
+                keycode_item = self.events_table.item(row, 3)
+                if event_name_item and event_type_item and keycode_item:
+                    event_name = event_name_item.text()
+                    event_type = event_type_item.text()
+                    keycode = keycode_item.text()
+                    if event_type in ["按键按下", "按键释放"] and keycode:
+                        # 只保存每个事件名称对应的事件类型和键码
+                        self.key_events[event_name] = (event_type, keycode)
+        
+        # 基本事件类型（移除了"按键按下"和"按键释放"）
+        base_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+        
         self.old_type_combo = ModernComboBox()
-
         self.old_type_combo.addItem("不替换类型")
-
-        self.old_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
-
-        self.old_type_combo.setFixedWidth(100)
+        self.old_type_combo.addItems(base_event_types)
+        # 添加具体按键事件到old_type_combo，只显示事件名称
+        for event_name in sorted(self.key_events.keys()):
+            self.old_type_combo.addItem(event_name)
+        self.old_type_combo.setFixedWidth(100)  # 恢复原始宽度
 
         type_arrow_label = QLabel("→")
-
         type_arrow_label.setFixedWidth(20)
-
         type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.new_type_combo = ModernComboBox()
-
-        self.new_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
-
-        self.new_type_combo.setFixedWidth(100)
+        self.new_type_combo.addItems(base_event_types)
+        # 添加具体按键事件到new_type_combo，只显示事件名称
+        for event_name in sorted(self.key_events.keys()):
+            self.new_type_combo.addItem(event_name)
+        self.new_type_combo.setFixedWidth(100)  # 恢复原始宽度
 
         
 
@@ -262,6 +280,12 @@ class BatchEditDialog(StyledDialog):
 
         layout.addWidget(operation_group)
 
+        # 添加提示信息
+        hint_label = QLabel("💡 提示：按键事件替换支持将事件列表中已有的按键事件替换为另一个已有的按键事件")
+        hint_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
+        hint_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(hint_label)
+
         
 
         # 按钮区域
@@ -274,7 +298,7 @@ class BatchEditDialog(StyledDialog):
 
             on_cancel=self.reject,
 
-            ok_text="应用修改",
+            ok_text="应用",
 
             cancel_text="取消"
 
@@ -304,15 +328,33 @@ class BatchEditDialog(StyledDialog):
 
         """获取类型替换信息"""
 
-        old_type = self.old_type_combo.currentText()
+        old_type_text = self.old_type_combo.currentText()
 
-        new_type = self.new_type_combo.currentText()
+        new_type_text = self.new_type_combo.currentText()
 
-        if old_type == "不替换类型":
+        if old_type_text == "不替换类型":
 
             return None, None
-
-        return old_type, new_type
+        
+        # 解析旧类型
+        old_type = old_type_text
+        old_keycode = None
+        
+        # 检查是否是按键事件名称
+        if old_type in self.key_events:
+            # 从key_events字典中获取事件类型和键码
+            old_type, old_keycode = self.key_events[old_type]
+        
+        # 解析新类型
+        new_type = new_type_text
+        new_keycode = None
+        
+        # 检查是否是按键事件名称
+        if new_type in self.key_events:
+            # 从key_events字典中获取事件类型和键码
+            new_type, new_keycode = self.key_events[new_type]
+        
+        return (old_type, old_keycode), (new_type, new_keycode)
 
 
 
@@ -2592,13 +2634,9 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
 
         # 打开批量编辑对话框
-
-        dialog = BatchEditDialog(self, selected_rows)
-
+        dialog = BatchEditDialog(self, selected_rows, self.events_table)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-
             # 应用批量编辑
-
             self.apply_batch_edit(dialog)
 
             
@@ -2625,7 +2663,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         unified_rel_time = dialog.get_unified_rel_time()
 
-        old_type, new_type = dialog.get_type_replacement()
+        old_type_info, new_type_info = dialog.get_type_replacement()
 
         
 
@@ -2675,29 +2713,55 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
                 # 2. 处理事件类型替换
 
-                if old_type and new_type:
+                if old_type_info and new_type_info:
 
+                    old_type, old_keycode = old_type_info
+                    new_type, new_keycode = new_type_info
+                    
                     type_item = self.events_table.item(row_idx, 2)
-
-                    if type_item and type_item.text() == old_type:
-
+                    current_event_type = type_item.text() if type_item else ""
+                    
+                    # 如果旧类型是基本类型，匹配当前事件类型
+                    # 如果旧类型是具体按键事件，匹配当前事件类型和键码
+                    match = False
+                    if old_keycode:
+                        # 具体按键事件匹配
+                        keycode_item = self.events_table.item(row_idx, 3)
+                        current_keycode = keycode_item.text() if keycode_item else ""
+                        match = (current_event_type == old_type) and (current_keycode == old_keycode)
+                    else:
+                        # 基本类型匹配
+                        match = (current_event_type == old_type)
+                    
+                    if match:
+                        # 更新事件类型
                         type_item.setText(new_type)
-
                         
-
-                        # 更新事件名称以反映新的事件类型
-
+                        # 检查是否需要清除键码（按键事件替换为鼠标事件时）
+                        keycode_item = self.events_table.item(row_idx, 3)
+                        if keycode_item:
+                            # 鼠标事件类型列表
+                            mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+                            # 按键事件类型列表
+                            key_event_types = ["按键按下", "按键释放"]
+                            
+                            # 如果从按键事件替换为鼠标事件，清除键码
+                            if old_type in key_event_types and new_type in mouse_event_types:
+                                keycode_item.setText("")
+                            # 如果新类型是具体按键事件，更新键码
+                            elif new_keycode:
+                                keycode_item.setText(new_keycode)
+                        
+                        # 更新事件名称以反映新的事件类型和键码
                         name_item = self.events_table.item(row_idx, 1)
-
                         if name_item:
-
-                            event_name = name_item.text()
-
-                            if "按下" in event_name:
-
-                                new_name = event_name.replace("按下", "释放") if "释放" in event_name else event_name.replace("释放", "按下")
-
-                                name_item.setText(new_name)
+                            # 获取当前键码（可能已更新或清除）
+                            keycode_item = self.events_table.item(row_idx, 3)
+                            current_keycode = keycode_item.text() if keycode_item else ""
+                            # 使用generate_key_event_name生成新名称
+                            from utils import generate_key_event_name
+                            new_name = generate_key_event_name(new_type, current_keycode)
+                            name_item.setText(new_name)
 
             
 

@@ -1430,6 +1430,11 @@ class ModernComboBox(QComboBox):
                  }
              """)
         
+    def addItem(self, text):
+        super().addItem(text)
+        # 设置该项居中
+        self.setItemData(self.count() - 1, Qt.AlignmentFlag.AlignCenter, Qt.ItemDataRole.TextAlignmentRole)
+    
     def addItems(self, texts):
         super().addItems(texts)
         # 设置所有项居中

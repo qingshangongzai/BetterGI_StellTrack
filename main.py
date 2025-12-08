@@ -30,20 +30,20 @@ class VersionManager:
         # 版本号组件 - 统一修改点
         self.major = 3
         self.minor = 3
-        self.patch = 0
+        self.patch = 1
         self.build = 0
         
         # 核心版本信息
-        self.version = "3.3.0"  # 应用程序主版本号
+        self.version = "3.3.1"  # 应用程序主版本号
         
         # 详细版本信息结构
         self.version_info = {
             "major": 3,
             "minor": 3,
-            "patch": 0,
+            "patch": 1,
             "build": 0,
-            "full": "3.3.0",
-            "short": "3.3.0"
+            "full": "3.3.1",
+            "short": "3.3.1"
         }
         
         # 应用程序元数据
