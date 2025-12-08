@@ -7,7 +7,7 @@ import os
 import json
 
 import ctypes
-
+import time
 from datetime import datetime
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -2423,7 +2423,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         # 添加"添加事件"菜单项
 
         add_action = QAction("➕ 添加事件", self)
-
+        add_action.setShortcut("Ctrl+I")  # 添加事件快捷键
         add_action.triggered.connect(self.on_add_event)
 
         context_menu.addAction(add_action)
@@ -2435,7 +2435,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         if selected_rows:
 
             edit_action = QAction("✏️ 编辑事件", self)
-
+            edit_action.setShortcut("Ctrl+E")  # 编辑事件快捷键
             edit_action.triggered.connect(self.on_edit_event)
 
             context_menu.addAction(edit_action)
@@ -2493,7 +2493,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         if selected_rows:
 
             batch_edit_action = QAction("🔧 批量编辑", self)
-
+            batch_edit_action.setShortcut("Ctrl+B")  # 批量编辑快捷键
             batch_edit_action.triggered.connect(self.on_batch_edit)
 
             context_menu.addAction(batch_edit_action)
@@ -3008,10 +3008,8 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
 
         # 从第二个事件开始，根据相对时间重新计算绝对时间
-
         prev_abs_time = 0
-
-        for i in range(0, self.events_table.rowCount()):
+        for i in range(1, self.events_table.rowCount()):
 
             # 获取相对时间
 
@@ -4166,9 +4164,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                     
 
                     self.update_stats()
-
+                    
+                    # 标记状态变更
+                    self.mark_state_dirty()
+                    
                     self.status_bar.showMessage("✅ 已添加新事件")
-
                     self.debug_logger.log_info(f"已添加新事件: {event_data[0]}")
 
                     
@@ -4358,9 +4358,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                     
 
                     self.update_stats()
-
+                    
+                    # 标记状态变更
+                    self.mark_state_dirty()
+                    
                     self.status_bar.showMessage(f"✅ 已编辑事件: 第{row + 1}行")
-
                     self.debug_logger.log_info(f"已编辑事件: 第{row + 1}行 - {new_event_data[0]}")
 
                     
@@ -4511,9 +4513,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             self.update_row_numbers()
 
             self.update_stats()
-
+            
+            # 标记状态变更
+            self.mark_state_dirty()
+            
             self.status_bar.showMessage(f"✅ 已删除 {len(selected_rows)} 个事件")
-
             self.debug_logger.log_info(f"已删除 {len(selected_rows)} 个事件，使用逻辑: {time_option}")
 
             
@@ -5069,11 +5073,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                 
 
                 for event in converted_events:
-
                     self.add_table_row(event)
-
                 
-
+                # 导入后重置搜索过滤状态
+                self.on_reset_search_filter()
+                
                 self.update_stats()
 
                 self.status_bar.showMessage(f"✅ 已导入 {len(converted_events)} 个事件")
@@ -5387,55 +5391,36 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
     
 
     def get_current_state(self):
-
-        """获取当前状态"""
-
+        """获取当前状态（优化版）"""
+        # 预取面板引用，减少多次属性访问
+        settings_panel = self.settings_panel
+        
+        # 构建基本状态
         state = {
-
             'events': [],
-
-            'loop_count': str(self.settings_panel.loop_count_input.value()),
-
-            'interval': str(self.settings_panel.interval_input.value()),
-
-            'time_unit': self.settings_panel.time_unit_combo.currentText(),
-
-            'width': self.settings_panel.width_input.text(),
-
-            'height': self.settings_panel.height_input.text(),
-
-            'scale': self.settings_panel.scale_combo.currentText(),
-
+            'loop_count': str(settings_panel.loop_count_input.value()),
+            'interval': str(settings_panel.interval_input.value()),
+            'time_unit': settings_panel.time_unit_combo.currentText(),
+            'width': settings_panel.width_input.text(),
+            'height': settings_panel.height_input.text(),
+            'scale': settings_panel.scale_combo.currentText(),
             'delete_logic': self.get_delete_logic(),
-
             'paste_logic': self.get_paste_logic()
-
         }
-
         
-
-        # 保存事件数据
-
-        for row in range(self.events_table.rowCount()):
-
-            event_data = []
-
-            for col in range(8):  # 包括所有列
-
-                item = self.events_table.item(row, col)
-
-                if item:
-
-                    event_data.append(item.text())
-
-                else:
-
-                    event_data.append("")
-
-            state['events'].append(event_data)
-
+        # 使用列表推导式优化事件数据收集
+        events_table = self.events_table
+        row_count = events_table.rowCount()
         
-
+        # 预先创建空列表的事件数据
+        state['events'] = [
+            [
+                events_table.item(row, col).text() if events_table.item(row, col) else ""
+                for col in range(8)
+            ]
+            for row in range(row_count)
+        ]
+        
         return state
 
     
@@ -5840,53 +5825,91 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
     
 
+    def _initialize_state_saving(self):
+        """初始化状态保存优化相关属性"""
+        # 确保这些属性只被初始化一次
+        if not hasattr(self, '_state_dirty'):
+            self._state_dirty = True  # 初始状态设为脏，确保首次保存
+        if not hasattr(self, '_save_timer'):
+            self._save_timer = QTimer(self)
+            self._save_timer.setSingleShot(True)
+            self._save_timer.timeout.connect(self._async_save_state)
+        if not hasattr(self, '_last_save_time'):
+            self._last_save_time = 0
+        if not hasattr(self, '_save_interval'):
+            self._save_interval = 2000  # 自动保存间隔(毫秒)
+        
+    def mark_state_dirty(self):
+        """标记状态为已更改，并设置延迟保存"""
+        # 初始化状态保存机制（如果尚未初始化）
+        self._initialize_state_saving()
+        
+        self._state_dirty = True
+        
+        # 启动延迟保存定时器
+        if self._save_timer and not self._save_timer.isActive():
+            # 检查是否已经过了最小保存间隔
+            current_time = time.time()
+            elapsed = (current_time - self._last_save_time) * 1000  # 转换为毫秒
+            
+            # 如果距离上次保存时间过短，则增加一些延迟
+            actual_delay = max(self._save_interval - elapsed, 0) + 500
+            self._save_timer.start(int(actual_delay))
+    
     def save_state(self):
-
-        """保存程序状态到程序目录"""
-
-        try:
-
-            state = self.get_current_state()
-
-            
-
-            # 获取程序所在目录
-
-            if getattr(sys, 'frozen', False):
-
-                app_dir = os.path.dirname(sys.executable)
-
-            else:
-
-                app_dir = os.path.dirname(os.path.abspath(__file__))
-
-            
-
-            # 保存状态到程序目录
-
-            state_file = os.path.join(app_dir, "BetterGI_StellTrack_state.json")
-
-            with open(state_file, 'w', encoding='utf-8') as f:
-
-                json.dump(state, f, ensure_ascii=False, indent=2)
-
-            
-
-            # 记录操作日志
-
-            self.debug_logger.log_info("程序状态已保存")
-
-            
-
-            return True
-
-        except Exception as e:
-
-            error_msg = f"保存状态失败: {e}"
-
-            self.debug_logger.log_error(error_msg)
-
+        """保存程序状态到程序目录（外部调用接口）"""
+        # 初始化状态保存机制（如果尚未初始化）
+        self._initialize_state_saving()
+        
+        # 直接调用异步保存
+        return self._async_save_state()
+        
+    def _async_save_state(self):
+        """异步保存程序状态到程序目录"""
+        # 避免过于频繁的保存
+        current_time = time.time()
+        if current_time - self._last_save_time < 2:  # 最小保存间隔2秒，避免频繁IO操作
             return False
+        
+        try:
+            # 如果状态未更改，无需保存
+            if not getattr(self, '_state_dirty', True):
+                return False
+            
+            state = self.get_current_state()
+            
+            # 获取程序所在目录
+            if getattr(sys, 'frozen', False):
+                app_dir = os.path.dirname(sys.executable)
+            else:
+                app_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # 保存状态到程序目录
+            state_file = os.path.join(app_dir, "BetterGI_StellTrack_state.json")
+            
+            # 使用QTimer.singleShot在主线程中执行，但不会阻塞UI
+            def _do_save():
+                try:
+                    with open(state_file, 'w', encoding='utf-8') as f:
+                        json.dump(state, f, ensure_ascii=False, indent=2)
+                    
+                    # 标记状态为已保存
+                    self._state_dirty = False
+                    self._last_save_time = time.time()
+                    
+                    # 记录操作日志
+                    self.debug_logger.log_info("程序状态已保存")
+                except Exception as e:
+                    self.debug_logger.log_error(f"保存状态时出错: {str(e)}")
+            
+            # 在主线程中异步执行保存操作
+            QTimer.singleShot(0, _do_save)
+            
+        except Exception as e:
+            self.debug_logger.log_error(f"准备保存状态时出错: {str(e)}")
+            return False
+            
+        return True
 
     
 
@@ -5947,48 +5970,41 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
     
 
     def resizeEvent(self, event):
-
-        """窗口大小改变事件 - 保存窗口状态"""
-
+        """窗口大小改变事件 - 标记状态变更但不立即保存"""
         super().resizeEvent(event)
-
-        # 延迟保存状态，避免频繁保存
-
-        if hasattr(self, '_resize_timer'):
-
-            self._resize_timer.stop()
-
-        else:
-
-            self._resize_timer = QTimer()
-
-            self._resize_timer.setSingleShot(True)
-
-            self._resize_timer.timeout.connect(self.save_state)
-
-        
-
-        self._resize_timer.start(500)  # 500毫秒后保存状态
+        # 使用新的状态管理机制
+        self.mark_state_dirty()
 
     
 
     def closeEvent(self, event):
-
-        """关闭事件 - 保存状态"""
-
+        """关闭事件 - 确保状态保存"""
         self.debug_logger.log_info("主窗口关闭中...")
-
-        if self.save_state():
-
-            self.status_bar.showMessage("✅ 状态已保存")
-
-            self.debug_logger.log_info("程序正常关闭")
-
+        # 立即保存状态，不使用延迟机制
+        if hasattr(self, '_async_save_state'):
+            # 直接执行实际的保存逻辑
+            state = self.get_current_state()
+            if getattr(sys, 'frozen', False):
+                app_dir = os.path.dirname(sys.executable)
+            else:
+                app_dir = os.path.dirname(os.path.abspath(__file__))
+            state_file = os.path.join(app_dir, "BetterGI_StellTrack_state.json")
+            try:
+                with open(state_file, 'w', encoding='utf-8') as f:
+                    json.dump(state, f, ensure_ascii=False, indent=2)
+                self.status_bar.showMessage("✅ 状态已保存")
+                self.debug_logger.log_info("程序正常关闭")
+            except Exception as e:
+                self.status_bar.showMessage("⚠️ 状态保存失败")
+                self.debug_logger.log_error(f"程序关闭时状态保存失败: {str(e)}")
         else:
-
-            self.status_bar.showMessage("⚠️ 状态保存失败")
-
-            self.debug_logger.log_error("程序关闭时状态保存失败")
+            # 回退到原有的保存方法
+            if self.save_state():
+                self.status_bar.showMessage("✅ 状态已保存")
+                self.debug_logger.log_info("程序正常关闭")
+            else:
+                self.status_bar.showMessage("⚠️ 状态保存失败")
+                self.debug_logger.log_error("程序关闭时状态保存失败")
 
         
 
