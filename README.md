@@ -7,4 +7,5 @@ BetterGI 星轨是一款由 AI 大模型驱动、基于 Python 开发的创新�
 
 Gitee开源地址：https://gitee.com/qingshangongzai/BetterGI_StellTrack
 （由于国内网络环境的原因，会在Gitee上推代码，然后这边是弄好新版本之后会发新的代码完整压缩包……其实最根本的原因是本人英语词汇量十分贫瘠，之前也没了解编程方面的知识，不怎么会用github，还望大家见谅。）
+
 [123网盘下载](https://www.123865.com/s/8f6rjv-07ohh?pwd=qsgz#)
