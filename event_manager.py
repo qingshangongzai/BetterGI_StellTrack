@@ -109,6 +109,10 @@ class EventManager:
         # 连接信号
         search_btn.clicked.connect(self.on_search_filter_changed)
         reset_btn.clicked.connect(self.on_reset_search_filter)
+        # 为搜索输入框添加回车键支持
+        self.search_input.returnPressed.connect(self.on_search_filter_changed)
+        # 为过滤类型下拉框添加回车键支持
+        self.filter_type_combo.activated.connect(self.on_search_filter_changed)
     
     def create_event_table(self, parent_layout):
         """创建事件表格"""
