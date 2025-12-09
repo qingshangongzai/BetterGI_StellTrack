@@ -1127,14 +1127,13 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
             # 窗口显示后设置任务栏图标
-
             QTimer.singleShot(100, self.fix_taskbar_icon)
-
             
-
-
+            # 初始化统计信息和预计总时间
+            self.stats_panel.update_stats()
+            self.on_calculate_total_time()
+            
             # 记录窗口创建成功
-
             self.debug_logger.log_info("主窗口初始化完成")
 
             
@@ -2263,8 +2262,8 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         # 设置面板信号
         self.settings_panel.detect_screen_btn.clicked.connect(self.on_detect_screen_info)
-        self.settings_panel.loop_count_input.textChanged.connect(self.on_calculate_total_time)
-        self.settings_panel.interval_input.textChanged.connect(self.on_calculate_total_time)
+        self.settings_panel.loop_count_input.valueChanged.connect(self.on_calculate_total_time)
+        self.settings_panel.interval_input.valueChanged.connect(self.on_calculate_total_time)
         self.settings_panel.time_unit_combo.currentTextChanged.connect(self.on_calculate_total_time)
 
 
@@ -2275,23 +2274,55 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         try:
             # 使用ctypes获取屏幕信息
             user32 = ctypes.windll.user32
-            user32.SetProcessDPIAware()
+            
+            # 使用更可靠的方法获取DPI
+            try:
+                # 尝试使用SetProcessDpiAwarenessContext (Windows 10 1703+)
+                shcore = ctypes.windll.shcore
+                if hasattr(shcore, 'SetProcessDpiAwarenessContext'):
+                    # 设置为系统DPI感知
+                    PROCESS_PER_MONITOR_DPI_AWARE = 2
+                    shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+                elif hasattr(user32, 'SetProcessDPIAware'):
+                    # 旧方法：单监视器DPI感知
+                    user32.SetProcessDPIAware()
+            except Exception:
+                pass
+            
+            # 获取屏幕分辨率
             width = user32.GetSystemMetrics(0)
             height = user32.GetSystemMetrics(1)
             
             # 获取缩放比例
+            scale = 100
             try:
                 # 尝试使用GetDpiForSystem获取系统DPI (Windows 10+)
-                shcore = ctypes.windll.shcore
                 if hasattr(shcore, 'GetDpiForSystem'):
                     dpi = shcore.GetDpiForSystem()
                     scale = int(dpi / 96 * 100)  # 转换为百分比
+                elif hasattr(user32, 'GetDpiForWindow'):
+                    # 备用方法：使用当前窗口DPI
+                    hwnd = user32.GetDesktopWindow()
+                    dpi = user32.GetDpiForWindow(hwnd)
+                    scale = int(dpi / 96 * 100)  # 转换为百分比
                 else:
-                    # 备用方法：使用默认DPI 96 (100%)
-                    scale = 100
+                    # 尝试通过系统参数获取
+                    LOGPIXELSX = 88
+                    dc = user32.GetDC(None)
+                    if dc:
+                        dpi = ctypes.windll.gdi32.GetDeviceCaps(dc, LOGPIXELSX)
+                        user32.ReleaseDC(None, dc)
+                        scale = int(dpi / 96 * 100)  # 转换为百分比
             except Exception:
-                # 如果获取失败，使用默认缩放比例100%
-                scale = 100
+                # 如果获取失败，尝试通过注册表获取
+                try:
+                    import winreg
+                    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Control Panel\Desktop\WindowMetrics", 0, winreg.KEY_READ) as key:
+                        value, _ = winreg.QueryValueEx(key, "AppliedDPI")
+                        scale = int(value / 96 * 100)  # 转换为百分比
+                except Exception:
+                    # 最后使用默认缩放比例100%
+                    scale = 100
             
             # 更新设置面板
             self.settings_panel.update_screen_settings(width, height, f"{scale}%")
