@@ -1999,20 +1999,33 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
     def setup_application_style(self):
-
         """设置应用程序样式 - 使用全局样式管理器"""
-
         # 使用styles模块中的StyleHelper来统一管理应用程序样式
-
         from styles import StyleHelper
-
         from PyQt6.QtWidgets import QApplication
-
         app = QApplication.instance()
-
         if app:
-
             StyleHelper.setup_global_style(app)
+    
+    def eventFilter(self, obj, event):
+        """事件过滤器，处理过滤类型下拉框的回车键事件"""
+        from PyQt6.QtCore import QEvent
+        from PyQt6.QtGui import QKeyEvent
+        
+        # 检查是否是过滤类型下拉框的按键事件
+        if hasattr(self, 'search_filter_widgets'):
+            search_filter_widgets = self.search_filter_widgets
+            if obj == search_filter_widgets['filter_combo']:
+                if event.type() == QEvent.Type.KeyPress:
+                    key_event = QKeyEvent(event)
+                    # 检查是否是回车键
+                    if key_event.key() == Qt.Key.Key_Return or key_event.key() == Qt.Key.Key_Enter:
+                        # 触发搜索功能
+                        search_filter_widgets['search_func']()
+                        return True
+        
+        # 不是我们要处理的事件，交给父类处理
+        return super().eventFilter(obj, event)
 
 
 

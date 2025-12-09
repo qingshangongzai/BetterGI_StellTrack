@@ -952,6 +952,99 @@ class UnifiedStyleHelper:
                 border-color: %s;
             }}
         """ % (self.COLORS['border'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
+    
+    def get_scroll_bar_style(self):
+        """获取滚动条样式"""
+        return """
+            /* 垂直滚动条 */
+            QScrollBar:vertical {
+                background-color: %s;
+                width: 8px;
+                margin: 0px;
+            }
+            
+            QScrollBar::groove:vertical {
+                background-color: %s;
+                border-radius: 4px;
+            }
+            
+            QScrollBar::handle:vertical {
+                background-color: %s;
+                border-radius: 4px;
+                min-height: 20px;
+            }
+            
+            QScrollBar::handle:vertical:hover {
+                background-color: %s;
+            }
+            
+            QScrollBar::handle:vertical:pressed {
+                background-color: %s;
+            }
+            
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                background-color: transparent;
+                border: none;
+                height: 0px;
+                width: 0px;
+            }
+            
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background-color: transparent;
+            }
+            
+            /* 水平滚动条 */
+            QScrollBar:horizontal {
+                background-color: %s;
+                height: 8px;
+                margin: 0px;
+            }
+            
+            QScrollBar::groove:horizontal {
+                background-color: %s;
+                border-radius: 4px;
+            }
+            
+            QScrollBar::handle:horizontal {
+                background-color: %s;
+                border-radius: 4px;
+                min-width: 20px;
+            }
+            
+            QScrollBar::handle:horizontal:hover {
+                background-color: %s;
+            }
+            
+            QScrollBar::handle:horizontal:pressed {
+                background-color: %s;
+            }
+            
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                background-color: transparent;
+                border: none;
+                height: 0px;
+                width: 0px;
+            }
+            
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background-color: transparent;
+            }
+        """ % (
+            self.COLORS['bg'],
+            self.COLORS['border_light'],
+            self.COLORS['border'],
+            self.COLORS['primary_hover'],
+            self.COLORS['primary_pressed'],
+            self.COLORS['bg'],
+            self.COLORS['border_light'],
+            self.COLORS['border'],
+            self.COLORS['primary_hover'],
+            self.COLORS['primary_pressed']
+        )
 
 # 保持向后兼容性的StyleHelper类
 class StyleHelper:
@@ -1286,6 +1379,9 @@ class StyleHelper:
             # 使用SourceHanSerifCN字体作为全局默认字体
             q_app.setFont(font_manager.get_source_han_font(9))
         
+        # 获取滚动条样式
+        scroll_bar_style = UnifiedStyleHelper.get_instance().get_scroll_bar_style()
+        
         # 设置应用程序样式表
         # 尝试直接在QApplication实例上设置样式表
         if hasattr(q_app, 'setStyleSheet'):
@@ -1334,6 +1430,9 @@ class StyleHelper:
                     background-color: {COLORS['primary_hover']};
                     color: white;
                 }}
+                
+                /* 滚动条样式 */
+                {scroll_bar_style}
             """)
         # 如果QApplication实例不可用，尝试在传入的app对象上设置
         elif hasattr(app, 'setStyleSheet'):
@@ -1382,6 +1481,9 @@ class StyleHelper:
                     background-color: {COLORS['primary_hover']};
                     color: white;
                 }}
+                
+                /* 滚动条样式 */
+                {scroll_bar_style}
             """)
 
 # =============================================================================
