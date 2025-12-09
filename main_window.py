@@ -1127,14 +1127,13 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
             # 窗口显示后设置任务栏图标
-
             QTimer.singleShot(100, self.fix_taskbar_icon)
-
             
-
-
+            # 初始化统计信息和预计总时间
+            self.stats_panel.update_stats()
+            self.on_calculate_total_time()
+            
             # 记录窗口创建成功
-
             self.debug_logger.log_info("主窗口初始化完成")
 
             
@@ -2263,45 +2262,102 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         # 设置面板信号
         self.settings_panel.detect_screen_btn.clicked.connect(self.on_detect_screen_info)
-        self.settings_panel.loop_count_input.textChanged.connect(self.on_calculate_total_time)
-        self.settings_panel.interval_input.textChanged.connect(self.on_calculate_total_time)
+        self.settings_panel.loop_count_input.valueChanged.connect(self.on_calculate_total_time)
+        self.settings_panel.interval_input.valueChanged.connect(self.on_calculate_total_time)
         self.settings_panel.time_unit_combo.currentTextChanged.connect(self.on_calculate_total_time)
 
 
 
 
     def on_detect_screen_info(self):
-        """获取屏幕分辨率和缩放比例"""
+        """检测屏幕分辨率和缩放比例"""
+        self.debug_logger.log_info("开始检测屏幕信息...")
+        
+        # 获取屏幕分辨率
+        width, height = self.get_screen_resolution()
+        
+        # 获取系统缩放比例
+        scale = self.get_system_scale()
+        
+        # 更新设置面板
+        self.settings_panel.update_screen_settings(width, height, scale)
+        
+        # 更新统计信息
+        self.event_manager.update_stats()
+        
+        self.status_bar.showMessage(f"✅ 已获取屏幕信息: {width}×{height}, 缩放: {scale}")
+        self.debug_logger.log_info(f"屏幕信息获取完成: {width}×{height}, 缩放: {scale}")
+    
+    def get_screen_resolution(self):
+        """获取屏幕分辨率（参考原代码实现）"""
         try:
-            # 使用ctypes获取屏幕信息
             user32 = ctypes.windll.user32
-            user32.SetProcessDPIAware()
-            width = user32.GetSystemMetrics(0)
-            height = user32.GetSystemMetrics(1)
             
-            # 获取缩放比例
+            # 方法1: 使用GetSystemMetrics获取主显示器分辨率
+            width = user32.GetSystemMetrics(0)  # SM_CXSCREEN
+            height = user32.GetSystemMetrics(1)  # SM_CYSCREEN
+            
+            # 方法2: 使用GetDeviceCaps获取更准确的分辨率（考虑DPI缩放）
             try:
-                # 尝试使用GetDpiForSystem获取系统DPI (Windows 10+)
-                shcore = ctypes.windll.shcore
-                if hasattr(shcore, 'GetDpiForSystem'):
-                    dpi = shcore.GetDpiForSystem()
-                    scale = int(dpi / 96 * 100)  # 转换为百分比
+                hdc = user32.GetDC(0)
+                if hdc:
+                    # 获取实际像素分辨率
+                    actual_width = ctypes.windll.gdi32.GetDeviceCaps(hdc, 118)  # HORZRES
+                    actual_height = ctypes.windll.gdi32.GetDeviceCaps(hdc, 117)  # VERTRES
+                    
+                    # 如果获取到了实际分辨率，使用它
+                    if actual_width > 0 and actual_height > 0:
+                        width, height = actual_width, actual_height
+                    
+                    user32.ReleaseDC(0, hdc)
+            except Exception as inner_e:
+                self.debug_logger.log_debug(f"获取实际分辨率失败: {inner_e}")
+            
+            return width, height
+        except Exception as e:
+            self.debug_logger.log_error(f"获取屏幕分辨率失败: {e}")
+            return 1920, 1080
+    
+    def get_system_scale(self):
+        """获取系统缩放比例"""
+        try:
+            user32 = ctypes.windll.user32
+            
+            # 获取主显示器的DPI
+            try:
+                hdc = user32.GetDC(0)
+                if hdc:
+                    # 获取逻辑DPI
+                    logical_dpi_x = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
+                    user32.ReleaseDC(0, hdc)
+                    
+                    # 计算缩放比例（基于96 DPI为100%）
+                    if logical_dpi_x > 0:
+                        scale_percent = int((logical_dpi_x / 96.0) * 100)
+                        
+                        # 四舍五入到最接近的标准值
+                        standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                        
+                        # 计算与每个标准值的差值
+                        differences = [abs(scale_percent - standard) for standard in standard_scales]
+                        
+                        # 找到最小差值对应的索引
+                        closest_index = differences.index(min(differences))
+                        
+                        # 获取最接近的标准缩放值
+                        scale = standard_scales[closest_index]
+                    else:
+                        scale = 100
                 else:
-                    # 备用方法：使用默认DPI 96 (100%)
                     scale = 100
-            except Exception:
-                # 如果获取失败，使用默认缩放比例100%
+            except Exception as inner_e:
+                self.debug_logger.log_debug(f"获取DPI失败: {inner_e}")
                 scale = 100
             
-            # 更新设置面板
-            self.settings_panel.update_screen_settings(width, height, f"{scale}%")
-            
-            self.status_bar.showMessage(f"✅ 已获取屏幕分辨率: {width}x{height}, 缩放比例: {scale}%")
-            self.debug_logger.log_info(f"已获取屏幕分辨率: {width}x{height}, 缩放比例: {scale}%")
+            return f"{scale}%"
         except Exception as e:
-            error_msg = f"获取屏幕信息失败: {str(e)}"
-            self.debug_logger.log_error(error_msg)
-            ChineseMessageBox.show_error(self, "错误", error_msg)
+            self.debug_logger.log_error(f"获取系统缩放比例失败: {e}")
+            return "100%"
 
 
 
