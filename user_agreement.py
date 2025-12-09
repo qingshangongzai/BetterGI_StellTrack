@@ -134,6 +134,8 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
         print("[DEBUG] 初始化用户协议对话框")
+        # 直接设置对话框背景为纯白色
+        self.setStyleSheet(f"QDialog {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -220,7 +222,7 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(StyleHelper.get_text_browser_style())
+        self.agreement_browser.setStyleSheet(StyleHelper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -291,6 +293,8 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 直接设置窗口背景为纯白色
+        self.setStyleSheet(f"QMainWindow {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -377,7 +381,7 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(StyleHelper.get_text_browser_style())
+        self.agreement_browser.setStyleSheet(StyleHelper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()

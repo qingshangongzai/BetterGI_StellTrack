@@ -623,10 +623,9 @@ class CustomInputDialog(StyledDialog):
 
             confirm_dialog.setWindowTitle("彩蛋确认")
 
-            confirm_dialog.setFixedSize(400, 200)
+            confirm_dialog.setFixedSize(300, 150)
 
             confirm_dialog.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-
                                         Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
 
             
@@ -641,40 +640,10 @@ class CustomInputDialog(StyledDialog):
             
 
 
-            # 彩蛋图标和标题
-
-            header_layout = QHBoxLayout()
-
-            icon_label = QLabel("🎬")
-
-            StyleHelper.set_smiley_font(icon_label, 24)  # 使用StyleHelper统一设置字体
-
-            header_layout.addWidget(icon_label)
-
-            
-
-
-            title_label = QLabel("发现彩蛋！")
-
-            StyleHelper.set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-
-            title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
-
-            header_layout.addWidget(title_label)
-
-            header_layout.addStretch()
-
-            
-
-
-            confirm_layout.addLayout(header_layout)
-
-            
-
 
             # 彩蛋信息
 
-            info_label = QLabel(f"恭喜你发现了隐藏彩蛋！\n\n输入的文字：{text}\n\n是否打开相关视频？")
+            info_label = QLabel("恭喜你发现了彩蛋")
 
             info_label.setFont(self.font_manager.get_source_han_font(10))
 
@@ -754,9 +723,9 @@ class CustomInputDialog(StyledDialog):
 
             else:
 
-                # 用户取消，不关闭输入对话框
+                # 用户取消，关闭输入对话框
 
-                return
+                self.reject()
 
         
 
@@ -809,7 +778,7 @@ class ModernTableWidget(QTableWidget):
 
         # 设置表格属性
 
-        self.setAlternatingRowColors(True)
+        self.setAlternatingRowColors(False)
 
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 
@@ -1073,9 +1042,9 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
             # 缩小主窗口大小
 
-            self.setMinimumSize(1200, 700)
+            self.setMinimumSize(1200, 800)
 
-            self.resize(1300, 800)
+            self.resize(1300, 850)
 
             
 
@@ -2842,26 +2811,14 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
     def on_user_agreement(self):
-        """打开用户协议"""
-        try:
-            # 使用资源管理器查找用户协议文件
-            from utils import find_resource_file
-            agreement_files = ["用户协议.pdf"]
-            
-            for agreement_file in agreement_files:
-                agreement_path = find_resource_file(agreement_file)
-                if agreement_path and os.path.exists(agreement_path):
-                    QDesktopServices.openUrl(QUrl.fromLocalFile(agreement_path))
-                    self.debug_logger.log_info(f"已打开用户协议: {agreement_path}")
-                    return
-            
-            # 如果没有找到本地文件，提示用户
-            ChineseMessageBox.show_info(self, "提示", "未找到本地用户协议文件，请查看项目文档或联系开发者")
-            self.debug_logger.log_warning("未找到用户协议文件")
-        except Exception as e:
-            error_msg = f"打开用户协议失败: {str(e)}"
-            self.debug_logger.log_error(error_msg)
-            ChineseMessageBox.show_error(self, "错误", error_msg)
+        """用户协议"""
+        self.debug_logger.log_info("打开用户协议窗口")
+        
+        from about_window import UserAgreementWindow
+        
+        agreement_window = UserAgreementWindow(self)
+        
+        agreement_window.show()
 
 
 

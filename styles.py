@@ -190,6 +190,9 @@ class StyledDialog(QDialog):
                     self.setWindowIcon(icon)
             except Exception:
                 pass
+        
+        # 应用对话框背景样式
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
 
 
 class StyledMainWindow(QMainWindow):
@@ -491,7 +494,7 @@ class UnifiedStyleHelper:
                 background-color: #f0f8ff;
             }}
             QHeaderView::section {{ 
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 padding: 8px 10px;
                 border: none;
                 border-right: 1px solid {self.COLORS['border_light']};
@@ -504,7 +507,7 @@ class UnifiedStyleHelper:
                 background-color: #e6f7ff;
             }}
             QTableCornerButton::section {{ 
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: none;
                 border-right: 1px solid {self.COLORS['border_light']};
                 border-bottom: 2px solid {self.COLORS['border_light']};
@@ -597,7 +600,7 @@ class UnifiedStyleHelper:
             QTextEdit {{ 
                 font-family: "Consolas, SourceHanSerifCN";
                 font-size: 12px;
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 6px;
                 padding: 10px;
@@ -622,7 +625,7 @@ class UnifiedStyleHelper:
         """获取协议浏览器样式"""
         return f"""
             QTextBrowser {{ 
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 4px;
                 padding: 10px;
@@ -644,7 +647,7 @@ class UnifiedStyleHelper:
         """获取信息编辑框样式"""
         return f"""
             QPlainTextEdit {{ 
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 4px;
                 padding: 10px;
@@ -658,8 +661,8 @@ class UnifiedStyleHelper:
         """获取状态栏样式"""
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
-            QStatusBar {{
-                background-color: #f0f0f0;
+            QStatusBar {{ 
+                background-color: #ffffff;
                 color: {self.COLORS['text']};
                 border-top: 1px solid {self.COLORS['border']};
                 font-size: 10px;
@@ -839,7 +842,7 @@ class UnifiedStyleHelper:
         return f"""
             QLabel {{
                 border: 2px solid {self.COLORS['border']};
-                background-color: #f0f0f0;
+                background-color: #ffffff;
             }}
         """
     
@@ -882,7 +885,7 @@ class UnifiedStyleHelper:
         """获取搜索容器样式"""
         return """
             QWidget {
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: none;
                 border-radius: 8px;
                 %s
@@ -1035,12 +1038,12 @@ class UnifiedStyleHelper:
             }
         """ % (
             self.COLORS['bg'],
-            self.COLORS['border_light'],
+            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed'],
             self.COLORS['bg'],
-            self.COLORS['border_light'],
+            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed']
@@ -1175,12 +1178,12 @@ class StyleHelper:
         """获取状态栏样式"""
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
-            QStatusBar {
-                background-color: #f0f0f0;
+            QStatusBar {{ 
+                background-color: #ffffff;
                 color: {COLORS['text']};
                 border-top: 1px solid {COLORS['border']};
                 font-size: 10px;
-            }
+            }}
         """
     
     @staticmethod
