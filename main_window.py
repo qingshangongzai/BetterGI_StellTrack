@@ -1262,10 +1262,31 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
         edit_menu.addSeparator()
-
         
 
 
+        # 添加事件
+
+        add_action = QAction('添加事件', self)
+
+        add_action.setShortcut('Ctrl+I')
+
+        add_action.triggered.connect(self.event_manager.on_add_event)
+
+        edit_menu.addAction(add_action)
+        
+        # 编辑事件
+
+        edit_action = QAction('编辑事件', self)
+
+        edit_action.setShortcut('Ctrl+E')
+
+        edit_action.triggered.connect(self.event_manager.on_edit_event)
+
+        edit_menu.addAction(edit_action)
+        
+        edit_menu.addSeparator()
+        
         # 剪切
 
         cut_action = QAction('剪切', self)
@@ -1332,6 +1353,16 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         select_all_action.triggered.connect(self.event_manager.on_select_all_events)
 
         edit_menu.addAction(select_all_action)
+        
+        # 批量编辑
+
+        batch_edit_action = QAction('批量编辑', self)
+
+        batch_edit_action.setShortcut('Ctrl+B')
+
+        batch_edit_action.triggered.connect(self.event_manager.on_batch_edit)
+
+        edit_menu.addAction(batch_edit_action)
 
         
 
@@ -2202,7 +2233,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         # 更新快捷键提示，包含新的快捷键
 
-        shortcuts_label = QLabel("快捷键: Ctrl+Z撤销 | Ctrl+Y重做 | Ctrl+A全选 | Ctrl+X剪切 | Ctrl+C复制 | Ctrl+V粘贴 | Delete删除 | Ctrl+S保存")
+        shortcuts_label = QLabel("快捷键: Ctrl+Z撤销 | Ctrl+Y重做 | Ctrl+I添加事件 | Ctrl+E编辑事件 | Ctrl+B批量编辑 | Ctrl+A全选 | Ctrl+X剪切 | Ctrl+C复制 | Ctrl+V粘贴 | Delete删除 | Ctrl+S保存")
 
         shortcuts_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 9px; margin-right: 10px; background-color: transparent;")
 
