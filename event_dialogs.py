@@ -214,7 +214,7 @@ class EventEditDialog(StyledDialog):
         # 事件类型
         basic_layout.addWidget(QLabel("事件类型:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
         self.type_combo = CenteredComboBox()
-        self.type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"])
+        self.type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         basic_layout.addWidget(self.type_combo, 1, 1)
         
         layout.addWidget(basic_info_group)
@@ -535,18 +535,13 @@ class EventEditDialog(StyledDialog):
             elif time_unit == "min":
                 relative_time *= 60000
             
-            # 关键修复：编辑模式时，绝对时间应该由主窗口重新计算
-            # 这里返回0，让主窗口处理
-            absolute_time = 0
-            
             return (
                 self.name_edit.text(),
                 self.type_combo.currentText(),
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                str(relative_time),  # 确保返回的是毫秒
-                str(absolute_time)   # 编辑时返回0，让主窗口重新计算
+                str(relative_time)  # 确保返回的是毫秒
             )
         except ValueError:
             # 如果转换失败，返回默认值
@@ -556,8 +551,7 @@ class EventEditDialog(StyledDialog):
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                "100",  # 默认100ms
-                "0"     # 让主窗口重新计算
+                "100"  # 默认100ms
             )
 
     def get_time_option(self):
@@ -636,11 +630,26 @@ class EventEditDialog(StyledDialog):
 
     def on_event_type_changed(self, event_type):
         """事件类型变化"""
-        if event_type in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"]:
+        if event_type in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]:
             # 选择鼠标事件：自动设置事件名称
             self.name_edit.setText(event_type)
             # 清空键码（鼠标事件不需要键码）
             self.keycode_edit.clear()
+        elif event_type in ["按键按下", "按键释放"]:
+            # 如果是按键事件，且有键码，则更新事件名称
+            keycode = self.keycode_edit.text().strip()
+            if keycode:
+                try:
+                    keycode_int = int(keycode)
+                    # 使用虚拟键码映射
+                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
+                    # 转换为中文名称
+                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+                    action = "按下" if event_type == "按键按下" else "释放"
+                    self.name_edit.setText(f"{action}{key_name_cn}")
+                except ValueError:
+                    # 如果键码不是数字，忽略
+                    pass
 
     def on_keycode_changed(self, keycode):
         """键码变化"""

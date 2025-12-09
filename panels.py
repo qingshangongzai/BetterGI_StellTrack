@@ -345,7 +345,7 @@ class StatsPanel(QWidget):
             if not self.main_window:
                 return
                 
-            row_count = self.main_window.events_table.rowCount()
+            row_count = self.main_window.event_manager.events_table.rowCount()
             
             # 计算单次循环总时间
             single_loop_time_ms = self.calculate_single_loop_time_ms()
@@ -373,8 +373,8 @@ class StatsPanel(QWidget):
             mouse_move_count = 0
             mouse_click_count = 0
             
-            for row in range(self.main_window.events_table.rowCount()):
-                type_item = self.main_window.events_table.item(row, 2)  # 事件类型列
+            for row in range(self.main_window.event_manager.events_table.rowCount()):
+                type_item = self.main_window.event_manager.events_table.item(row, 2)  # 事件类型列
                 if type_item:
                     event_type = type_item.text()
                     if event_type == "按键按下":
@@ -383,8 +383,10 @@ class StatsPanel(QWidget):
                         key_release_count += 1
                     elif event_type == "鼠标移动":
                         mouse_move_count += 1
-                    elif event_type in ["左键按下", "左键释放", "右键按下", "右键释放"]:
+                    elif event_type in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放"]:
                         mouse_click_count += 1
+                    elif event_type == "鼠标滚轮":
+                        mouse_move_count += 1
             
             # 获取窗口设置
             width = self.main_window.settings_panel.width_input.text() or "1920"
@@ -453,10 +455,10 @@ class StatsPanel(QWidget):
         """计算单次循环的总时间（毫秒）"""
         try:
             # 获取单次循环时间（最后一个事件的绝对时间）
-            if not self.main_window or self.main_window.events_table.rowCount() == 0:
+            if not self.main_window or self.main_window.event_manager.events_table.rowCount() == 0:
                 return 0
-            last_row = self.main_window.events_table.rowCount() - 1
-            time_item = self.main_window.events_table.item(last_row, 7)  # 绝对偏移列
+            last_row = self.main_window.event_manager.events_table.rowCount() - 1
+            time_item = self.main_window.event_manager.events_table.item(last_row, 7)  # 绝对偏移列
             if time_item and time_item.text().isdigit():
                 return int(time_item.text())
             else:

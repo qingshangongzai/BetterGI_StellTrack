@@ -142,7 +142,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
     # 定义信号
     manual_requested = pyqtSignal(str)
     
-    def __init__(self, version=None, parent=None):
+    def __init__(self, parent=None, version=None):
         # 如果未提供版本号，则从全局版本管理器获取
         self.version = version if version is not None else get_current_version()
         # 使用基类初始化方法设置窗口属性
@@ -153,6 +153,9 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
+        
+        # 居中显示窗口
+        self.center()
         
         # 创建中央部件
         central_widget = QWidget()
@@ -420,3 +423,14 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         
         # 如果没有找到文件，发射信号
         self.manual_requested.emit("LICENSE.html")
+    
+    def center(self):
+        """将窗口居中显示"""
+        # 获取屏幕几何
+        screen_geometry = self.screen().geometry()
+        # 获取窗口几何
+        window_geometry = self.frameGeometry()
+        # 计算中心位置
+        window_geometry.moveCenter(screen_geometry.center())
+        # 移动窗口
+        self.move(window_geometry.topLeft())

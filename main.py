@@ -29,21 +29,21 @@ class VersionManager:
         """
         # 版本号组件 - 统一修改点
         self.major = 3
-        self.minor = 2
-        self.patch = 0
+        self.minor = 3
+        self.patch = 1
         self.build = 0
         
         # 核心版本信息
-        self.version = "3.2.0"  # 应用程序主版本号
+        self.version = "3.3.1"  # 应用程序主版本号
         
         # 详细版本信息结构
         self.version_info = {
             "major": 3,
-            "minor": 2,
-            "patch": 0,
+            "minor": 3,
+            "patch": 1,
             "build": 0,
-            "full": "3.2.0",
-            "short": "3.2.0"
+            "full": "3.3.1",
+            "short": "3.3.1"
         }
         
         # 应用程序元数据
@@ -620,7 +620,7 @@ class BetterGIApplication:
                 
                 # 使用日志记录器记录异常信息
                 if self.debug_logger:
-                    self.debug_logger.error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
+                    self.debug_logger.log_error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
                 else:
                     print(f"[ERROR] {error_msg}")
                     import traceback

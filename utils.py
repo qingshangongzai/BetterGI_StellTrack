@@ -34,7 +34,9 @@ VK_MAPPING = {
     0x6F: "Num /", 0x70: "F1", 0x71: "F2", 0x72: "F3", 0x73: "F4", 0x74: "F5", 0x75: "F6", 0x76: "F7", 0x77: "F8",
     0x78: "F9", 0x79: "F10", 0x7A: "F11", 0x7B: "F12",
     0x90: "Num Lock", 0x91: "Scroll Lock", 0xBA: ";", 0xBB: "=", 0xBC: ",", 0xBD: "-", 0xBE: ".",
-    0xBF: "/", 0xC0: "`", 0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'"
+    0xBF: "/", 0xC0: "`", 0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'",
+    0xA2: "Ctrl",  # 左Ctrl键
+    0xA3: "Ctrl"   # 右Ctrl键
 }
 
 # 中文按键名称映射
@@ -64,8 +66,13 @@ EVENT_TYPE_MAP = {
     "左键按下": 4,
     "左键释放": 5,
     "右键按下": 4,
-    "右键释放": 5
+    "右键释放": 5,
+    "中键按下": 4,
+    "中键释放": 5
 }
+
+# 排序提示文本
+SORT_TIP_TEXT = "💡 提示：为避免计算出现异常，若添加事件、编辑事件、粘贴事件后相对时间出现负数，请点击'事件排序'"
 
 # =============================================================================
 # 事件类型转换和按键名称生成函数
@@ -76,17 +83,23 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
     
     Args:
         type_num: 事件类型数字
-        mouse_button: 鼠标按钮（"Left" 或 "Right"）
+        mouse_button: 鼠标按钮（"Left"、"Right" 或 "Middle"）
         
     Returns:
         str: 事件类型字符串
     """
+    # 处理滚轮事件
+    if type_num == 6:
+        return "鼠标滚轮"
+    
     if mouse_button:
         if type_num == 4:  # 按下
             if mouse_button == "Right":
                 return "右键按下"
             elif mouse_button == "Left":
                 return "左键按下"
+            elif mouse_button == "Middle":
+                return "中键按下"
             else:
                 return "左键按下"  # 默认左键
         elif type_num == 5:  # 释放
@@ -94,6 +107,8 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
                 return "右键释放"
             elif mouse_button == "Left":
                 return "左键释放"
+            elif mouse_button == "Middle":
+                return "中键释放"
             else:
                 return "左键释放"  # 默认左键
     
@@ -103,9 +118,33 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
         1: "按键释放", 
         2: "鼠标移动",
         4: "左键按下",   # 默认左键
-        5: "左键释放"    # 默认左键
+        5: "左键释放",   # 默认左键
+        6: "鼠标滚轮"    # 滚轮事件
     }
     return type_mapping.get(type_num, "未知事件")
+
+def convert_event_type_num_to_str(type_num):
+    """将数字事件类型转换为字符串
+    
+    Args:
+        type_num: 事件类型数字
+        
+    Returns:
+        str: 事件类型字符串
+    """
+    # 直接调用现有的函数，不提供mouse_button参数
+    return convert_event_type_num_to_str_with_button(type_num)
+
+def convert_event_type_str_to_num(type_str):
+    """将字符串事件类型转换为数字
+    
+    Args:
+        type_str: 事件类型字符串
+        
+    Returns:
+        int: 事件类型数字
+    """
+    return EVENT_TYPE_MAP.get(type_str, 0)
 
 def generate_key_event_name(event_type_str, keycode):
     """根据事件类型和键码生成事件名称
@@ -130,9 +169,170 @@ def generate_key_event_name(event_type_str, keycode):
         except (ValueError, TypeError):
             # 如果键码不是数字，返回默认名称
             return event_type_str
-    else:
-        # 非键盘事件，返回原名称
+    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标移动", "鼠标滚轮"]:
+        # 鼠标事件，返回原名称
         return event_type_str
+    else:
+        # 其他事件，返回原名称
+        return event_type_str
+
+def get_key_chinese_name(keycode):
+    """获取按键的中文名称
+    
+    Args:
+        keycode: 键码
+        
+    Returns:
+        str: 按键的中文名称
+    """
+    if not keycode:
+        return "未知"
+    
+    try:
+        keycode_int = int(keycode)
+        # 使用虚拟键码映射获取按键名称
+        key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
+        # 转换为中文名称
+        key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+        return key_name_cn
+    except (ValueError, TypeError):
+        # 如果键码不是数字，返回原值
+        return keycode
+
+def get_event_data_from_table(table, row, skip_row_number=True):
+    """从表格中获取事件数据
+    
+    Args:
+        table: 事件表格对象
+        row: 行索引
+        skip_row_number: 是否跳过行号列（默认True）
+        
+    Returns:
+        list: 事件数据列表
+    """
+    event_data = []
+    start_col = 1 if skip_row_number else 0
+    end_col = 8  # 共8列，包括行号列
+    
+    for col in range(start_col, end_col):
+        item = table.item(row, col)
+        if item:
+            event_data.append(item.text())
+        else:
+            event_data.append("")
+    
+    return event_data
+
+def handle_errors(logger=None, error_title="错误", error_message="操作失败"):
+    """错误处理装饰器，用于统一处理函数中的异常
+    
+    Args:
+        logger: 日志记录器对象
+        error_title: 错误对话框标题
+        error_message: 错误对话框默认消息
+        
+    Returns:
+        decorator: 装饰器函数
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                # 构造完整的错误消息
+                full_error_message = f"{error_message}: {str(e)}"
+                
+                # 记录错误日志
+                if logger:
+                    logger.log_error(full_error_message, exc_info=True)
+                else:
+                    print(f"[ERROR] {full_error_message}")
+                
+                # 显示错误消息给用户
+                # 注意：这里需要从args中获取主窗口对象，或者使用其他方式获取
+                # 这里简化处理，假设第一个参数是self，且self.main_window是主窗口对象
+                if args and hasattr(args[0], 'main_window'):
+                    from styles import ChineseMessageBox
+                    ChineseMessageBox.show_error(args[0].main_window, error_title, full_error_message)
+                
+                return None
+        return wrapper
+    return decorator
+
+class batch_operation:
+    """批量操作上下文管理器，用于统一处理批量操作的开始和结束逻辑
+    
+    典型用法：
+    with batch_operation(main_window):
+        # 执行批量操作
+        pass
+    """
+    
+    def __init__(self, main_window, save_to_undo_stack=True):
+        """初始化批量操作上下文管理器
+        
+        Args:
+            main_window: 主窗口对象
+            save_to_undo_stack: 是否保存当前状态到撤销栈（默认True）
+        """
+        self.main_window = main_window
+        self.save_to_undo_stack = save_to_undo_stack
+    
+    def __enter__(self):
+        """进入上下文，开始批量操作
+        
+        Returns:
+            None
+        """
+        # 保存当前状态到撤销栈
+        if self.save_to_undo_stack:
+            self.main_window.save_state_to_undo_stack()
+        
+        # 设置批量操作标志为True
+        self.main_window._batch_operation = True
+        
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文，结束批量操作
+        
+        Args:
+            exc_type: 异常类型
+            exc_val: 异常值
+            exc_tb: 异常回溯
+            
+        Returns:
+            bool: 是否抑制异常
+        """
+        # 无论操作成功或失败，将批量操作标志设置为False
+        self.main_window._batch_operation = False
+        
+        # 不抑制异常，让异常正常传播
+        return False
+
+def update_app_state(main_window, event_manager=None):
+    """更新应用状态，包括统计信息和预计总时间
+    
+    Args:
+        main_window: 主窗口对象
+        event_manager: 事件管理器对象（可选）
+        
+    Returns:
+        None
+    """
+    # 标记状态变更
+    if hasattr(main_window, 'mark_state_dirty'):
+        main_window.mark_state_dirty()
+    
+    # 更新统计信息
+    if event_manager and hasattr(event_manager, 'update_stats'):
+        event_manager.update_stats()
+    elif hasattr(main_window, 'stats_panel') and hasattr(main_window.stats_panel, 'update_stats'):
+        main_window.stats_panel.update_stats()
+    
+    # 立即更新预计总时间
+    if hasattr(main_window, 'on_calculate_total_time'):
+        main_window.on_calculate_total_time()
 
 # =============================================================================
 # Windows 任务栏图标修复相关函数
