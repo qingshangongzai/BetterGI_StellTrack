@@ -883,11 +883,11 @@ class UnifiedStyleHelper:
         return """
             QWidget {
                 background-color: #f8f9fa;
-                border: 1px solid %s;
+                border: none;
                 border-radius: 8px;
                 %s
             }
-        """ % (self.COLORS['border'], self.SHADOWS['small'])
+        """ % (self.SHADOWS['small'])
     
     def get_search_input_style(self):
         """获取搜索输入框样式"""
