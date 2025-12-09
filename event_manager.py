@@ -79,15 +79,12 @@ class EventManager:
         # 搜索输入框
         self.search_input = ModernLineEdit()
         self.search_input.setPlaceholderText("按事件名称、类型、键码搜索...")
-        self.search_input.setStyleSheet(StyleHelper.get_search_input_style())
         search_layout.addWidget(self.search_input)
         
         # 事件类型过滤
-        self.filter_type_combo = ModernComboBox()
+        self.filter_type_combo = ModernComboBox(width=150)
         self.filter_type_combo.addItem("全部事件类型")
         self.filter_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
-        self.filter_type_combo.setStyleSheet(StyleHelper.get_filter_combo_style())
-        self.filter_type_combo.setFixedWidth(150)
         search_layout.addWidget(self.filter_type_combo)
         
         # 搜索按钮
@@ -111,8 +108,9 @@ class EventManager:
         reset_btn.clicked.connect(self.on_reset_search_filter)
         # 为搜索输入框添加回车键支持
         self.search_input.returnPressed.connect(self.on_search_filter_changed)
-        # 为过滤类型下拉框添加回车键支持
-        self.filter_type_combo.activated.connect(self.on_search_filter_changed)
+        # 为过滤类型下拉框添加焦点事件，允许用户按回车键触发搜索
+        # 使用自定义的按键处理
+        self.filter_type_combo.keyPressEvent = lambda event: self.on_combo_key_press(event)
     
     def create_event_table(self, parent_layout):
         """创建事件表格"""
@@ -301,6 +299,17 @@ class EventManager:
         finally:
             # 确保重新启用重绘
             self.events_table.setUpdatesEnabled(True)
+    
+    def on_combo_key_press(self, event):
+        """处理过滤类型下拉框的按键事件"""
+        from PyQt6.QtCore import Qt
+        # 调用原有的keyPressEvent方法，确保其他功能正常
+        super(self.filter_type_combo.__class__, self.filter_type_combo).keyPressEvent(event)
+        
+        # 检查是否是回车键
+        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            # 触发搜索功能
+            self.on_search_filter_changed()
     
     def on_reset_search_filter(self):
         """重置搜索过滤条件"""
