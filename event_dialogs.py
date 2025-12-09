@@ -535,18 +535,13 @@ class EventEditDialog(StyledDialog):
             elif time_unit == "min":
                 relative_time *= 60000
             
-            # 关键修复：编辑模式时，绝对时间应该由主窗口重新计算
-            # 这里返回0，让主窗口处理
-            absolute_time = 0
-            
             return (
                 self.name_edit.text(),
                 self.type_combo.currentText(),
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                str(relative_time),  # 确保返回的是毫秒
-                str(absolute_time)   # 编辑时返回0，让主窗口重新计算
+                str(relative_time)  # 确保返回的是毫秒
             )
         except ValueError:
             # 如果转换失败，返回默认值
@@ -556,8 +551,7 @@ class EventEditDialog(StyledDialog):
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                "100",  # 默认100ms
-                "0"     # 让主窗口重新计算
+                "100"  # 默认100ms
             )
 
     def get_time_option(self):

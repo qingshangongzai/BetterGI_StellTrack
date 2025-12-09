@@ -434,17 +434,21 @@ def check_user_agreement():
         print(f"[DEBUG] 检查协议文件: {agreement_file}")
         print(f"[DEBUG] 协议文件存在: {os.path.exists(agreement_file)}")
         
-        # 获取当前用户协议文件的哈希值
+        # 获取当前用户协议文件的哈希值（使用SHA256）
         current_agreement_hash = ""
         agreement_html_file = find_resource_file("UserAgreement.html")
         
         if agreement_html_file and os.path.exists(agreement_html_file):
-            # 计算当前协议文件的MD5哈希值
+            # 计算当前协议文件的SHA256哈希值
             with open(agreement_html_file, 'rb') as f:
-                current_agreement_hash = hashlib.md5(f.read()).hexdigest()
+                current_agreement_hash = hashlib.sha256(f.read()).hexdigest()
             print(f"[DEBUG] 当前协议文件哈希: {current_agreement_hash}")
         else:
             print("[DEBUG] 未找到用户协议HTML文件")
+        
+        # 计算应用程序目录路径的SHA256哈希值
+        current_path_hash = hashlib.sha256(base_path.encode('utf-8')).hexdigest()
+        print(f"[DEBUG] 当前应用目录哈希: {current_path_hash}")
         
         # 检查是否需要重新确认协议
         need_reconfirm = False
@@ -457,14 +461,27 @@ def check_user_agreement():
                 
                 # 检查协议内容是否有变化
                 if current_agreement_hash and "协议哈希:" in saved_content:
+                    # 提取保存的协议哈希
                     saved_hash = saved_content.split("协议哈希:")[1].split("\n")[0].strip()
-                    if saved_hash != current_agreement_hash:
-                        need_reconfirm = True
-                        print(f"[DEBUG] 协议内容已更新，需要重新确认")
-                        print(f"[DEBUG] 保存的哈希: {saved_hash}")
-                        print(f"[DEBUG] 当前哈希: {current_agreement_hash}")
+                    
+                    # 检查是否有路径哈希
+                    if "目录路径哈希:" in saved_content:
+                        saved_path_hash = saved_content.split("目录路径哈希:")[1].split("\n")[0].strip()
+                        
+                        # 同时检查协议哈希和路径哈希
+                        if saved_hash != current_agreement_hash or saved_path_hash != current_path_hash:
+                            need_reconfirm = True
+                            print(f"[DEBUG] 协议内容或目录路径已更新，需要重新确认")
+                            print(f"[DEBUG] 保存的协议哈希: {saved_hash}")
+                            print(f"[DEBUG] 当前协议哈希: {current_agreement_hash}")
+                            print(f"[DEBUG] 保存的路径哈希: {saved_path_hash}")
+                            print(f"[DEBUG] 当前路径哈希: {current_path_hash}")
+                        else:
+                            print("[DEBUG] 协议内容和目录路径未变化，无需重新确认")
                     else:
-                        print("[DEBUG] 协议内容未变化，无需重新确认")
+                        # 兼容旧版本：没有路径哈希记录，需要重新确认
+                        need_reconfirm = True
+                        print("[DEBUG] 旧版本协议文件，需要重新确认以记录路径哈希")
                 else:
                     # 兼容旧版本：没有哈希值记录，需要重新确认
                     need_reconfirm = True
@@ -506,11 +523,12 @@ def check_user_agreement():
                 # 确保目录存在
                 os.makedirs(base_path, exist_ok=True)
                 
-                # 写入协议信息，包含哈希值
+                # 写入协议信息，包含协议哈希和目录路径哈希
                 with open(agreement_file, 'w', encoding='utf-8') as f:
                     content = f"{app_info['name']} 用户协议同意时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                     if current_agreement_hash:
                         content += f"协议哈希: {current_agreement_hash}\n"
+                        content += f"目录路径哈希: {current_path_hash}\n"
                     f.write(content)
                 print(f"[DEBUG] 协议文件已创建: {agreement_file}")
                 return True
