@@ -775,6 +775,7 @@ class ModernTableWidget(QTableWidget):
 
         
 
+        
 
         # 设置表格属性
 
@@ -786,8 +787,12 @@ class ModernTableWidget(QTableWidget):
 
         self.horizontalHeader().setStretchLastSection(True)
 
+        # 调整表头行高
+        self.horizontalHeader().setDefaultSectionSize(24)
+
         
 
+        
 
         # 设置行高
 
@@ -1042,9 +1047,9 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
             # 缩小主窗口大小
 
-            self.setMinimumSize(1200, 800)
+            self.setMinimumSize(1100, 750)
 
-            self.resize(1300, 850)
+            self.resize(1200,820)
 
             
 
@@ -2050,7 +2055,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         splitter.setChildrenCollapsible(False)
 
-        splitter.setHandleWidth(2)
+        splitter.setHandleWidth(0)
 
         splitter.setStyleSheet(StyleHelper.get_splitter_style())
 
@@ -2077,7 +2082,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         # 设置分割比例
 
-        splitter.setSizes([350, 950])
+        splitter.setSizes([250, 1050])
 
         
 
