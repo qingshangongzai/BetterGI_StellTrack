@@ -347,6 +347,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
 · 出品：浮晓 HXiao Studio
 · 开发：青山公仔
 · 代码：Deepseek、智谱清言、Trae、Qoder、CodeBuddy、通义千问
+· logo 绘制：青山公仔
 · 联系邮箱：qingshangongzai@163.com
 
 

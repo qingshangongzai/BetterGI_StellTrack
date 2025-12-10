@@ -1147,8 +1147,8 @@ class EventManager:
             return
         
         # 确认清空操作
-        reply = ChineseMessageBox.question(self.main_window, "确认清空", "确定要清空所有事件吗？此操作不可撤销。")
-        if reply == ChineseMessageBox.StandardButton.Yes:
+        reply = ChineseMessageBox.show_question(self.main_window, "确认清空", "确定要清空所有事件吗？")
+        if reply:
             # 保存当前状态到撤销栈
             self.main_window.save_state_to_undo_stack()
             
