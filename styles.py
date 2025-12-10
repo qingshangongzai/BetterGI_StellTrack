@@ -304,7 +304,7 @@ COLORS = {
     'bg': "#ffffff",  # 改为纯白色
     'card_bg': "#ffffff",
     'primary': "#66ccff",
-    'primary_hover': "#4db8ff",
+    'primary_hover': "#66ccff",
     'primary_pressed': "#3399ff",
     'secondary': "#ffffff",  # 普通按钮改为纯白色
     'secondary_hover': "#f5f5f5",  # 悬停时略微变灰
