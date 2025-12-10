@@ -1545,6 +1545,10 @@ class ModernComboBox(QComboBox):
         # 设置所有项居中
         for i in range(self.count()):
             self.setItemData(i, Qt.AlignmentFlag.AlignCenter, Qt.ItemDataRole.TextAlignmentRole)
+    
+    def wheelEvent(self, event):
+        """屏蔽鼠标滚轮事件，防止误触"""
+        event.ignore()
 
 class ModernSpinBox(QSpinBox):
     """现代化的整数输入框，带上下按钮，内容居中显示"""
@@ -1599,6 +1603,10 @@ class CenteredComboBox(QComboBox):
         # 设置所有项居中
         for i in range(self.count()):
             self.setItemData(i, Qt.AlignmentFlag.AlignCenter, Qt.ItemDataRole.TextAlignmentRole)
+    
+    def wheelEvent(self, event):
+        """屏蔽鼠标滚轮事件，防止误触"""
+        event.ignore()
 
 class CenteredLineEdit(QLineEdit):
     """居中对齐的单行文本编辑器"""
