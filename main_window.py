@@ -12,7 +12,8 @@ from PyQt6.QtWidgets import (
                             QLabel, QLineEdit, QComboBox, QPushButton, QTableWidget,
                             QTableWidgetItem, QTextEdit, QFrame, QGroupBox, QGridLayout,
                             QHeaderView, QScrollArea, QSizePolicy, QSplitter,
-                            QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar)
+                            QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar,
+                            QCheckBox)
 
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
 
@@ -115,7 +116,7 @@ class BatchEditDialog(StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(450, 350)  # 调整窗口大小，使其与其他窗口保持一致
+        self.setFixedSize(450, 400)  # 调整窗口大小，高度增加50px
 
         
 
@@ -158,29 +159,14 @@ class BatchEditDialog(StyledDialog):
 
 
         # 1. 增减偏移时间
-
         offset_label = QLabel("增减偏移时间:")
-
         offset_label.setFixedWidth(120)
-
-        self.offset_input = ModernDoubleSpinBox()
-
-        self.offset_input.setMinimum(-999999)
-
-        self.offset_input.setMaximum(999999)
-
-        self.offset_input.setValue(0)
-
-        self.offset_input.setDecimals(0)
-
-        self.offset_input.setSingleStep(100)  # 设置上下按钮变化幅度为100
-
+        self.offset_input = ModernLineEdit()
+        self.offset_input.setText("0")
         self.offset_input.setFixedWidth(100)
 
         offset_label_unit = QLabel("ms")
-
         offset_label_unit.setFixedWidth(20)
-
         offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         
@@ -198,29 +184,14 @@ class BatchEditDialog(StyledDialog):
 
 
         # 2. 统一相对时间
-
         rel_time_label = QLabel("统一相对时间:")
-
         rel_time_label.setFixedWidth(120)
-
-        self.rel_time_input = ModernDoubleSpinBox()
-
-        self.rel_time_input.setMinimum(0)
-
-        self.rel_time_input.setMaximum(999999)
-
-        self.rel_time_input.setValue(0)
-
-        self.rel_time_input.setDecimals(0)
-
-        self.rel_time_input.setSingleStep(100)  # 设置上下按钮变化幅度为100
-
+        self.rel_time_input = ModernLineEdit()
+        self.rel_time_input.setText("0")
         self.rel_time_input.setFixedWidth(100)
 
         rel_time_label_unit = QLabel("ms")
-
         rel_time_label_unit.setFixedWidth(20)
-
         rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         
@@ -238,7 +209,6 @@ class BatchEditDialog(StyledDialog):
 
 
         # 3. 事件类型替换
-
         # 提取所有按键事件（使用字典保存，事件名称为键，(event_type, keycode)为值）
         self.key_events = {}
         if self.events_table:
@@ -278,13 +248,46 @@ class BatchEditDialog(StyledDialog):
 
         
 
-
         operation_layout.addWidget(QLabel("事件类型替换:"), 2, 0)
 
         operation_layout.addWidget(self.old_type_combo, 2, 1)
 
         operation_layout.addWidget(type_arrow_label, 2, 2)
         operation_layout.addWidget(self.new_type_combo, 2, 3)
+        
+        # 4. 统一坐标（带开关）
+        self.unified_coords_checkbox = QCheckBox("统一坐标")
+        
+        # 创建统一坐标的水平布局
+        coords_layout = QHBoxLayout()
+        coords_layout.addWidget(self.unified_coords_checkbox)
+        coords_layout.addSpacing(10)
+        
+        # x坐标部分
+        x_layout = QHBoxLayout()
+        x_label = QLabel("x坐标:")
+        x_label.setFixedWidth(50)
+        self.x_input = ModernLineEdit()
+        self.x_input.setText("0")
+        self.x_input.setFixedWidth(80)
+        x_layout.addWidget(x_label)
+        x_layout.addWidget(self.x_input)
+        coords_layout.addLayout(x_layout)
+        coords_layout.addSpacing(15)
+        
+        # y坐标部分
+        y_layout = QHBoxLayout()
+        y_label = QLabel("y坐标:")
+        y_label.setFixedWidth(50)
+        self.y_input = ModernLineEdit()
+        self.y_input.setText("0")
+        self.y_input.setFixedWidth(80)
+        y_layout.addWidget(y_label)
+        y_layout.addWidget(self.y_input)
+        coords_layout.addLayout(y_layout)
+        
+        # 将统一坐标布局添加到操作布局
+        operation_layout.addLayout(coords_layout, 3, 0, 1, 5)
         
         # 将操作选项组添加到主布局
         layout.addWidget(operation_group)
@@ -325,17 +328,21 @@ class BatchEditDialog(StyledDialog):
     def get_offset_adjustment(self):
 
         """获取偏移调整值"""
-
-        return int(self.offset_input.value())
-
+        try:
+            return int(self.offset_input.text())
+        except ValueError:
+            return 0
     
+
 
 
     def get_unified_rel_time(self):
 
         """获取统一相对时间值"""
-
-        return int(self.rel_time_input.value())
+        try:
+            return int(self.rel_time_input.text())
+        except ValueError:
+            return 0
 
     
 
@@ -371,6 +378,21 @@ class BatchEditDialog(StyledDialog):
             new_type, new_keycode = self.key_events[new_type]
         
         return (old_type, old_keycode), (new_type, new_keycode)
+    
+    def get_unified_coordinates(self):
+        """获取统一坐标值和应用标志"""
+        apply_coords = self.unified_coords_checkbox.isChecked()
+        
+        try:
+            x = int(self.x_input.text())
+        except ValueError:
+            x = 0
+        try:
+            y = int(self.y_input.text())
+        except ValueError:
+            y = 0
+        
+        return apply_coords, x, y
 
 
 

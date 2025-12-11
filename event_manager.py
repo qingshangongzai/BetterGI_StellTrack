@@ -82,10 +82,10 @@ class BatchEditThread(QThread):
     """批量编辑线程类，负责在后台对事件进行批量编辑"""
     
     # 信号定义
-    edit_complete = pyqtSignal(list, int, object, object)  # 编辑完成信号，允许类型信息为None
+    edit_complete = pyqtSignal(list, int, object, object, int, int, bool)  # 编辑完成信号，添加应用标志
     edit_failed = pyqtSignal(str)  # 排序失败信号编辑失败信号
     
-    def __init__(self, events_table, selected_row_indices, offset, unified_rel_time, old_type_info, new_type_info):
+    def __init__(self, events_table, selected_row_indices, offset, unified_rel_time, old_type_info, new_type_info, unified_x, unified_y, apply_coords):
         super().__init__()
         self.events_table = events_table
         self.selected_row_indices = selected_row_indices
@@ -93,6 +93,9 @@ class BatchEditThread(QThread):
         self.unified_rel_time = unified_rel_time
         self.old_type_info = old_type_info
         self.new_type_info = new_type_info
+        self.unified_x = unified_x
+        self.unified_y = unified_y
+        self.apply_coords = apply_coords
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
@@ -143,6 +146,11 @@ class BatchEditThread(QThread):
                 # 添加所有选中行到需要调整的行列表
                 rows_to_adjust.extend(self.selected_row_indices)
             
+            # 4. 处理统一坐标
+            # 只要设置了应用标志，就需要调整所有选中行
+            if self.apply_coords:
+                rows_to_adjust.extend(self.selected_row_indices)
+            
             # 去重并排序
             rows_to_adjust = sorted(list(set(rows_to_adjust)))
             
@@ -151,7 +159,10 @@ class BatchEditThread(QThread):
                 rows_to_adjust,
                 self.offset,
                 self.old_type_info,
-                self.new_type_info
+                self.new_type_info,
+                self.unified_x,
+                self.unified_y,
+                self.apply_coords
             )
             
         except Exception as e:
@@ -555,6 +566,7 @@ class EventManager:
         offset = dialog.get_offset_adjustment()
         unified_rel_time = dialog.get_unified_rel_time()
         old_type_info, new_type_info = dialog.get_type_replacement()
+        apply_coords, unified_x, unified_y = dialog.get_unified_coordinates()
         
         # 获取选中的行索引
         selected_row_indices = [row.row() for row in self.selected_rows]
@@ -570,13 +582,16 @@ class EventManager:
             offset,
             unified_rel_time,
             old_type_info,
-            new_type_info
+            new_type_info,
+            unified_x,
+            unified_y,
+            apply_coords
         )
-        self.batch_edit_thread.edit_complete.connect(lambda rows, off, old, new: self.on_batch_edit_complete(rows, off, old, new, selected_row_indices, unified_rel_time))
+        self.batch_edit_thread.edit_complete.connect(lambda rows, off, old, new, ux, uy, app: self.on_batch_edit_complete(rows, off, old, new, selected_row_indices, unified_rel_time, ux, uy, app))
         self.batch_edit_thread.edit_failed.connect(self.on_batch_edit_failed)
         self.batch_edit_thread.start()
     
-    def on_batch_edit_complete(self, rows_to_adjust, offset, old_type_info, new_type_info, selected_row_indices, unified_rel_time):
+    def on_batch_edit_complete(self, rows_to_adjust, offset, old_type_info, new_type_info, selected_row_indices, unified_rel_time, unified_x, unified_y, apply_coords):
         """批量编辑完成回调"""
         # 开始批量操作
         self.main_window._batch_operation = True
@@ -640,11 +655,9 @@ class EventManager:
                             # 生成新名称
                             new_name = generate_key_event_name(new_type, current_keycode)
                             name_item.setText(new_name)
-            
-            # 3. 处理统一相对时间
-            if unified_rel_time > 0:
-                # 对每个选中的事件设置统一的相对时间
-                for row_idx in selected_row_indices:
+                
+                # 3. 处理统一相对时间
+                if unified_rel_time > 0:
                     # 设置相对时间
                     rel_time_item = self.events_table.item(row_idx, 6)
                     rel_time_item.setText(str(unified_rel_time))
@@ -659,10 +672,23 @@ class EventManager:
                     new_abs_time = prev_abs_time + unified_rel_time
                     abs_time_item = self.events_table.item(row_idx, 7)
                     abs_time_item.setText(str(new_abs_time))
+                
+                # 4. 处理统一坐标
+                # 使用应用标志判断是否需要应用统一坐标
+                if apply_coords:
+                    # 更新X坐标
+                    x_item = self.events_table.item(row_idx, 4)
+                    if x_item:
+                        x_item.setText(str(unified_x))
+                    
+                    # 更新Y坐标
+                    y_item = self.events_table.item(row_idx, 5)
+                    if y_item:
+                        y_item.setText(str(unified_y))
             
             # 4. 根据修改调整后续事件时间
             if offset != 0 or unified_rel_time > 0:
-                # 重新计算所有相对时间，保持绝对时间不变
+                # 重新计算所有事件的相对时间
                 self.recalculate_relative_times()
             
             # 清除撤销栈
