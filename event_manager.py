@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                             QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
                             QListView, QFileDialog, QTextBrowser, QSpinBox, QMenu,
                             QDialog)
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint
+from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QThread
 from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
@@ -24,6 +24,202 @@ from debug_tools import get_global_debug_logger
 
 
 # =============================================================================
+# 线程类定义
+# =============================================================================
+
+class SortEventsThread(QThread):
+    """事件排序线程类，负责在后台对事件进行排序"""
+    
+    # 信号定义
+    sort_complete = pyqtSignal(list)  # 排序完成信号
+    sort_failed = pyqtSignal(str)  # 排序失败信号
+    
+    def __init__(self, events_table):
+        super().__init__()
+        self.events_table = events_table
+        self.debug_logger = get_global_debug_logger()
+    
+    def run(self):
+        """线程运行方法，执行事件排序逻辑"""
+        try:
+            # 获取所有事件数据
+            events = []
+            for row in range(self.events_table.rowCount()):
+                event_data = []
+                for col in range(self.events_table.columnCount()):
+                    item = self.events_table.item(row, col)
+                    event_data.append(item.text() if item else "")
+                events.append(event_data)
+            
+            # 按绝对时间排序
+            events.sort(key=lambda x: int(x[7]) if x[7].isdigit() else 0)
+            
+            # 重新计算相对时间
+            prev_absolute_time = 0
+            for i, event in enumerate(events):
+                # 获取当前事件的绝对时间
+                current_absolute_time = int(event[7]) if event[7].isdigit() else 0
+                
+                # 计算新的相对时间
+                relative_time = current_absolute_time - prev_absolute_time
+                
+                # 更新事件数据
+                event[0] = str(i + 1)  # 更新行号
+                event[6] = str(relative_time)  # 更新相对时间
+                
+                # 更新前一个绝对时间为当前绝对时间
+                prev_absolute_time = current_absolute_time
+            
+            # 发送排序完成信号
+            self.sort_complete.emit(events)
+            
+        except Exception as e:
+            error_msg = f"排序事件失败: {str(e)}"
+            self.sort_failed.emit(error_msg)
+
+
+class BatchEditThread(QThread):
+    """批量编辑线程类，负责在后台对事件进行批量编辑"""
+    
+    # 信号定义
+    edit_complete = pyqtSignal(list, int, object, object)  # 编辑完成信号，允许类型信息为None
+    edit_failed = pyqtSignal(str)  # 排序失败信号编辑失败信号
+    
+    def __init__(self, events_table, selected_row_indices, offset, unified_rel_time, old_type_info, new_type_info):
+        super().__init__()
+        self.events_table = events_table
+        self.selected_row_indices = selected_row_indices
+        self.offset = offset
+        self.unified_rel_time = unified_rel_time
+        self.old_type_info = old_type_info
+        self.new_type_info = new_type_info
+        self.debug_logger = get_global_debug_logger()
+    
+    def run(self):
+        """线程运行方法，执行批量编辑逻辑"""
+        try:
+            # 获取需要调整的行索引
+            rows_to_adjust = []
+            
+            # 处理每个选中的事件
+            for row_idx in self.selected_row_indices:
+                # 1. 处理增减偏移时间
+                if self.offset != 0:
+                    # 获取当前行的绝对偏移时间
+                    abs_time_item = self.events_table.item(row_idx, 7)
+                    if abs_time_item:
+                        abs_time = int(abs_time_item.text()) if abs_time_item.text().isdigit() else 0
+                        new_abs_time = abs_time + self.offset
+                        
+                        # 添加到需要调整的行列表
+                        rows_to_adjust.append(row_idx)
+                
+                # 2. 处理事件类型替换
+                if self.old_type_info and self.new_type_info:
+                    old_type, old_keycode = self.old_type_info
+                    new_type, new_keycode = self.new_type_info
+                    
+                    type_item = self.events_table.item(row_idx, 2)
+                    if type_item:
+                        current_event_type = type_item.text()
+                        
+                        # 匹配逻辑
+                        match = False
+                        if old_keycode:
+                            # 具体按键事件匹配
+                            keycode_item = self.events_table.item(row_idx, 3)
+                            current_keycode = keycode_item.text() if keycode_item else ""
+                            match = (current_event_type == old_type) and (current_keycode == old_keycode)
+                        else:
+                            # 基本类型匹配
+                            match = (current_event_type == old_type)
+                        
+                        if match:
+                            # 添加到需要调整的行列表
+                            rows_to_adjust.append(row_idx)
+            
+            # 3. 处理统一相对时间
+            if self.unified_rel_time > 0:
+                # 添加所有选中行到需要调整的行列表
+                rows_to_adjust.extend(self.selected_row_indices)
+            
+            # 去重并排序
+            rows_to_adjust = sorted(list(set(rows_to_adjust)))
+            
+            # 发送编辑完成信号
+            self.edit_complete.emit(
+                rows_to_adjust,
+                self.offset,
+                self.old_type_info,
+                self.new_type_info
+            )
+            
+        except Exception as e:
+            error_msg = f"批量编辑事件失败: {str(e)}"
+            self.edit_failed.emit(error_msg)
+
+
+class SearchFilterThread(QThread):
+    """搜索过滤线程类，负责在后台对事件进行搜索过滤"""
+    
+    # 信号定义
+    filter_complete = pyqtSignal(list, list)  # 过滤完成信号
+    filter_failed = pyqtSignal(str)  # 过滤失败信号
+    
+    def __init__(self, events_table, search_text, filter_type):
+        super().__init__()
+        self.events_table = events_table
+        self.search_text = search_text.lower()
+        self.filter_type = filter_type
+        self.debug_logger = get_global_debug_logger()
+    
+    def run(self):
+        """线程运行方法，执行搜索过滤逻辑"""
+        try:
+            show_rows = []
+            hide_rows = []
+            
+            # 遍历所有行，根据条件隐藏或显示
+            for row in range(self.events_table.rowCount()):
+                # 获取当前行的事件类型
+                type_item = self.events_table.item(row, 2)
+                event_type = type_item.text() if type_item else ""
+                
+                # 获取当前行的事件名称
+                name_item = self.events_table.item(row, 1)
+                event_name = name_item.text().lower() if name_item else ""
+                
+                # 获取当前行的键码
+                keycode_item = self.events_table.item(row, 3)
+                key_code = keycode_item.text().lower() if keycode_item else ""
+                
+                # 搜索条件匹配
+                matches_search = True
+                if self.search_text:
+                    if self.search_text not in event_name and self.search_text not in event_type.lower() and self.search_text not in key_code:
+                        matches_search = False
+                
+                # 类型过滤匹配
+                matches_type = True
+                if self.filter_type != "全部事件类型":
+                    if event_type != self.filter_type:
+                        matches_type = False
+                
+                # 根据匹配结果添加到相应列表
+                if matches_search and matches_type:
+                    show_rows.append(row)
+                else:
+                    hide_rows.append(row)
+            
+            # 发送过滤完成信号
+            self.filter_complete.emit(show_rows, hide_rows)
+            
+        except Exception as e:
+            error_msg = f"搜索过滤事件失败: {str(e)}"
+            self.filter_failed.emit(error_msg)
+
+
+# =============================================================================
 # 事件管理类
 # =============================================================================
 
@@ -34,6 +230,11 @@ class EventManager:
         self.main_window = main_window
         self.debug_logger = get_global_debug_logger()
         self.events_table = None
+        
+        # 线程实例
+        self.sort_events_thread = None
+        self.batch_edit_thread = None
+        self.search_filter_thread = None
         
     def create_event_editor(self, parent=None):
         """创建事件编辑器"""
@@ -260,38 +461,22 @@ class EventManager:
         search_text = self.search_input.text().lower()
         filter_type = self.filter_type_combo.currentText()
         
+        # 创建并启动搜索过滤线程
+        self.search_filter_thread = SearchFilterThread(self.events_table, search_text, filter_type)
+        self.search_filter_thread.filter_complete.connect(self.on_search_filter_complete)
+        self.search_filter_thread.filter_failed.connect(self.on_search_filter_failed)
+        self.search_filter_thread.start()
+    
+    def on_search_filter_complete(self, show_rows, hide_rows):
+        """搜索过滤完成回调"""
         # 批量更新优化：禁用中间重绘
         self.events_table.setUpdatesEnabled(False)
         
         try:
             # 遍历所有行，根据条件隐藏或显示
             for row in range(self.events_table.rowCount()):
-                # 获取当前行的事件类型
-                type_item = self.events_table.item(row, 2)
-                event_type = type_item.text() if type_item else ""
-                
-                # 获取当前行的事件名称
-                name_item = self.events_table.item(row, 1)
-                event_name = name_item.text().lower() if name_item else ""
-                
-                # 获取当前行的键码
-                keycode_item = self.events_table.item(row, 3)
-                key_code = keycode_item.text().lower() if keycode_item else ""
-                
-                # 搜索条件匹配
-                matches_search = True
-                if search_text:
-                    if search_text not in event_name and search_text not in event_type.lower() and search_text not in key_code:
-                        matches_search = False
-                
-                # 类型过滤匹配
-                matches_type = True
-                if filter_type != "全部事件类型":
-                    if event_type != filter_type:
-                        matches_type = False
-                
                 # 根据匹配结果隐藏或显示行
-                should_show = matches_search and matches_type
+                should_show = row in show_rows
                 self.events_table.setRowHidden(row, not should_show)
             
             # 更新统计信息
@@ -299,6 +484,11 @@ class EventManager:
         finally:
             # 确保重新启用重绘
             self.events_table.setUpdatesEnabled(True)
+    
+    def on_search_filter_failed(self, error_msg):
+        """搜索过滤失败回调"""
+        self.debug_logger.log_error(error_msg)
+        ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_combo_key_press(self, event):
         """处理过滤类型下拉框的按键事件"""
@@ -373,6 +563,21 @@ class EventManager:
         # 保存当前状态到撤销栈
         self.main_window.save_state_to_undo_stack()
         
+        # 创建并启动批量编辑线程
+        self.batch_edit_thread = BatchEditThread(
+            self.events_table,
+            selected_row_indices,
+            offset,
+            unified_rel_time,
+            old_type_info,
+            new_type_info
+        )
+        self.batch_edit_thread.edit_complete.connect(lambda rows, off, old, new: self.on_batch_edit_complete(rows, off, old, new, selected_row_indices, unified_rel_time))
+        self.batch_edit_thread.edit_failed.connect(self.on_batch_edit_failed)
+        self.batch_edit_thread.start()
+    
+    def on_batch_edit_complete(self, rows_to_adjust, offset, old_type_info, new_type_info, selected_row_indices, unified_rel_time):
+        """批量编辑完成回调"""
         # 开始批量操作
         self.main_window._batch_operation = True
         
@@ -472,6 +677,11 @@ class EventManager:
             # 结束批量操作
             self.main_window._batch_operation = False
     
+    def on_batch_edit_failed(self, error_msg):
+        """批量编辑失败回调"""
+        self.debug_logger.log_error(error_msg)
+        ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
+    
     def add_sample_data(self):
         """添加示例数据用于测试"""
         sample_data = [
@@ -533,44 +743,24 @@ class EventManager:
         # 保存当前状态到撤销栈
         self.main_window.save_state_to_undo_stack()
         
+        # 创建并启动事件排序线程
+        self.sort_events_thread = SortEventsThread(self.events_table)
+        self.sort_events_thread.sort_complete.connect(self.on_sort_complete)
+        self.sort_events_thread.sort_failed.connect(self.on_sort_failed)
+        self.sort_events_thread.start()
+    
+    def on_sort_complete(self, sorted_events):
+        """事件排序完成回调"""
         # 开始批量操作
         self.main_window._batch_operation = True
         
         try:
-            # 获取所有事件数据
-            events = []
-            for row in range(self.events_table.rowCount()):
-                event_data = []
-                for col in range(self.events_table.columnCount()):
-                    item = self.events_table.item(row, col)
-                    event_data.append(item.text() if item else "")
-                events.append(event_data)
-            
-            # 按绝对时间排序
-            events.sort(key=lambda x: int(x[7]) if x[7].isdigit() else 0)
-            
             # 清空表格
             self.events_table.setRowCount(0)
             
-            # 重新计算相对时间并插入
-            prev_absolute_time = 0
-            for i, event in enumerate(events):
-                # 获取当前事件的绝对时间
-                current_absolute_time = int(event[7]) if event[7].isdigit() else 0
-                
-                # 计算新的相对时间
-                relative_time = current_absolute_time - prev_absolute_time
-                
-                # 更新事件数据
-                event[0] = str(i + 1)  # 更新行号
-                event[6] = str(relative_time)  # 更新相对时间
-                # 绝对时间保持不变
-                
-                # 插入事件
+            # 插入排序后的事件
+            for event in sorted_events:
                 self.add_table_row(event)
-                
-                # 更新前一个绝对时间为当前绝对时间
-                prev_absolute_time = current_absolute_time
             
             # 更新统计信息
             self.update_stats()
@@ -586,6 +776,11 @@ class EventManager:
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
+    
+    def on_sort_failed(self, error_msg):
+        """事件排序失败回调"""
+        self.debug_logger.log_error(error_msg)
+        ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def recalculate_all_times(self):
         """重新计算所有事件的相对时间和绝对时间"""
@@ -1112,10 +1307,11 @@ class EventManager:
                 # 计算新事件的绝对时间
                 new_absolute_time = prev_absolute_time + relative_time
                 
-                # 插入新行 - 修复：所有事件都插入到同一个位置，因为insertRow会自动下移后续行
-                self.events_table.insertRow(paste_position)
+                # 插入新行 - 修复：每次插入到当前位置，确保事件顺序正确
+                insert_position = paste_position + i
+                self.events_table.insertRow(insert_position)
                 new_row_data = [
-                    str(paste_position + i + 1),  # 行号
+                    str(insert_position + 1),  # 行号
                     event_data[0],  # 事件名称
                     event_data[1],  # 事件类型
                     event_data[2],  # 键码
@@ -1128,7 +1324,7 @@ class EventManager:
                 for col, data in enumerate(new_row_data):
                     item = QTableWidgetItem(str(data))
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                    self.events_table.setItem(paste_position, col, item)
+                    self.events_table.setItem(insert_position, col, item)
                 
                 # 更新前一个事件的绝对时间
                 prev_absolute_time = new_absolute_time

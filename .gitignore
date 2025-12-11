@@ -51,3 +51,6 @@ logo.png.bak
 event_timeline.png
 使用说明.docx
 使用说明.md
+count_chars.py
+count_lines.py
+main_window（重构备份版）.py
