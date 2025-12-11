@@ -1462,6 +1462,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
 
 
+        # 末尾事件操作跳过弹窗开关
+        skip_end_events_action = QAction('末尾事件操作跳过弹窗', self)
+        skip_end_events_action.setCheckable(True)
+        skip_end_events_action.setChecked(True)  # 默认开启
+        skip_end_events_action.triggered.connect(self.set_skip_end_events_prompt)
+        time_logic_menu.addAction(skip_end_events_action)
+        
+        # 保存末尾事件开关的引用
+        self.skip_end_events_action = skip_end_events_action
+
+        
+
         # 保存菜单项引用，用于更新选中状态
 
         self.delete_logic_actions = {
@@ -1638,6 +1650,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         self.debug_logger.log_info(f"粘贴事件逻辑设置为: {logic}")
 
 
+    def set_skip_end_events_prompt(self, checked):
+        """设置末尾事件操作是否跳过弹窗"""
+        self.skip_end_events_prompt = checked
+        self.save_time_logic_settings()
+        status = "开启" if checked else "关闭"
+        self.status_bar.showMessage(f"✅ 末尾事件操作跳过弹窗已{status}")
+        self.debug_logger.log_info(f"末尾事件操作跳过弹窗已设置为: {checked}")
+
+
+    def get_skip_end_events_prompt(self):
+        """获取末尾事件操作是否跳过弹窗的设置"""
+        return getattr(self, 'skip_end_events_prompt', True)
 
 
     def update_time_logic_menu_state(self):
@@ -1662,6 +1686,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             for logic, action in self.paste_logic_actions.items():
 
                 action.setChecked(getattr(self, 'paste_logic', 'prompt') == logic)
+
+        
+        # 更新末尾事件操作跳过弹窗开关状态
+        if hasattr(self, 'skip_end_events_action'):
+            self.skip_end_events_action.setChecked(self.get_skip_end_events_prompt())
 
 
 
@@ -1772,6 +1801,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             settings['delete_logic'] = self.get_delete_logic()
 
             settings['paste_logic'] = self.get_paste_logic()
+            settings['skip_end_events_prompt'] = self.get_skip_end_events_prompt()
 
             
 
@@ -1834,6 +1864,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                 self.delete_logic = settings.get('delete_logic', 'prompt')
 
                 self.paste_logic = settings.get('paste_logic', 'prompt')
+                self.skip_end_events_prompt = settings.get('skip_end_events_prompt', True)
 
                 
 
@@ -1842,7 +1873,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
                 
 
-                self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={self.delete_logic}, 粘贴={self.paste_logic}")
+                self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 跳过末尾事件弹窗={self.skip_end_events_prompt}")
 
                 return True
 
@@ -1853,6 +1884,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
                 self.delete_logic = 'prompt'
 
                 self.paste_logic = 'prompt'
+                self.skip_end_events_prompt = True
 
                 self.debug_logger.log_info("使用默认时间逻辑设置")
 

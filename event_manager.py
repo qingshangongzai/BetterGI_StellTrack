@@ -887,18 +887,37 @@ class EventManager:
             ChineseMessageBox.show_warning(self.main_window, "警告", "请先选择要删除的事件")
             return
         
-        # 获取删除逻辑设置
+        # 获取删除前的表行数和最后一行索引，用于判断是否删除的是末尾事件
+        rows_before_delete = self.events_table.rowCount()
+        last_row_before_delete = rows_before_delete - 1
+        
+        # 找出第一个和最后一个被删除事件的索引
+        selected_row_numbers = [row.row() for row in selected_rows]
+        first_deleted_index = min(selected_row_numbers)
+        last_deleted_index = max(selected_row_numbers)
+        
+        # 检测是否删除的是末尾事件
+        is_deleting_end_events = last_deleted_index == last_row_before_delete
+        
+        # 获取删除逻辑设置和跳过弹窗开关
         delete_logic = self.main_window.get_delete_logic()
+        skip_prompt = self.main_window.get_skip_end_events_prompt()
         time_option = None
         
         # 根据设置决定是否弹出提示
         if delete_logic == 'prompt':
-            # 显示删除选项对话框
-            delete_dialog = DeleteOptionsDialog(self.main_window)
-            if delete_dialog.exec() != QDialog.DialogCode.Accepted:
-                self.debug_logger.log_info("用户取消删除事件")
-                return
-            time_option = delete_dialog.get_time_option()
+            # 如果开关开启且删除的是末尾事件，则跳过弹窗
+            if skip_prompt and is_deleting_end_events:
+                # 直接使用默认设置
+                time_option = "仅修改当前事件时间"
+                self.debug_logger.log_info("删除末尾事件，跳过弹窗，使用默认时间选项")
+            else:
+                # 显示删除选项对话框
+                delete_dialog = DeleteOptionsDialog(self.main_window)
+                if delete_dialog.exec() != QDialog.DialogCode.Accepted:
+                    self.debug_logger.log_info("用户取消删除事件")
+                    return
+                time_option = delete_dialog.get_time_option()
         else:
             # 使用默认设置
             time_option = "仅修改当前事件时间" if delete_logic == 'current' else "修改后重新计算后续事件时间"
@@ -1026,18 +1045,38 @@ class EventManager:
             ChineseMessageBox.show_warning(self.main_window, "警告", "没有可粘贴的事件")
             return
         
-        # 获取粘贴逻辑设置
+        # 获取粘贴位置，用于判断是否粘贴到末尾
+        selected_rows = self.get_selected_event_rows()
+        paste_position = None
+        if selected_rows:
+            # 有选中事件：在第一个选中事件后粘贴
+            paste_position = selected_rows[0].row() + 1
+        else:
+            # 没有选中事件：在最后粘贴
+            paste_position = self.events_table.rowCount()
+        
+        # 判断是否粘贴到末尾
+        is_pasting_to_end = paste_position == self.events_table.rowCount()
+        
+        # 获取粘贴逻辑设置和跳过弹窗开关
         paste_logic = self.main_window.get_paste_logic()
+        skip_prompt = self.main_window.get_skip_end_events_prompt()
         time_option = None
         
         # 根据设置决定是否弹出提示
         if paste_logic == 'prompt':
-            # 显示粘贴选项对话框
-            paste_dialog = PasteOptionsDialog(self.main_window)
-            if paste_dialog.exec() != QDialog.DialogCode.Accepted:
-                self.debug_logger.log_info("用户取消粘贴事件")
-                return
-            time_option = paste_dialog.get_time_option()
+            # 如果开关开启且粘贴到末尾，则跳过弹窗
+            if skip_prompt and is_pasting_to_end:
+                # 直接使用默认设置
+                time_option = "仅修改当前事件时间"
+                self.debug_logger.log_info("粘贴到末尾，跳过弹窗，使用默认时间选项")
+            else:
+                # 显示粘贴选项对话框
+                paste_dialog = PasteOptionsDialog(self.main_window)
+                if paste_dialog.exec() != QDialog.DialogCode.Accepted:
+                    self.debug_logger.log_info("用户取消粘贴事件")
+                    return
+                time_option = paste_dialog.get_time_option()
         else:
             # 使用默认设置
             time_option = "仅修改当前事件时间" if paste_logic == 'current' else "修改后重新计算后续事件时间"
