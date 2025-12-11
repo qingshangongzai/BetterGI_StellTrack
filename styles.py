@@ -304,7 +304,7 @@ COLORS = {
     'bg': "#ffffff",  # 改为纯白色
     'card_bg': "#ffffff",
     'primary': "#66ccff",
-    'primary_hover': "#4db8ff",
+    'primary_hover': "#66ccff",
     'primary_pressed': "#3399ff",
     'secondary': "#ffffff",  # 普通按钮改为纯白色
     'secondary_hover': "#f5f5f5",  # 悬停时略微变灰
@@ -475,16 +475,15 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 6px;
                 background-color: white;
-                gridline-color: {self.COLORS['grid']};
-                font-size: 10px;
+                gridline-color: #f0f0f0;
+                font-size: 11px;
                 outline: none;
                 {self.SHADOWS['medium']}
             }}
             QTableWidget::item {{ 
                 padding: 6px 8px;
                 border: none;
-                border-right: 1px solid {self.COLORS['grid']};
-                border-bottom: 1px solid {self.COLORS['grid']};
+                text-align: center;
             }}
             QTableWidget::item:selected {{ 
                 background-color: {self.COLORS['primary']};
@@ -495,22 +494,24 @@ class UnifiedStyleHelper:
             }}
             QHeaderView::section {{ 
                 background-color: #ffffff;
-                padding: 8px 10px;
+                padding: 4px 10px;
                 border: none;
-                border-right: 1px solid {self.COLORS['border_light']};
-                border-bottom: 2px solid {self.COLORS['border_light']};
+                border-right: 1px solid #e0e0e0;
+                border-bottom: 1px solid #e0e0e0;
                 font-weight: bold;
                 font-size: 10px;
                 color: #333333;
+                text-align: center;
+                min-height: 20px;
             }}
-            QHeaderView::section:checked {{ 
-                background-color: #e6f7ff;
+            QHeaderView::section:last {{ 
+                border-right: none;
             }}
             QTableCornerButton::section {{ 
                 background-color: #ffffff;
                 border: none;
-                border-right: 1px solid {self.COLORS['border_light']};
-                border-bottom: 2px solid {self.COLORS['border_light']};
+                border-right: 1px solid #e0e0e0;
+                border-bottom: 1px solid #e0e0e0;
             }}
         """
     
@@ -603,7 +604,7 @@ class UnifiedStyleHelper:
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 6px;
-                padding: 10px;
+                padding: 6px;
             }}
         """
     
@@ -617,7 +618,7 @@ class UnifiedStyleHelper:
                 color: #d4d4d4;
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 6px;
-                padding: 10px;
+                padding: 6px;
             }}
         """
     
@@ -628,7 +629,7 @@ class UnifiedStyleHelper:
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 4px;
-                padding: 10px;
+                padding: 6px;
                 font-family: SourceHanSerifCN;
                 font-size: 10px;
                 line-height: 1.3;
@@ -871,15 +872,15 @@ class UnifiedStyleHelper:
         """获取分割器样式"""
         return """
             QSplitter::handle {
-                background-color: %s;
+                background-color: transparent;
                 width: 6px;
                 height: 6px;
                 border-radius: 3px;
             }
             QSplitter::handle:hover {
-                background-color: %s;
+                background-color: transparent;
             }
-        """ % (self.COLORS['border'], self.COLORS['primary'])
+        """
     
     def get_search_container_style(self):
         """获取搜索容器样式"""
@@ -1327,7 +1328,7 @@ class StyleHelper:
                 background-color: #ffffff;
                 border: 1px solid {COLORS['border_light']};
                 border-radius: 6px;
-                padding: 10px;
+                padding: 6px;
                 font-family: "SourceHanSerifCN";
                 font-size: 10px;
                 {SHADOWS['small']}

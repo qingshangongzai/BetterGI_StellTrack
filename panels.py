@@ -146,7 +146,7 @@ class SettingsPanel(QWidget):
         # 修复：当值大于60s后就显示min值，小于60s就显示s值
         if total_ms < 1000:
             # 小于1秒，显示毫秒
-            self.total_time_label.setText(f"{total_ms} ms")
+            self.total_time_label.setText(f"{int(total_ms)} ms")
         elif total_ms < 60000:
             # 小于60秒，显示秒
             seconds = total_ms / 1000
@@ -213,7 +213,7 @@ class OperationsPanel(QWidget):
         group = ModernGroupBox("⚡ 操作")
         group_layout = QVBoxLayout(group)
         group_layout.setSpacing(10)
-        group_layout.setContentsMargins(15, 20, 15, 15)
+        group_layout.setContentsMargins(10, 15, 10, 10)
         
         # 按钮布局
         buttons_layout = QVBoxLayout()
@@ -318,7 +318,7 @@ class StatsPanel(QWidget):
         
         group = ModernGroupBox("📊 统计信息")
         group_layout = QVBoxLayout(group)
-        group_layout.setContentsMargins(15, 20, 15, 15)
+        group_layout.setContentsMargins(10, 15, 10, 10)
         
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
@@ -399,9 +399,9 @@ class StatsPanel(QWidget):
                 avg_interval = single_loop_time_ms / (row_count - 1)
             
             # 生成统计信息文本
-            stats_text = f"""═══════════════════════════════════════
+            stats_text = f"""═════════════════
 📊 脚本统计信息
-═══════════════════════════════════════
+═════════════════
 
 🔢 事件统计:
 • 总事件数: {row_count}
