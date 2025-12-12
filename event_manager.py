@@ -12,7 +12,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
 # 导入共享模块
-from styles import StyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox
+from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, generate_key_event_name, SORT_TIP_TEXT, get_event_data_from_table
 from event_dialogs import EventEditDialog, PasteOptionsDialog, DeleteOptionsDialog
 from debug_tools import get_global_debug_logger
@@ -251,7 +251,7 @@ class EventManager:
         """创建事件编辑器"""
         if parent is None:
             parent = QWidget()
-            parent.setStyleSheet(StyleHelper.get_container_bg_style())
+            parent.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
         
         layout = QVBoxLayout(parent)
         layout.setSpacing(12)
@@ -278,14 +278,14 @@ class EventManager:
         """创建搜索和过滤组件"""
         # 创建搜索和过滤区域
         search_container = QWidget()
-        search_container.setStyleSheet(StyleHelper.get_search_container_style())
+        search_container.setStyleSheet(UnifiedStyleHelper.get_instance().get_search_container_style())
         search_layout = QHBoxLayout(search_container)
         search_layout.setSpacing(8)
         search_layout.setContentsMargins(10, 10, 10, 10)
         
         # 搜索标签
         search_label = QLabel("🔍 搜索:")
-        search_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']}; font-size: 12px;")
+        search_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; font-size: 12px;")
         search_layout.addWidget(search_label)
         
         # 搜索输入框
@@ -302,14 +302,14 @@ class EventManager:
         # 搜索按钮
         search_btn = QPushButton("搜索")
         search_btn.setFixedHeight(30)
-        search_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        search_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         search_btn.setFixedWidth(70)
         search_layout.addWidget(search_btn)
         
         # 重置按钮
         reset_btn = QPushButton("重置")
         reset_btn.setFixedHeight(30)
-        reset_btn.setStyleSheet(StyleHelper.get_button_style())
+        reset_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         reset_btn.setFixedWidth(70)
         search_layout.addWidget(reset_btn)
         
@@ -368,11 +368,11 @@ class EventManager:
         for btn in all_buttons:
             btn.setFixedHeight(32)
             btn.setFixedWidth(100)  # 设置统一的固定宽度
-            btn.setStyleSheet(StyleHelper.get_button_style())
+            btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         
         # 设置强调色按钮
-        self.add_event_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
-        self.sort_events_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        self.add_event_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
+        self.sort_events_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         
         # 添加拉伸和按钮，实现居中效果
         buttons_layout.addStretch()
@@ -388,7 +388,7 @@ class EventManager:
         
         # 排序提示
         sort_tip = QLabel(SORT_TIP_TEXT)
-        sort_tip.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
+        sort_tip.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
         sort_tip.setAlignment(Qt.AlignmentFlag.AlignCenter)
         parent_layout.addWidget(sort_tip)
         
@@ -808,6 +808,52 @@ class EventManager:
         self.debug_logger.log_error(error_msg)
         ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
+    def recalculate_relative_times(self):
+        """重新计算所有事件的相对时间，保持绝对时间不变"""
+        if self.events_table.rowCount() < 2:
+            return
+        
+        # 从第二个事件开始，根据绝对时间计算相对时间
+        for i in range(1, self.events_table.rowCount()):
+            # 获取前一个事件的绝对时间
+            prev_abs_time_item = self.events_table.item(i-1, 7)
+            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+            
+            # 获取当前事件的绝对时间
+            curr_abs_time_item = self.events_table.item(i, 7)
+            curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item and curr_abs_time_item.text().isdigit() else 0
+            
+            # 计算并更新相对时间
+            rel_time = curr_abs_time - prev_abs_time
+            rel_time_item = self.events_table.item(i, 6)
+            rel_time_item.setText(str(rel_time))
+    
+    def recalculate_time_from_row(self, start_row):
+        """从指定行开始重新计算时间"""
+        total_rows = self.events_table.rowCount()
+        if total_rows <= start_row:
+            return
+        
+        # 获取前一个事件的绝对时间
+        prev_abs_time = 0
+        if start_row > 0:
+            prev_abs_time_item = self.events_table.item(start_row - 1, 7)
+            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+        
+        # 重新计算后续事件的绝对时间
+        for i in range(start_row, total_rows):
+            # 获取相对时间
+            rel_time_item = self.events_table.item(i, 6)
+            rel_time = int(rel_time_item.text()) if rel_time_item and rel_time_item.text().isdigit() else 0
+            
+            # 计算并更新绝对时间
+            curr_abs_time = prev_abs_time + rel_time
+            abs_time_item = self.events_table.item(i, 7)
+            abs_time_item.setText(str(curr_abs_time))
+            
+            # 更新前一个绝对时间
+            prev_abs_time = curr_abs_time
+    
     def recalculate_all_times(self):
         """重新计算所有事件的相对时间和绝对时间"""
         if self.events_table.rowCount() == 0:
@@ -815,74 +861,11 @@ class EventManager:
         
         # 第一个事件的绝对时间为0
         first_abs_time_item = self.events_table.item(0, 7)
-        first_abs_time_item.setText("0")
+        if first_abs_time_item:
+            first_abs_time_item.setText("0")
         
-        # 从第二个事件开始，根据相对时间重新计算绝对时间
-        prev_abs_time = 0
-        for i in range(1, self.events_table.rowCount()):
-            # 获取相对时间
-            rel_time_item = self.events_table.item(i, 6)
-            rel_time = int(rel_time_item.text()) if rel_time_item.text().isdigit() else 0
-            
-            # 计算当前事件的绝对时间
-            curr_abs_time = prev_abs_time + rel_time
-            
-            # 更新绝对时间
-            abs_time_item = self.events_table.item(i, 7)
-            abs_time_item.setText(str(curr_abs_time))
-            
-            # 更新前一个绝对时间
-            prev_abs_time = curr_abs_time
-    
-    def recalculate_relative_times(self):
-        """重新计算所有事件的相对时间，保持绝对时间不变"""
-        if self.events_table.rowCount() == 0:
-            return
-        
-        # 从第二个事件开始，根据绝对时间计算相对时间
-        for i in range(1, self.events_table.rowCount()):
-            # 获取前一个事件的绝对时间
-            prev_abs_time_item = self.events_table.item(i-1, 7)
-            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item.text().isdigit() else 0
-            
-            # 获取当前事件的绝对时间
-            curr_abs_time_item = self.events_table.item(i, 7)
-            curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item.text().isdigit() else 0
-            
-            # 计算相对时间
-            rel_time = curr_abs_time - prev_abs_time
-            
-            # 更新相对时间
-            rel_time_item = self.events_table.item(i, 6)
-            rel_time_item.setText(str(rel_time))
-    
-    def recalculate_time_from_row(self, start_row):
-        """从指定行开始重新计算时间"""
-        if self.events_table.rowCount() <= start_row:
-            return
-        
-        # 获取前一个事件的绝对时间
-        if start_row == 0:
-            prev_abs_time = 0
-        else:
-            prev_abs_time_item = self.events_table.item(start_row - 1, 7)
-            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item.text().isdigit() else 0
-        
-        # 重新计算后续事件的绝对时间
-        for i in range(start_row, self.events_table.rowCount()):
-            # 获取相对时间
-            rel_time_item = self.events_table.item(i, 6)
-            rel_time = int(rel_time_item.text()) if rel_time_item.text().isdigit() else 0
-            
-            # 计算当前事件的绝对时间
-            curr_abs_time = prev_abs_time + rel_time
-            
-            # 更新绝对时间
-            abs_time_item = self.events_table.item(i, 7)
-            abs_time_item.setText(str(curr_abs_time))
-            
-            # 更新前一个绝对时间
-            prev_abs_time = curr_abs_time
+        # 从第二个事件开始重新计算
+        self.recalculate_time_from_row(1)
     
     def get_selected_event_rows(self):
         """获取选中的事件行"""
@@ -898,6 +881,47 @@ class EventManager:
                 item = QTableWidgetItem(str(row + 1))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.events_table.setItem(row, 0, item)
+    
+    def get_prev_absolute_time(self, current_row):
+        """获取当前行前一个事件的绝对时间"""
+        if current_row == 0:
+            return 0
+        prev_item = self.events_table.item(current_row - 1, 7)
+        return int(prev_item.text()) if prev_item and prev_item.text().isdigit() else 0
+    
+    def get_next_absolute_time(self, current_row):
+        """获取当前行后一个事件的绝对时间"""
+        total_rows = self.events_table.rowCount()
+        if current_row >= total_rows - 1:
+            return None
+        next_item = self.events_table.item(current_row + 1, 7)
+        return int(next_item.text()) if next_item and next_item.text().isdigit() else None
+    
+    def adjust_next_event_relative_time(self, current_row, new_current_absolute_time):
+        """调整当前行后一个事件的相对时间"""
+        next_absolute_time = self.get_next_absolute_time(current_row)
+        if next_absolute_time is not None:
+            next_row = current_row + 1
+            new_relative_time = next_absolute_time - new_current_absolute_time
+            rel_time_item = self.events_table.item(next_row, 6)
+            if rel_time_item:
+                rel_time_item.setText(str(new_relative_time))
+            else:
+                # 如果不存在，创建新的相对时间项
+                new_rel_item = QTableWidgetItem(str(new_relative_time))
+                new_rel_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.events_table.setItem(next_row, 6, new_rel_item)
+    
+    def get_event_absolute_time(self, row):
+        """获取指定行事件的绝对时间"""
+        abs_time_item = self.events_table.item(row, 7)
+        return int(abs_time_item.text()) if abs_time_item and abs_time_item.text().isdigit() else 0
+    
+    def update_app_state(self):
+        """更新应用状态"""
+        self.update_stats()
+        self.main_window.mark_state_dirty()
+        self.main_window.on_calculate_total_time()
     
     def on_add_event(self):
         """添加事件 - 在指定位置插入"""
@@ -937,18 +961,7 @@ class EventManager:
                     time_option = dialog.get_time_option()
                     
                     # 获取前一个事件的绝对时间
-                    if insert_position == 0:
-                        prev_absolute_time = 0
-                    else:
-                        prev_item = self.events_table.item(insert_position - 1, 7)  # 绝对偏移列
-                        prev_absolute_time = int(prev_item.text()) if prev_item and prev_item.text().isdigit() else 0
-                    
-                    # 获取下一个事件的绝对时间（如果存在）
-                    next_absolute_time = None
-                    if insert_position < self.events_table.rowCount():
-                        next_item = self.events_table.item(insert_position, 7)  # 绝对偏移列
-                        if next_item and next_item.text().isdigit():
-                            next_absolute_time = int(next_item.text())
+                    prev_absolute_time = self.get_prev_absolute_time(insert_position)
                     
                     # 获取新事件的相对时间
                     relative_time = int(event_data[5]) if event_data[5] else 100
@@ -979,26 +992,15 @@ class EventManager:
                     
                     # 根据时间修改选项调整后续事件
                     if time_option == "仅修改当前事件时间":
-                        if next_absolute_time is not None:
-                            # 调整下一个事件的相对时间
-                            next_relative_time = next_absolute_time - new_absolute_time
-                            next_item = self.events_table.item(insert_position + 1, 6)  # 相对偏移列
-                            if next_item:
-                                next_item.setText(str(next_relative_time))
+                        self.adjust_next_event_relative_time(insert_position, new_absolute_time)
                     else:  # 修改后重新计算后续事件时间
-                        # 重新计算后续所有事件的绝对时间
                         self.recalculate_time_from_row(insert_position + 1)
                     
-                    self.update_stats()
-                    
-                    # 标记状态变更
-                    self.main_window.mark_state_dirty()
+                    # 更新应用状态
+                    self.update_app_state()
                     
                     self.main_window.status_bar.showMessage("✅ 已添加新事件")
                     self.debug_logger.log_info(f"已添加新事件: {event_data[0]}")
-                    
-                    # 立即更新预计总时间
-                    self.main_window.on_calculate_total_time()
             finally:
                 # 结束批量操作
                 self.main_window._batch_operation = False
@@ -1037,60 +1039,37 @@ class EventManager:
                     new_event_data = dialog.get_event_data()
                     time_option = dialog.get_time_option()
                     
-                    # 1. 获取前一个事件的绝对时间
-                    if row == 0:
-                        prev_absolute_time = 0
-                    else:
-                        prev_item = self.events_table.item(row - 1, 7)  # 绝对偏移列
-                        prev_absolute_time = int(prev_item.text()) if prev_item and prev_item.text().isdigit() else 0
+                    # 获取前一个事件的绝对时间
+                    prev_absolute_time = self.get_prev_absolute_time(row)
                     
-                    # 2. 获取下一个事件的绝对时间（如果存在）
-                    next_absolute_time = None
-                    if row + 1 < self.events_table.rowCount():
-                        next_item = self.events_table.item(row + 1, 7)  # 绝对偏移列
-                        if next_item and next_item.text().isdigit():
-                            next_absolute_time = int(next_item.text())
-                    
-                    # 3. 获取编辑后事件的相对时间
+                    # 获取编辑后事件的相对时间
                     relative_time = int(new_event_data[5]) if new_event_data[5] else 100
                     
-                    # 4. 计算编辑后事件的绝对时间
+                    # 计算编辑后事件的绝对时间
                     current_absolute_time = prev_absolute_time + relative_time
                     
-                    # 5. 更新当前事件的数据（跳过绝对时间列）
+                    # 更新当前事件的数据（跳过绝对时间列）
                     for col in range(1, 7):  # 只更新1-6列
                         item = QTableWidgetItem(new_event_data[col-1])
                         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                         self.events_table.setItem(row, col, item)
                     
-                    # 6. 更新当前事件的绝对时间
+                    # 更新当前事件的绝对时间
                     absolute_item = QTableWidgetItem(str(current_absolute_time))
                     absolute_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.events_table.setItem(row, 7, absolute_item)
                     
-                    # 7. 根据时间修改选项调整后续事件
+                    # 根据时间修改选项调整后续事件
                     if time_option == "仅修改当前事件时间":
-                        if next_absolute_time is not None:
-                            # 调整下一个事件的相对时间
-                            next_relative_time = next_absolute_time - current_absolute_time
-                            # 修复：正确创建和设置下一个事件的相对时间项
-                            next_relative_item = QTableWidgetItem(str(next_relative_time))
-                            next_relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                            self.events_table.setItem(row + 1, 6, next_relative_item)
+                        self.adjust_next_event_relative_time(row, current_absolute_time)
                     else:  # 修改后重新计算后续事件时间
-                        # 重新计算后续所有事件的绝对时间
                         self.recalculate_time_from_row(row + 1)
                     
-                    self.update_stats()
-                    
-                    # 标记状态变更
-                    self.main_window.mark_state_dirty()
+                    # 更新应用状态
+                    self.update_app_state()
                     
                     self.main_window.status_bar.showMessage(f"✅ 已编辑事件: 第{row + 1}行")
                     self.debug_logger.log_info(f"已编辑事件: 第{row + 1}行 - {new_event_data[0]}")
-                    
-                    # 立即更新预计总时间
-                    self.main_window.on_calculate_total_time()
             finally:
                 # 结束批量操作
                 self.main_window._batch_operation = False

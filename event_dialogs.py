@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
 
 # 导入共享模块
-from styles import StyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog
+from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog
 from styles import ChineseMessageBox, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING
 # 导入资源管理器（从utils模块）
@@ -39,7 +39,7 @@ class SimpleCoordinateCapture(QDialog):
         # 创建图片显示标签
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setStyleSheet(StyleHelper.get_coordinate_capture_label_style())
+        self.image_label.setStyleSheet(UnifiedStyleHelper.get_instance().get_coordinate_capture_label_style())
         layout.addWidget(self.image_label)
         
         # 加载图片
@@ -62,7 +62,7 @@ class SimpleCoordinateCapture(QDialog):
             
         # 坐标显示标签
         self.coord_label = QLabel("移动鼠标选择坐标，点击左键确认，右键或ESC取消")
-        self.coord_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 12px; padding: 10px;")
+        self.coord_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 12px; padding: 10px;")
         self.coord_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.coord_label)
         
@@ -168,7 +168,7 @@ class EventEditDialog(StyledDialog):
             self.setMinimumSize(550, 650)
             
             # 设置背景样式
-            self.setStyleSheet(StyleHelper.get_dialog_bg_style())
+            self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             self.setup_ui()
             self.setup_connections()
@@ -237,7 +237,7 @@ class EventEditDialog(StyledDialog):
         
         # 捕获状态
         self.capture_status = QLabel("就绪")
-        self.capture_status.setStyleSheet(StyleHelper.get_capture_status_style())
+        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_style())
         keycode_row.addWidget(self.capture_status)
         
         keycode_row.addStretch()
@@ -245,7 +245,7 @@ class EventEditDialog(StyledDialog):
         
         # 常用按键快速选择
         quick_keys_label = QLabel("常用按键:")
-        quick_keys_label.setStyleSheet(StyleHelper.get_quick_keys_label_style())
+        quick_keys_label.setStyleSheet(UnifiedStyleHelper.get_instance().get_quick_keys_label_style())
         keycode_layout.addWidget(quick_keys_label)
         
         # 常用按键 - 分两行显示，统一宽度
@@ -410,7 +410,7 @@ class EventEditDialog(StyledDialog):
         
         # 绝对偏移时间信息
         absolute_time_info = QLabel("绝对偏移时间将根据相对偏移自动计算")
-        absolute_time_info.setStyleSheet(StyleHelper.get_absolute_time_info_style())
+        absolute_time_info.setStyleSheet(UnifiedStyleHelper.get_instance().get_absolute_time_info_style())
         time_layout.addWidget(absolute_time_info, 3, 0, 1, 2)
         
         layout.addWidget(time_group)
@@ -423,7 +423,7 @@ class EventEditDialog(StyledDialog):
             
             # 插入位置显示
             self.insert_position_label = QLabel("将在最后添加事件")
-            self.insert_position_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px;")
+            self.insert_position_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px;")
             insert_info_layout.addWidget(self.insert_position_label)
             
             layout.addWidget(insert_info_group)
@@ -591,7 +591,7 @@ class EventEditDialog(StyledDialog):
         self.key_capture_active = True
         self.capture_btn.setText("取消捕获")
         self.capture_status.setText("等待按键...")
-        self.capture_status.setStyleSheet(StyleHelper.get_capture_status_active_style())
+        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_active_style())
         
         # 设置焦点以便捕获按键
         self.setFocus()
@@ -601,7 +601,7 @@ class EventEditDialog(StyledDialog):
         self.key_capture_active = False
         self.capture_btn.setText("按键捕获")
         self.capture_status.setText("已取消")
-        self.capture_status.setStyleSheet(StyleHelper.get_capture_status_inactive_style())
+        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_inactive_style())
 
     def on_common_key_clicked(self):
         """常用按键点击"""
@@ -693,7 +693,7 @@ class EventEditDialog(StyledDialog):
             
             # 更新状态
             self.capture_status.setText(f"已捕获: {key_name_cn}")
-            self.capture_status.setStyleSheet(f"color: {StyleHelper.COLORS['success']};")
+            self.capture_status.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['success']};")
             
             # 结束捕获状态
             self.key_capture_active = False
@@ -716,7 +716,7 @@ class EventEditDialog(StyledDialog):
             else:
                 # 在指定位置插入
                 self.insert_position_label.setText(f"将在事件 {insert_position} 处插入新事件")
-            self.insert_position_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; font-size: 10px;")
+            self.insert_position_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 10px;")
 
 # =============================================================================
 # 粘贴选项对话框
@@ -733,7 +733,7 @@ class PasteOptionsDialog(QDialog):
         """设置UI界面"""
         self.setWindowTitle("粘贴选项")
         self.setMinimumWidth(400)
-        self.setStyleSheet(StyleHelper.get_event_dialog_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())
         
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
@@ -741,7 +741,7 @@ class PasteOptionsDialog(QDialog):
         
         # 标题
         title_label = QLabel("请选择粘贴选项")
-        title_label.setStyleSheet(f"font-weight: bold; color: {StyleHelper.COLORS['primary']}; font-size: 14px;")
+        title_label.setStyleSheet(f"font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 14px;")
         layout.addWidget(title_label)
         
         # 时间修改选项
@@ -766,7 +766,7 @@ class PasteOptionsDialog(QDialog):
   在粘贴位置之后的事件的时间都要重新计算
   例如：第1s和第3s之间插入事件，第3s的事件延后执行""")
         explanation.setMaximumHeight(180)
-        explanation.setStyleSheet(StyleHelper.get_explanation_text_edit_style())
+        explanation.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
         layout.addWidget(explanation)
         
         # 使用DialogFactory创建确定和取消按钮布局
@@ -803,7 +803,7 @@ class DeleteOptionsDialog(QDialog):
         """设置UI界面"""
         self.setWindowTitle("删除选项")
         self.setMinimumWidth(400)
-        self.setStyleSheet(StyleHelper.get_event_dialog_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())
         
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
@@ -811,7 +811,7 @@ class DeleteOptionsDialog(QDialog):
         
         # 标题
         title_label = QLabel("请选择删除选项")
-        title_label.setStyleSheet(f"font-weight: bold; color: {StyleHelper.COLORS['primary']}; font-size: 14px;")
+        title_label.setStyleSheet(f"font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 14px;")
         layout.addWidget(title_label)
         
         # 时间修改选项
@@ -836,7 +836,7 @@ class DeleteOptionsDialog(QDialog):
   删除事件后，重新计算后续所有事件的绝对时间
   保持每个事件的相对时间不变，确保时间连续性""")
         explanation.setMaximumHeight(180)
-        explanation.setStyleSheet(StyleHelper.get_explanation_text_edit_style())
+        explanation.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
         layout.addWidget(explanation)
         
         # 使用DialogFactory创建确定和取消按钮布局

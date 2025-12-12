@@ -1049,6 +1049,264 @@ class UnifiedStyleHelper:
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed']
         )
+    
+    def get_centered_combobox_listview_style(self):
+        """获取居中组合框列表视图样式"""
+        return f"""
+            QListView {{ 
+                background-color: {self.COLORS['card_bg']}; 
+                color: {self.COLORS['text']}; 
+                font-family: "SourceHanSerifCN";
+                font-size: 11px;
+                outline: none;
+                show-decoration-selected: 0;
+            }}
+            QListView::item {{ 
+                padding: 8px;
+                text-align: center;
+                border: none;
+            }}
+            QListView::item:selected {{ 
+                background-color: {self.COLORS['primary']}; 
+                color: white;
+            }}
+        """
+    
+    def set_smiley_font(self, widget, size=12, weight=QFont.Weight.Normal):
+        """为组件设置得意黑字体"""
+        font_manager = get_global_font_manager()
+        if font_manager.is_smiley_font_available():
+            widget.setFont(font_manager.get_smiley_font(size, weight))
+        else:
+            widget.setFont(QFont("sans-serif", size, weight))
+    
+    def set_source_han_font(self, widget, size=12, weight=QFont.Weight.Normal):
+        """为组件设置思源宋体字体"""
+        font_manager = get_global_font_manager()
+        widget.setFont(font_manager.get_source_han_font(size, weight))
+    
+    def get_time_offset_spin_box_style(self):
+        """获取时间偏移输入框样式"""
+        return f"""
+            QSpinBox {{
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 6px;
+                padding: 6px 8px;
+                background-color: white;
+                font-family: "SourceHanSerifCN";
+                font-size: 11px;
+                selection-background-color: {self.COLORS['primary']};
+                text-align: center;
+                {self.SHADOWS['small']}
+                min-height: 20px;
+                max-height: 20px;
+            }}
+            QSpinBox:focus {{
+                border-color: {self.COLORS['primary']};
+                background-color: #fafafa;
+                border-width: 1.5px;
+            }}
+            QSpinBox:hover {{
+                border-color: #a0a0a0;
+                background-color: #fafafa;
+            }}
+            QSpinBox::up-button {{
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-top-right-radius: 5px;
+                background-color: transparent;
+                margin: 1px 1px 0px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::up-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::up-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+            QSpinBox::down-button {{
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-bottom-right-radius: 5px;
+                background-color: transparent;
+                margin: 0px 1px 1px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::down-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::down-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+        """
+    
+    def get_explanation_text_edit_style(self):
+        """获取说明文本编辑器样式"""
+        return f"""
+            QTextEdit {{
+                background-color: #ffffff;
+                border: 1px solid {self.COLORS['border_light']};
+                border-radius: 6px;
+                padding: 6px;
+                font-family: "SourceHanSerifCN";
+                font-size: 10px;
+                {self.SHADOWS['small']}
+            }}
+        """
+    
+    def get_event_dialog_style(self):
+        """获取事件对话框样式"""
+        return f"""
+            QDialog {{ 
+                background-color: {self.COLORS['bg']}; 
+            }}
+        """
+    
+    def get_absolute_time_info_style(self):
+        """获取绝对时间信息标签样式"""
+        return f"color: {self.COLORS['text_secondary']}; font-size: 9px;"
+    
+    def get_capture_status_active_style(self):
+        """获取捕获状态激活样式"""
+        return f"color: {self.COLORS['primary']};"
+    
+    def get_capture_status_inactive_style(self):
+        """获取捕获状态非激活样式"""
+        return f"color: {self.COLORS['text_secondary']};"
+    
+    def get_capture_status_bold_style(self):
+        """获取捕获状态加粗样式"""
+        return f"color: {self.COLORS['primary']}; font-weight: bold;"
+    
+    def setup_global_style(self, app):
+        """设置全局样式"""
+        from PyQt6.QtWidgets import QApplication
+        
+        # 设置全局字体 - 使用SourceHanSerifCN字体
+        font_manager = get_global_font_manager()
+        q_app = QApplication.instance()
+        if q_app:
+            # 使用SourceHanSerifCN字体作为全局默认字体
+            q_app.setFont(font_manager.get_source_han_font(9))
+        
+        # 获取滚动条样式
+        scroll_bar_style = self.get_scroll_bar_style()
+        
+        # 设置应用程序样式表
+        # 尝试直接在QApplication实例上设置样式表
+        if hasattr(q_app, 'setStyleSheet'):
+            q_app.setStyleSheet(f"""
+                QMainWindow {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QDialog {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QWidget {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QGroupBox {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QMenuBar {{
+                    background-color: {self.COLORS['bg']};
+                    border: none;
+                    padding: 4px;
+                }}
+                QMenuBar::item {{
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }}
+                QMenuBar::item:selected {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                QMenu {{ 
+                    background-color: {self.COLORS['bg']};
+                    border: 1px solid {self.COLORS['border']};
+                    border-radius: 4px;
+                    padding: 4px;
+                    {self.SHADOWS['small']}
+                }}
+                QMenu::item {{
+                    padding: 4px 16px;
+                    border-radius: 4px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                QAction::hover {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                
+                /* 滚动条样式 */
+                {scroll_bar_style}
+            """)
+        # 如果QApplication实例不可用，尝试在传入的app对象上设置
+        elif hasattr(app, 'setStyleSheet'):
+            app.setStyleSheet(f"""
+                QMainWindow {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QDialog {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QWidget {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QGroupBox {{
+                    background-color: {self.COLORS['bg']};
+                }}
+                QMenuBar {{
+                    background-color: {self.COLORS['bg']};
+                    border: none;
+                    padding: 4px;
+                }}
+                QMenuBar::item {{
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }}
+                QMenuBar::item:selected {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                QMenu {{ 
+                    background-color: {self.COLORS['bg']};
+                    border: 1px solid {self.COLORS['border']};
+                    border-radius: 4px;
+                    padding: 4px;
+                    {self.SHADOWS['small']}
+                }}
+                QMenu::item {{
+                    padding: 4px 16px;
+                    border-radius: 4px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                QAction::hover {{
+                    background-color: {self.COLORS['primary_hover']};
+                    color: white;
+                }}
+                
+                /* 滚动条样式 */
+                {scroll_bar_style}
+            """)
 
 # 保持向后兼容性的StyleHelper类
 class StyleHelper:
@@ -1175,37 +1433,14 @@ class StyleHelper:
         return UnifiedStyleHelper.get_instance().get_text_browser_style()
     
     @staticmethod
-    def get_status_bar_style():
-        """获取状态栏样式"""
-        # 使用系统默认字体，避免硬编码字体名称
-        return f"""
-            QStatusBar {{ 
-                background-color: #ffffff;
-                color: {COLORS['text']};
-                border-top: 1px solid {COLORS['border']};
-                font-size: 10px;
-            }}
-        """
-    
-    @staticmethod
     def set_smiley_font(widget, size=12, weight=QFont.Weight.Normal):
         """为组件设置得意黑字体"""
-        font_manager = get_global_font_manager()
-        if font_manager.is_smiley_font_available():
-            widget.setFont(font_manager.get_smiley_font(size, weight))
-        else:
-            widget.setFont(QFont("sans-serif", size, weight))
+        return UnifiedStyleHelper.get_instance().set_smiley_font(widget, size, weight)
     
     @staticmethod
     def set_source_han_font(widget, size=12, weight=QFont.Weight.Normal):
         """为组件设置思源宋体字体"""
-        font_manager = get_global_font_manager()
-        widget.setFont(font_manager.get_source_han_font(size, weight))
-
-    @staticmethod
-    def get_text_browser_style():
-        """获取文本浏览器样式"""
-        return UnifiedStyleHelper.get_instance().get_text_browser_style()
+        return UnifiedStyleHelper.get_instance().set_source_han_font(widget, size, weight)
     
     @staticmethod
     def get_spin_box_style():

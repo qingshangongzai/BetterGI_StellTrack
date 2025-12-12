@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QDesktopServices, QFontDatabase
 
 # 导入共享模块
-from styles import StyleHelper, get_global_font_manager
+from styles import UnifiedStyleHelper, get_global_font_manager
 from styles import ChineseMessageBox, DialogFactory
 from user_agreement import load_user_agreement_html
 # 导入调试工具模块
@@ -50,7 +50,7 @@ class UserAgreementWindow(StyledMainWindow):
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"color: {StyleHelper.COLORS['border']};")
+        separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         main_layout.addWidget(separator)
         
         # 创建协议内容区域
@@ -70,7 +70,7 @@ class UserAgreementWindow(StyledMainWindow):
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            StyleHelper.set_smiley_font(logo_label, 20)  # 使用StyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
         header_layout.addWidget(logo_label)
         
         # 标题区域
@@ -78,8 +78,8 @@ class UserAgreementWindow(StyledMainWindow):
         
         # 中文标题 - 使用得意黑字体
         title_label = QLabel("用户服务协议与免责声明")
-        StyleHelper.set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
         title_layout.addWidget(title_label)
         
         # 副标题
@@ -87,7 +87,7 @@ class UserAgreementWindow(StyledMainWindow):
         from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         subtitle_label.setFont(font_manager.get_source_han_font(11))
-        subtitle_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+        subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         title_layout.addWidget(subtitle_label)
         
         header_layout.addLayout(title_layout)
@@ -100,7 +100,7 @@ class UserAgreementWindow(StyledMainWindow):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(StyleHelper.get_agreement_browser_style())
+        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -173,7 +173,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"color: {StyleHelper.COLORS['border']};")
+        separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         main_layout.addWidget(separator)
         
         # 创建信息区域
@@ -208,7 +208,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            StyleHelper.set_smiley_font(logo_label, 20)  # 使用StyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
         header_layout.addWidget(logo_label)
         
         # 标题区域
@@ -217,20 +217,20 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         
         # 中文标题 - 使用得意黑字体
         title_label = QLabel("BetterGI 星轨")
-        StyleHelper.set_smiley_font(title_label, 24, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-bottom: 0px;")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 24, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 0px;")
         title_layout.addWidget(title_label)
         
         # 英文标题 - 使用得意黑字体
         english_title = QLabel("BetterGI StellTrack")
-        StyleHelper.set_smiley_font(english_title, 12)  # 使用StyleHelper统一设置字体
-        english_title.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-top: 0px; margin-bottom: 0px;")
+        UnifiedStyleHelper.get_instance().set_smiley_font(english_title, 12)  # 使用UnifiedStyleHelper统一设置字体
+        english_title.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-top: 0px; margin-bottom: 0px;")
         title_layout.addWidget(english_title)
         
         # 版本信息 - 使用得意黑字体
         version_label = QLabel(f"版本 {self.version}")
-        StyleHelper.set_smiley_font(version_label, 10, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-        version_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']}; margin-top: 0px;")
+        UnifiedStyleHelper.get_instance().set_smiley_font(version_label, 10, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-top: 0px;")
         title_layout.addWidget(version_label)
         
         header_layout.addLayout(title_layout)
@@ -242,7 +242,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
             QLabel {{
                 font-family: "SourceHanSerifCN";
                 font-size: 12px;
-                color: {StyleHelper.COLORS['text_secondary']};
+                color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']};
                 font-style: italic;
                 margin-right: 15px;
                 background-color: transparent;
@@ -257,7 +257,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         # 创建纯文本编辑器
         self.info_edit = QPlainTextEdit()
         self.info_edit.setReadOnly(True)
-        self.info_edit.setStyleSheet(StyleHelper.get_info_edit_style())
+        self.info_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_info_edit_style())
         
         # 设置信息内容
         self.set_info_content()
@@ -311,7 +311,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         button.setFont(font_manager.get_source_han_font(9))
         button.setMinimumHeight(32)
         button.setMinimumWidth(90)  # 设置最小宽度确保按钮大小一致
-        button.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         return button
     
     def create_copyright(self, parent_layout):
@@ -328,7 +328,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         copyright_text.setFont(font_manager.get_source_han_font(8))
-        copyright_text.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']};")
+        copyright_text.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']};")
         
         copyright_layout.addWidget(copyright_text)
         parent_layout.addLayout(copyright_layout)

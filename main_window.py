@@ -26,7 +26,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 # 导入共享模块
 
 
-from styles import StyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog
+from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog
 
 from styles import WindowIconMixin, DialogFactory
 
@@ -116,7 +116,7 @@ class BatchEditDialog(StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(450, 400)  # 调整窗口大小，高度增加50px
+        self.setFixedSize(650, 400)  # 调整窗口大小，宽度增加200px，高度保持不变
 
         
 
@@ -134,9 +134,9 @@ class BatchEditDialog(StyledDialog):
 
         title_label = QLabel("批量编辑事件")
 
-        StyleHelper.set_smiley_font(title_label, 16, QFont.Weight.Bold)
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
 
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-bottom: 10px;")
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 10px;")
 
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -158,52 +158,46 @@ class BatchEditDialog(StyledDialog):
         
 
 
+        # 设置统一的输入框宽度
+        input_width = 120
+        
         # 1. 增减偏移时间
-        offset_label = QLabel("增减偏移时间:")
+        offset_label = QLabel("增减绝对时间:")
         offset_label.setFixedWidth(120)
-        self.offset_input = ModernLineEdit()
-        self.offset_input.setText("0")
-        self.offset_input.setFixedWidth(100)
+        self.offset_input = ModernDoubleSpinBox()
+        self.offset_input.setMinimum(-999999)
+        self.offset_input.setMaximum(999999)
+        self.offset_input.setValue(0)
+        self.offset_input.setDecimals(0)
+        self.offset_input.setSingleStep(100) 
+        self.offset_input.setFixedWidth(input_width)
 
         offset_label_unit = QLabel("ms")
         offset_label_unit.setFixedWidth(20)
         offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        
-
-
         operation_layout.addWidget(offset_label, 0, 0)
-
         operation_layout.addWidget(self.offset_input, 0, 1)
-
         operation_layout.addWidget(offset_label_unit, 0, 2)
-
-        operation_layout.setColumnStretch(3, 1)
-
-        
-
 
         # 2. 统一相对时间
         rel_time_label = QLabel("统一相对时间:")
         rel_time_label.setFixedWidth(120)
-        self.rel_time_input = ModernLineEdit()
-        self.rel_time_input.setText("0")
-        self.rel_time_input.setFixedWidth(100)
+        self.rel_time_input = ModernDoubleSpinBox()
+        self.rel_time_input.setMinimum(0)
+        self.rel_time_input.setMaximum(999999)
+        self.rel_time_input.setValue(0)
+        self.rel_time_input.setDecimals(0)
+        self.rel_time_input.setSingleStep(100) 
+        self.rel_time_input.setFixedWidth(input_width)
 
         rel_time_label_unit = QLabel("ms")
         rel_time_label_unit.setFixedWidth(20)
         rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        
-
-
         operation_layout.addWidget(rel_time_label, 1, 0)
-
         operation_layout.addWidget(self.rel_time_input, 1, 1)
-
         operation_layout.addWidget(rel_time_label_unit, 1, 2)
-
-        operation_layout.setColumnStretch(3, 1)
 
         
 
@@ -233,7 +227,7 @@ class BatchEditDialog(StyledDialog):
         # 添加具体按键事件到old_type_combo，只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.old_type_combo.addItem(event_name)
-        self.old_type_combo.setFixedWidth(100)  # 恢复原始宽度
+        self.old_type_combo.setFixedWidth(input_width)
 
         type_arrow_label = QLabel("→")
         type_arrow_label.setFixedWidth(20)
@@ -244,57 +238,70 @@ class BatchEditDialog(StyledDialog):
         # 添加具体按键事件到new_type_combo，只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.new_type_combo.addItem(event_name)
-        self.new_type_combo.setFixedWidth(100)  # 恢复原始宽度
-
-        
+        self.new_type_combo.setFixedWidth(input_width)
 
         operation_layout.addWidget(QLabel("事件类型替换:"), 2, 0)
-
         operation_layout.addWidget(self.old_type_combo, 2, 1)
-
         operation_layout.addWidget(type_arrow_label, 2, 2)
         operation_layout.addWidget(self.new_type_combo, 2, 3)
         
         # 4. 统一坐标（带开关）
-        self.unified_coords_checkbox = QCheckBox("统一坐标")
+        # 清除之前的所有组件，重新设计布局
         
-        # 创建统一坐标的水平布局
-        coords_layout = QHBoxLayout()
-        coords_layout.addWidget(self.unified_coords_checkbox)
-        coords_layout.addSpacing(10)
+        # 创建水平布局来容纳统一坐标的所有组件
+        unified_coords_layout = QHBoxLayout()
+        unified_coords_layout.setContentsMargins(0, 0, 0, 0)
+        unified_coords_layout.setSpacing(10)
         
-        # x坐标部分
-        x_layout = QHBoxLayout()
+        # 1. 统一坐标复选框
+        self.unified_coords_checkbox = QCheckBox()
+        unified_coords_layout.addWidget(self.unified_coords_checkbox)
+        
+        # 2. 统一坐标标签
+        unified_label = QLabel("统一坐标:")
+        unified_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        unified_coords_layout.addWidget(unified_label)
+        
+        # 3. 空白间距
+        unified_coords_layout.addSpacing(10)
+        
+        # 4. x坐标标签
         x_label = QLabel("x坐标:")
-        x_label.setFixedWidth(50)
+        x_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        unified_coords_layout.addWidget(x_label)
+        
+        # 5. x坐标输入框
         self.x_input = ModernLineEdit()
         self.x_input.setText("0")
-        self.x_input.setFixedWidth(80)
-        x_layout.addWidget(x_label)
-        x_layout.addWidget(self.x_input)
-        coords_layout.addLayout(x_layout)
-        coords_layout.addSpacing(15)
+        self.x_input.setFixedWidth(input_width)
+        unified_coords_layout.addWidget(self.x_input)
         
-        # y坐标部分
-        y_layout = QHBoxLayout()
+        # 6. 空白间距
+        unified_coords_layout.addSpacing(20)
+        
+        # 7. y坐标标签
         y_label = QLabel("y坐标:")
-        y_label.setFixedWidth(50)
+        y_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        unified_coords_layout.addWidget(y_label)
+        
+        # 8. y坐标输入框
         self.y_input = ModernLineEdit()
         self.y_input.setText("0")
-        self.y_input.setFixedWidth(80)
-        y_layout.addWidget(y_label)
-        y_layout.addWidget(self.y_input)
-        coords_layout.addLayout(y_layout)
+        self.y_input.setFixedWidth(input_width)
+        unified_coords_layout.addWidget(self.y_input)
         
-        # 将统一坐标布局添加到操作布局
-        operation_layout.addLayout(coords_layout, 3, 0, 1, 5)
+        # 9. 拉伸空间
+        unified_coords_layout.addStretch()
+        
+        # 将整个水平布局添加到GridLayout中
+        operation_layout.addLayout(unified_coords_layout, 3, 0, 1, 5, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         # 将操作选项组添加到主布局
         layout.addWidget(operation_group)
 
         # 添加提示信息
         hint_label = QLabel("💡 提示：按键事件替换支持将事件列表中已有的按键事件替换为另一个已有的按键事件")
-        hint_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
+        hint_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
         hint_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(hint_label)
 
@@ -328,10 +335,8 @@ class BatchEditDialog(StyledDialog):
     def get_offset_adjustment(self):
 
         """获取偏移调整值"""
-        try:
-            return int(self.offset_input.text())
-        except ValueError:
-            return 0
+
+        return int(self.offset_input.value())
     
 
 
@@ -339,10 +344,8 @@ class BatchEditDialog(StyledDialog):
     def get_unified_rel_time(self):
 
         """获取统一相对时间值"""
-        try:
-            return int(self.rel_time_input.text())
-        except ValueError:
-            return 0
+
+        return int(self.rel_time_input.value())
 
     
 
@@ -462,9 +465,9 @@ class CustomInputDialog(StyledDialog):
 
         title_label = QLabel("🔐 调试工具入口")
 
-        StyleHelper.set_smiley_font(title_label, 16, QFont.Weight.Bold)
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
 
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-bottom: 3px;")
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 3px;")
 
         title_layout.addWidget(title_label)
 
@@ -475,9 +478,9 @@ class CustomInputDialog(StyledDialog):
 
         subtitle_label = QLabel("请输入访问密码或特殊文字")
 
-        StyleHelper.set_source_han_font(subtitle_label, 11)
+        UnifiedStyleHelper.get_instance().set_source_han_font(subtitle_label, 11)
 
-        subtitle_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']}; margin-bottom: 8px;")
+        subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-bottom: 8px;")
 
         title_layout.addWidget(subtitle_label)
 
@@ -488,7 +491,7 @@ class CustomInputDialog(StyledDialog):
 
         hint_label = QLabel("💡 提示：尝试输入一些有意义的句子")
 
-        hint_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-bottom: 12px;")
+        hint_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-bottom: 12px;")
 
         title_layout.addWidget(hint_label)
 
@@ -508,9 +511,9 @@ class CustomInputDialog(StyledDialog):
 
         input_label = QLabel("输入内容：")
 
-        StyleHelper.set_source_han_font(input_label, 10)
+        UnifiedStyleHelper.get_instance().set_source_han_font(input_label, 10)
 
-        input_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']}; margin-bottom: 3px;")
+        input_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-bottom: 3px;")
 
         input_layout.addWidget(input_label)
 
@@ -669,7 +672,7 @@ class CustomInputDialog(StyledDialog):
 
             info_label.setFont(self.font_manager.get_source_han_font(10))
 
-            info_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+            info_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
 
             info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -793,7 +796,7 @@ class ModernTableWidget(QTableWidget):
 
         super().__init__(rows, columns, parent)
 
-        self.setStyleSheet(StyleHelper.get_table_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_table_style())
 
         
 
@@ -842,7 +845,7 @@ class HeaderWidget(QFrame):
 
         self.setFixedHeight(80)
 
-        self.setStyleSheet(StyleHelper.get_header_widget_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_header_widget_style())
 
         
 
@@ -901,9 +904,9 @@ class HeaderWidget(QFrame):
 
         main_title = QLabel(app_info["name"])
 
-        StyleHelper.set_smiley_font(main_title, 24, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(main_title, 24, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
 
-        main_title.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
+        main_title.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
 
         title_text_layout.addWidget(main_title)
 
@@ -914,9 +917,9 @@ class HeaderWidget(QFrame):
 
         subtitle = QLabel(app_info["name_en"])
 
-        StyleHelper.set_smiley_font(subtitle, 12)  # 使用StyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(subtitle, 12)  # 使用UnifiedStyleHelper统一设置字体
 
-        subtitle.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
+        subtitle.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
 
         title_text_layout.addWidget(subtitle)
 
@@ -931,7 +934,7 @@ class HeaderWidget(QFrame):
 
         slogan_label = QLabel("风带来故事的种子，时间使之发芽")
 
-        slogan_label.setStyleSheet(StyleHelper.get_slogan_label_style())
+        slogan_label.setStyleSheet(UnifiedStyleHelper.get_instance().get_slogan_label_style())
 
         title_layout.addWidget(slogan_label)
 
@@ -973,7 +976,7 @@ class HeaderWidget(QFrame):
 
         self.logo_label.setText("🌌")
 
-        self.logo_label.setStyleSheet(StyleHelper.get_logo_label_style())
+        self.logo_label.setStyleSheet(UnifiedStyleHelper.get_instance().get_logo_label_style())
 
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -2058,12 +2061,12 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
     def setup_application_style(self):
         """设置应用程序样式 - 使用全局样式管理器"""
-        # 使用styles模块中的StyleHelper来统一管理应用程序样式
-        from styles import StyleHelper
+        # 使用styles模块中的UnifiedStyleHelper来统一管理应用程序样式
+        from styles import UnifiedStyleHelper
         from PyQt6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
-            StyleHelper.setup_global_style(app)
+            UnifiedStyleHelper.get_instance().setup_global_style(app)
     
     def eventFilter(self, obj, event):
         """事件过滤器，处理过滤类型下拉框的回车键事件"""
@@ -2111,7 +2114,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         splitter.setHandleWidth(0)
 
-        splitter.setStyleSheet(StyleHelper.get_splitter_style())
+        splitter.setStyleSheet(UnifiedStyleHelper.get_instance().get_splitter_style())
 
         
 
@@ -2154,7 +2157,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         container.setMaximumWidth(400)
 
-        container.setStyleSheet(StyleHelper.get_container_bg_style())
+        container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
         layout = QVBoxLayout(container)
 
@@ -2199,7 +2202,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         container = QWidget()
 
-        container.setStyleSheet(StyleHelper.get_container_bg_style())
+        container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
         # 使用水平布局，左边是事件编辑，右边是统计信息
 
@@ -2255,7 +2258,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         # 修复状态栏样式 - 纯白色背景
 
-        self.status_bar.setStyleSheet(StyleHelper.get_status_bar_white_style())
+        self.status_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_status_bar_white_style())
 
         
 
@@ -2269,7 +2272,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         self.time_label = QLabel()
 
-        self.time_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; background-color: transparent;")
+        self.time_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; background-color: transparent;")
 
         self.status_bar.addPermanentWidget(self.time_label)
 
@@ -2293,7 +2296,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         shortcuts_label = QLabel("快捷键: Ctrl+Z撤销 | Ctrl+Y重做 | Ctrl+I添加事件 | Ctrl+E编辑事件 | Ctrl+B批量编辑 | Ctrl+A全选 | Ctrl+X剪切 | Ctrl+C复制 | Ctrl+V粘贴 | Delete删除 | Ctrl+S保存")
 
-        shortcuts_label.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 9px; margin-right: 10px; background-color: transparent;")
+        shortcuts_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 9px; margin-right: 10px; background-color: transparent;")
 
         self.status_bar.addPermanentWidget(shortcuts_label)
 

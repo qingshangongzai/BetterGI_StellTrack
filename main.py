@@ -13,103 +13,8 @@ from PyQt6.QtCore import Qt, QTimer, QObject, pyqtSignal
 from PyQt6.QtGui import QFont
 
 
-class VersionManager:
-    """
-    应用程序版本管理器
-    
-    负责管理应用程序的版本信息和应用元数据，提供统一的版本访问接口，
-    确保整个应用程序使用一致的版本信息。
-    """
-    
-    def __init__(self):
-        """
-        初始化版本管理器
-        
-        设置应用程序的版本号组件和元数据信息
-        """
-        # 版本号组件 - 统一修改点
-        self.major = 3
-        self.minor = 5
-        self.patch = 0
-        self.build = 0
-        
-        # 核心版本信息
-        self.version = "3.5.0"  # 应用程序主版本号
-        
-        # 详细版本信息结构
-        self.version_info = {
-            "major": 3,
-            "minor": 5,
-            "patch": 0,
-            "build": 0,
-            "full": "3.5.0",
-            "short": "3.5.0"
-        }
-        
-        # 应用程序元数据
-        self.app_info = {
-            "name": "BetterGI 星轨",
-            "name_en": "BetterGI StellTrack",
-            "company": "HXiaoStudio",
-            "copyright": "© 2025 HXiaoStudio",
-            "description": "BetterGI 星轨 - BetterGI StellTrack",
-            "internal_name": "BetterGI_StellTrack",
-            "original_filename": "BetterGI_StellTrack.exe"
-        }
-    
-    def get_version(self):
-        """
-        获取当前版本号
-        
-        Returns:
-            str: 应用程序版本号，格式为"X.Y.Z"
-        """
-        return self.version
-    
-    def get_version_info(self):
-        """
-        获取版本详细信息
-        
-        Returns:
-            dict: 包含主要版本号、次要版本号、补丁版本号、构建号和完整版本号的字典
-        """
-        return self.version_info.copy()
-    
-    def get_app_info(self):
-        """
-        获取应用程序信息
-        
-        Returns:
-            dict: 包含应用程序名称、英文名称、公司、版权等元数据的字典
-        """
-        return self.app_info.copy()
-    
-    def get_full_app_name(self):
-        """
-        获取完整应用程序名称（包含版本号）
-        
-        Returns:
-            str: 完整的应用程序名称，格式为"应用名称 v版本号"
-        """
-        return f"{self.app_info['name']} v{self.version}"
-    
-    def get_file_version_info(self):
-        """
-        获取文件版本信息（用于Windows EXE元数据）
-        
-        Returns:
-            dict: 包含文件版本和产品版本的高16位和低16位值的字典
-        """
-        return {
-            "file_version_ms": (self.version_info["major"] << 16) | self.version_info["minor"],
-            "file_version_ls": (self.version_info["patch"] << 16) | self.version_info["build"],
-            "product_version_ms": (self.version_info["major"] << 16) | self.version_info["minor"],
-            "product_version_ls": (self.version_info["patch"] << 16) | self.version_info["build"]
-        }
-
-
-# 创建全局版本管理器实例
-version_manager = VersionManager()
+# 导入版本管理器
+from version import version_manager
 
 
 # Windows平台特定功能
@@ -207,30 +112,26 @@ def setup_exe_environment():
     Returns:
         str: 应用程序的基础路径
     """
-    # 确定基础路径
+    # 确定基础路径 - 复制utils.py中的get_base_path()逻辑，避免循环导入
     if getattr(sys, 'frozen', False):
-        # 打包后的EXE环境
+        # 打包后的环境
         if hasattr(sys, '_MEIPASS'):
+            # PyInstaller 临时目录
             base_path = sys._MEIPASS
         else:
             base_path = os.path.dirname(sys.executable)
-        
-        # 确保基础路径在sys.path中
-        for path in [base_path, os.path.dirname(sys.executable)]:
-            if path not in sys.path:
-                sys.path.insert(0, path)
-        
-        # Windows平台特定初始化
-        if sys.platform == 'win32':
-            print("[DEBUG] 设置Windows版本信息")
-            set_version_info()
     else:
-        # 开发环境使用当前脚本所在目录
+        # 开发环境
         base_path = os.path.dirname(os.path.abspath(__file__))
-        
-        # 添加到Python路径（避免重复添加）
-        if base_path not in sys.path:
-            sys.path.insert(0, base_path)
+    
+    # 确保基础路径在sys.path中
+    if base_path not in sys.path:
+        sys.path.insert(0, base_path)
+    
+    # Windows平台特定初始化
+    if sys.platform == 'win32':
+        print("[DEBUG] 设置Windows版本信息")
+        set_version_info()
     
     # 设置工作目录为基础路径，确保相对路径引用正确
     try:
@@ -539,12 +440,12 @@ class BetterGIApplication:
         """
         设置应用程序全局样式表和样式属性
         
-        使用styles模块中的StyleHelper来统一管理应用程序样式
+        使用styles模块中的UnifiedStyleHelper来统一管理应用程序样式
         """
         try:
             # 使用全局样式管理器的setup_global_style方法
-            from styles import StyleHelper
-            StyleHelper.setup_global_style(self)
+            from styles import UnifiedStyleHelper
+            UnifiedStyleHelper.get_instance().setup_global_style(self)
             print("[DEBUG] 全局样式已应用")
             
         except Exception as e:

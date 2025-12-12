@@ -18,12 +18,12 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 from main import version_manager
 
 # 导入共享模块
-from styles import DialogFactory, StyleHelper
+from styles import DialogFactory, UnifiedStyleHelper
 
 # =============================================================================
 # 从styles模块导入样式和字体管理相关组件
 # =============================================================================
-from styles import (StyleHelper, StyledDialog, StyledMainWindow, get_global_font_manager, 
+from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, get_global_font_manager, 
                    ModernGroupBox, ModernLineEdit, ModernComboBox, ModernSpinBox, 
                    ModernDoubleSpinBox, ChineseMessageBox)
 # 从utils模块导入通用功能
@@ -71,7 +71,7 @@ def load_icon_exe_safe():
 # 样式工具类 - 保持不变
 # =============================================================================
 
-# StyleHelper 已从 styles 模块导入
+# UnifiedStyleHelper 已从 styles 模块导入
 
 # =============================================================================
 # 现代化控件类 - 保持不变
@@ -165,7 +165,7 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"color: {StyleHelper.COLORS['border']};")
+        separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         layout.addWidget(separator)
         
         # 创建协议内容区域
@@ -190,7 +190,7 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            StyleHelper.set_smiley_font(logo_label, 20)  # 使用StyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
         header_layout.addWidget(logo_label)
         
         # 标题区域
@@ -201,15 +201,15 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         
         # 中文标题 - 使用得意黑字体
         title_label = QLabel("用户服务协议与免责声明")
-        StyleHelper.set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
         title_layout.addWidget(title_label)
         
         # 副标题 - 使用SourceHanSerifCN字体
         subtitle_label = QLabel(f"首次使用请仔细阅读并同意用户服务协议与免责声明")
         font_manager = get_global_font_manager()
         subtitle_label.setFont(font_manager.get_source_han_font(11))
-        subtitle_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+        subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         title_layout.addWidget(subtitle_label)
         
         header_layout.addLayout(title_layout)
@@ -222,7 +222,7 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(StyleHelper.get_agreement_browser_style())
+        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -329,7 +329,7 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"color: {StyleHelper.COLORS['border']};")
+        separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         main_layout.addWidget(separator)
         
         # 创建协议内容区域
@@ -349,7 +349,7 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            StyleHelper.set_smiley_font(logo_label, 20)  # 使用StyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
         header_layout.addWidget(logo_label)
         
         # 标题区域
@@ -360,15 +360,15 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         
         # 中文标题 - 使用得意黑字体
         title_label = QLabel("用户服务协议与免责声明")
-        StyleHelper.set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用StyleHelper统一设置字体
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']};")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
         title_layout.addWidget(title_label)
         
         # 副标题 - 使用SourceHanSerifCN字体
         subtitle_label = QLabel(f"请仔细阅读{app_info['name']}的用户服务协议与免责声明")
         font_manager = get_global_font_manager()
         subtitle_label.setFont(font_manager.get_source_han_font(11))
-        subtitle_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+        subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         title_layout.addWidget(subtitle_label)
         
         header_layout.addLayout(title_layout)
@@ -381,7 +381,7 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(StyleHelper.get_agreement_browser_style())
+        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()

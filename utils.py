@@ -12,7 +12,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
 # 导入版本管理器
-from main import version_manager
+from version import version_manager
 
 # =============================================================================
 # 全局常量和映射
@@ -452,34 +452,28 @@ def find_resource_file(filename):
     搜索顺序：
     1. 基础路径
     2. 基础路径/assets
-    3. 可执行文件目录
-    4. 可执行文件目录/assets
-    5. _MEIPASS（打包环境）
-    6. _MEIPASS/assets
+    3. _MEIPASS（打包环境）
+    4. _MEIPASS/assets
     """
     base_path = get_base_path()
-    exe_dir = os.path.dirname(sys.executable) if hasattr(sys, 'executable') else None
     
-    # 构建搜索路径列表
-    search_paths = [
+    # 构建搜索路径列表，简化逻辑，合并重复路径
+    search_paths = []
+    
+    # 添加基础路径和基础路径/assets
+    search_paths.extend([
         base_path,
         os.path.join(base_path, "assets"),
-    ]
+    ])
     
-    # 添加可执行文件目录路径
-    if exe_dir and exe_dir != base_path:
-        search_paths.extend([
-            exe_dir,
-            os.path.join(exe_dir, "assets"),
-        ])
-    
-    # 添加 _MEIPASS 路径
+    # 添加 _MEIPASS 路径（如果存在）
     if hasattr(sys, '_MEIPASS'):
         meipass = sys._MEIPASS
-        search_paths.extend([
-            meipass,
-            os.path.join(meipass, "assets"),
-        ])
+        if meipass not in search_paths:
+            search_paths.extend([
+                meipass,
+                os.path.join(meipass, "assets"),
+            ])
     
     # 在所有路径中查找文件
     for path in search_paths:
@@ -490,7 +484,14 @@ def find_resource_file(filename):
     return None
 
 def get_resource_path(relative_path):
-    """获取资源文件的绝对路径（兼容函数）"""
+    """获取资源文件的绝对路径，是资源加载的主要接口
+    
+    Args:
+        relative_path: 资源文件的相对路径
+        
+    Returns:
+        str: 资源文件的绝对路径，如果找不到则返回基于基础路径的相对路径
+    """
     return find_resource_file(relative_path) or os.path.join(get_base_path(), relative_path)
 
 def load_icon_universal():
