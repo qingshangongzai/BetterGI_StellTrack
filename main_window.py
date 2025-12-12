@@ -21,11 +21,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
 
-
-
 # 导入共享模块
-
-
 from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog
 
 from styles import WindowIconMixin, DialogFactory
@@ -60,20 +56,6 @@ from script_manager import ScriptManager
 from time_analysis import EventTimeAnalyzerDialog
 
 # 导入版本管理器
-
-
-
-
-# =============================================================================
-
-# 常量定义
-
-# =============================================================================
-
-
-
-
-
 
 
 
@@ -991,28 +973,42 @@ class HeaderWidget(QFrame):
 
 
 class MainWindow(StyledMainWindow, WindowIconMixin):
-
-    """主窗口类"""
+    """应用程序主窗口类
+    
+    作为应用程序的核心界面，管理所有UI组件、事件处理和功能模块。
+    负责整合事件管理、脚本生成、面板显示等核心功能。
+    
+    继承关系：
+    - StyledMainWindow: 提供基础样式和布局支持
+    - WindowIconMixin: 提供窗口图标设置功能
+    """
 
     
 
 
     def __init__(self):
-
+        """初始化主窗口
+        
+        初始化窗口属性、组件、管理器和信号槽连接。
+        设置窗口标题、大小、图标和样式。
+        
+        主要初始化内容：
+        - 核心属性和标志位
+        - 撤销/重做系统
+        - 调试日志记录器
+        - 事件管理器和脚本管理器
+        - 自动保存定时器
+        - 窗口样式和布局
+        """
         super().__init__()
-
+        
+        # 核心属性初始化
         self.script = None  # 存储生成的脚本
-
         self.copied_events = []  # 存储复制的事件
-
         self.undo_stack = []  # 撤销栈
-
         self.redo_stack = []  # 重做栈
-
         self.max_undo_steps = 50  # 最大撤销步骤数
-
         self._table_changing = False  # 防止表格变化时的递归调用
-
         self._batch_operation = False  # 批量操作标志
 
         
@@ -1183,8 +1179,11 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
     def create_menu_bar(self):
-
-        """创建菜单栏"""
+        """创建应用程序菜单栏
+        
+        构建包含文件、编辑、工具、设置和帮助等菜单的菜单栏，
+        并为每个菜单项连接相应的操作。
+        """
 
         menubar = self.menuBar()
 
@@ -2090,8 +2089,14 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
 
     def create_header(self, parent_layout):
-
-        """创建标题栏"""
+        """创建窗口顶部标题和信息区域
+        
+        在指定的父布局中创建应用程序的头部区域，
+        包含应用名称、版本信息和操作按钮等。
+        
+        Args:
+            parent_layout: 父布局对象，用于放置头部组件
+        """
 
         self.header_widget = HeaderWidget()
 

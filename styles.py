@@ -23,7 +23,6 @@ class GlobalFontManager:
     
     @classmethod
     def get_instance(cls):
-        """获取单例实例"""
         if cls._instance is None:
             cls._instance = GlobalFontManager()
         return cls._instance
@@ -135,7 +134,6 @@ class StyleManager:
     
     @classmethod
     def get_instance(cls):
-        """获取单例实例"""
         if cls._instance is None:
             cls._instance = StyleManager()
         return cls._instance
@@ -336,7 +334,6 @@ class UnifiedStyleHelper:
     
     @classmethod
     def get_instance(cls):
-        """获取单例实例"""
         if not cls._instance:
             cls._instance = UnifiedStyleHelper()
         return cls._instance
@@ -544,6 +541,7 @@ class UnifiedStyleHelper:
             HeaderWidget {{
                 background-color: #ffffff;
                 border-bottom: 1px solid {self.COLORS['border']};
+                
             }}
         """
     
@@ -1308,423 +1306,6 @@ class UnifiedStyleHelper:
                 {scroll_bar_style}
             """)
 
-# 保持向后兼容性的StyleHelper类
-class StyleHelper:
-    """样式工具类，提供统一的样式方法（向后兼容）"""
-    
-    # 颜色主题常量
-    COLORS = COLORS
-    @staticmethod
-    def get_centered_combobox_listview_style():
-        """获取居中组合框列表视图样式"""
-        return f"""
-            QListView {{ 
-                background-color: {COLORS['card_bg']}; 
-                color: {COLORS['text']}; 
-                font-family: "SourceHanSerifCN";
-                font-size: 11px;
-                outline: none;
-                show-decoration-selected: 0;
-            }}
-            QListView::item {{ 
-                padding: 8px;
-                text-align: center;
-                border: none;
-            }}
-            QListView::item:selected {{ 
-                background-color: {COLORS['primary']}; 
-                color: white;
-            }}
-        """
-      
-    @staticmethod
-    def get_button_style(accent=False, disabled=False):
-        """获取按钮样式"""
-        return UnifiedStyleHelper.get_instance().get_button_style(accent, disabled)
-    
-    @staticmethod
-    def get_line_edit_style():
-        """获取输入框样式"""
-        return UnifiedStyleHelper.get_instance().get_line_edit_style()
-    
-    @staticmethod
-    def get_combo_box_style():
-        """获取下拉框样式"""
-        return UnifiedStyleHelper.get_instance().get_combo_box_style()
-    
-    @staticmethod
-    def get_table_style():
-        """获取表格样式"""
-        return UnifiedStyleHelper.get_instance().get_table_style()
-    
-    @staticmethod
-    def get_group_box_style():
-        """获取分组框样式 - 已去掉灰色底纹"""
-        return UnifiedStyleHelper.get_instance().get_group_box_style()
-    
-    @staticmethod
-    def get_header_widget_style():
-        """获取标题栏样式"""
-        return UnifiedStyleHelper.get_instance().get_header_widget_style()
-    
-    @staticmethod
-    def get_slogan_label_style():
-        """获取标语标签样式"""
-        return UnifiedStyleHelper.get_instance().get_slogan_label_style()
-    
-    @staticmethod
-    def get_dialog_bg_style():
-        """获取对话框背景样式"""
-        return UnifiedStyleHelper.get_instance().get_dialog_bg_style()
-    
-    @staticmethod
-    def get_logo_label_style():
-        """获取Logo标签样式"""
-        return UnifiedStyleHelper.get_instance().get_logo_label_style()
-    
-    @staticmethod
-    def get_container_bg_style():
-        """获取容器背景样式"""
-        return UnifiedStyleHelper.get_instance().get_container_bg_style()
-    
-    @staticmethod
-    def get_capture_status_style():
-        """获取捕获状态样式"""
-        return UnifiedStyleHelper.get_instance().get_capture_status_style()
-    
-    @staticmethod
-    def get_quick_keys_label_style():
-        """获取快速按键标签样式"""
-        return UnifiedStyleHelper.get_instance().get_quick_keys_label_style()
-    
-    @staticmethod
-    def get_total_time_label_style():
-        """获取总时间标签样式"""
-        return UnifiedStyleHelper.get_instance().get_total_time_label_style()
-    
-    @staticmethod
-    def get_script_text_style():
-        """获取脚本文本样式"""
-        return UnifiedStyleHelper.get_instance().get_script_text_style()
-    
-    @staticmethod
-    def get_log_display_style():
-        """获取日志显示样式"""
-        return UnifiedStyleHelper.get_instance().get_log_display_style()
-    
-    @staticmethod
-    def get_agreement_browser_style():
-        """获取协议浏览器样式"""
-        return UnifiedStyleHelper.get_instance().get_agreement_browser_style()
-    
-    @staticmethod
-    def get_info_edit_style():
-        """获取信息编辑框样式"""
-        return UnifiedStyleHelper.get_instance().get_info_edit_style()
-    
-    @staticmethod
-    def get_status_bar_style():
-        """获取状态栏样式"""
-        return UnifiedStyleHelper.get_instance().get_status_bar_style()
-    
-    @staticmethod
-    def get_text_browser_style():
-        """获取文本浏览器样式"""
-        return UnifiedStyleHelper.get_instance().get_text_browser_style()
-    
-    @staticmethod
-    def set_smiley_font(widget, size=12, weight=QFont.Weight.Normal):
-        """为组件设置得意黑字体"""
-        return UnifiedStyleHelper.get_instance().set_smiley_font(widget, size, weight)
-    
-    @staticmethod
-    def set_source_han_font(widget, size=12, weight=QFont.Weight.Normal):
-        """为组件设置思源宋体字体"""
-        return UnifiedStyleHelper.get_instance().set_source_han_font(widget, size, weight)
-    
-    @staticmethod
-    def get_spin_box_style():
-        """获取整数输入框样式"""
-        return UnifiedStyleHelper.get_instance().get_spin_box_style()
-    
-    @staticmethod
-    def get_double_spin_box_style():
-        """获取浮点数输入框样式"""
-        return UnifiedStyleHelper.get_instance().get_double_spin_box_style()
-    
-    @staticmethod
-    def get_splitter_style():
-        """获取分割器样式"""
-        return UnifiedStyleHelper.get_instance().get_splitter_style()
-    
-    @staticmethod
-    def get_search_container_style():
-        """获取搜索容器样式"""
-        return UnifiedStyleHelper.get_instance().get_search_container_style()
-    
-    @staticmethod
-    def get_search_input_style():
-        """获取搜索输入框样式"""
-        return UnifiedStyleHelper.get_instance().get_search_input_style()
-    
-    @staticmethod
-    def get_filter_combo_style():
-        """获取过滤组合框样式"""
-        return UnifiedStyleHelper.get_instance().get_filter_combo_style()
-    
-    @staticmethod
-    def get_status_bar_white_style():
-        """获取纯白色状态栏样式"""
-        return UnifiedStyleHelper.get_instance().get_status_bar_white_style()
-    
-    @staticmethod
-    def get_coordinate_capture_label_style():
-        """获取坐标捕获标签样式"""
-        return UnifiedStyleHelper.get_instance().get_coordinate_capture_label_style()
-    
-    @staticmethod
-    def get_centered_combo_box_style():
-        """获取居中组合框样式"""
-        return UnifiedStyleHelper.get_instance().get_centered_combo_box_style()
-    
-    @staticmethod
-    def get_time_offset_spin_box_style():
-        """获取时间偏移输入框样式"""
-        return f"""
-            QSpinBox {{
-                border: 1px solid {COLORS['border']};
-                border-radius: 6px;
-                padding: 6px 8px;
-                background-color: white;
-                font-family: "SourceHanSerifCN";
-                font-size: 11px;
-                selection-background-color: {COLORS['primary']};
-                text-align: center;
-                {SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
-            }}
-            QSpinBox:focus {{
-                border-color: {COLORS['primary']};
-                background-color: #fafafa;
-                border-width: 1.5px;
-            }}
-            QSpinBox:hover {{
-                border-color: #a0a0a0;
-                background-color: #fafafa;
-            }}
-            QSpinBox::up-button {{
-                subcontrol-origin: border;
-                subcontrol-position: top right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-top-right-radius: 5px;
-                background-color: transparent;
-                margin: 1px 1px 0px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::up-button:hover {{
-                background-color: {COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::up-button:pressed {{
-                background-color: {COLORS['primary_pressed']};
-            }}
-            QSpinBox::down-button {{
-                subcontrol-origin: border;
-                subcontrol-position: bottom right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-bottom-right-radius: 5px;
-                background-color: transparent;
-                margin: 0px 1px 1px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::down-button:hover {{
-                background-color: {COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::down-button:pressed {{
-                background-color: {COLORS['primary_pressed']};
-            }}
-        """
-    
-    @staticmethod
-    def get_explanation_text_edit_style():
-        """获取说明文本编辑器样式"""
-        return f"""
-            QTextEdit {{
-                background-color: #ffffff;
-                border: 1px solid {COLORS['border_light']};
-                border-radius: 6px;
-                padding: 6px;
-                font-family: "SourceHanSerifCN";
-                font-size: 10px;
-                {SHADOWS['small']}
-            }}
-        """
-    
-    @staticmethod
-    def get_event_dialog_style():
-        """获取事件对话框样式"""
-        return f"""
-            QDialog {{ 
-                background-color: {COLORS['bg']}; 
-            }}
-        """
-    
-
-    
-    @staticmethod
-    def get_centered_combobox_style():
-        """获取居中组合框样式（兼容小写b的方法名）"""
-        return StyleHelper.get_centered_combo_box_style()
-    
-    @staticmethod
-    def get_absolute_time_info_style():
-        """获取绝对时间信息标签样式"""
-        return f"color: {COLORS['text_secondary']}; font-size: 9px;"
-    
-    @staticmethod
-    def get_capture_status_active_style():
-        """获取捕获状态激活样式"""
-        return f"color: {COLORS['primary']};"
-    
-    @staticmethod
-    def get_capture_status_inactive_style():
-        """获取捕获状态非激活样式"""
-        return f"color: {COLORS['text_secondary']};"
-    
-    @staticmethod
-    def get_capture_status_bold_style():
-        """获取捕获状态加粗样式"""
-        return f"color: {COLORS['primary']}; font-weight: bold;"
-    
-    @staticmethod
-    def setup_global_style(app):
-        """设置全局样式"""
-        from PyQt6.QtWidgets import QApplication
-        
-        # 设置全局字体 - 使用SourceHanSerifCN字体
-        font_manager = get_global_font_manager()
-        q_app = QApplication.instance()
-        if q_app:
-            # 使用SourceHanSerifCN字体作为全局默认字体
-            q_app.setFont(font_manager.get_source_han_font(9))
-        
-        # 获取滚动条样式
-        scroll_bar_style = UnifiedStyleHelper.get_instance().get_scroll_bar_style()
-        
-        # 设置应用程序样式表
-        # 尝试直接在QApplication实例上设置样式表
-        if hasattr(q_app, 'setStyleSheet'):
-            q_app.setStyleSheet(f"""
-                QMainWindow {{
-                    background-color: {COLORS['bg']};
-                }}
-                QDialog {{
-                    background-color: {COLORS['bg']};
-                }}
-                QWidget {{
-                    background-color: {COLORS['bg']};
-                }}
-                QGroupBox {{
-                    background-color: {COLORS['bg']};
-                }}
-                QMenuBar {{
-                    background-color: {COLORS['bg']};
-                    border: none;
-                    padding: 4px;
-                }}
-                QMenuBar::item {{
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                }}
-                QMenuBar::item:selected {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                QMenu {{ 
-                    background-color: {COLORS['bg']};
-                    border: 1px solid {COLORS['border']};
-                    border-radius: 4px;
-                    padding: 4px;
-                    {SHADOWS['small']}
-                }}
-                QMenu::item {{
-                    padding: 4px 16px;
-                    border-radius: 4px;
-                }}
-                QMenu::item:selected {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                QAction::hover {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                
-                /* 滚动条样式 */
-                {scroll_bar_style}
-            """)
-        # 如果QApplication实例不可用，尝试在传入的app对象上设置
-        elif hasattr(app, 'setStyleSheet'):
-            app.setStyleSheet(f"""
-                QMainWindow {{
-                    background-color: {COLORS['bg']};
-                }}
-                QDialog {{
-                    background-color: {COLORS['bg']};
-                }}
-                QWidget {{
-                    background-color: {COLORS['bg']};
-                }}
-                QGroupBox {{
-                    background-color: {COLORS['bg']};
-                }}
-                QMenuBar {{
-                    background-color: {COLORS['bg']};
-                    border: none;
-                    padding: 4px;
-                }}
-                QMenuBar::item {{
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                }}
-                QMenuBar::item:selected {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                QMenu {{ 
-                    background-color: {COLORS['bg']};
-                    border: 1px solid {COLORS['border']};
-                    border-radius: 4px;
-                    padding: 4px;
-                    {SHADOWS['small']}
-                }}
-                QMenu::item {{
-                    padding: 4px 16px;
-                    border-radius: 4px;
-                }}
-                QMenu::item:selected {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                QAction::hover {{
-                    background-color: {COLORS['primary_hover']};
-                    color: white;
-                }}
-                
-                /* 滚动条样式 */
-                {scroll_bar_style}
-            """)
-
 # =============================================================================
 # 现代化控件类
 # =============================================================================
@@ -1733,7 +1314,7 @@ class ModernGroupBox(QGroupBox):
     """现代化的分组框"""
     def __init__(self, title="", parent=None):
         super().__init__(title, parent)
-        self.setStyleSheet(StyleHelper.get_group_box_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_group_box_style())
 
 class ModernLineEdit(QLineEdit):
     """现代化的输入框，内容居中显示"""
@@ -1742,7 +1323,7 @@ class ModernLineEdit(QLineEdit):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if width:
             self.setFixedWidth(width)
-        self.setStyleSheet(StyleHelper.get_line_edit_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_line_edit_style())
 
 class ModernComboBox(QComboBox):
     """现代化的下拉框，内容居中显示"""
@@ -1752,7 +1333,7 @@ class ModernComboBox(QComboBox):
             self.setFixedWidth(width)
         
         # 结合原有样式表并添加文本居中样式
-        combo_style = StyleHelper.get_combo_box_style() + "\n"
+        combo_style = UnifiedStyleHelper.get_instance().get_combo_box_style() + "\n"
         combo_style += "QComboBox {\n"
         combo_style += "    text-align: center;\n"
         combo_style += "    padding-left: 15px; /* 调整文本位置使其居中 */\n"
@@ -1792,7 +1373,7 @@ class ModernSpinBox(QSpinBox):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QSpinBox.ButtonSymbols.PlusMinus)
-        self.setStyleSheet(StyleHelper.get_spin_box_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
 
 class ModernDoubleSpinBox(QDoubleSpinBox):
     """现代化的浮点数输入框，带上下按钮，内容居中显示"""
@@ -1800,7 +1381,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.PlusMinus)
-        self.setStyleSheet(StyleHelper.get_double_spin_box_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_double_spin_box_style())
 
 
 class CenteredComboBox(QComboBox):
@@ -1809,7 +1390,7 @@ class CenteredComboBox(QComboBox):
         super().__init__(parent)
         
         # 设置组合框样式 - 移除下拉箭头
-        base_style = StyleHelper.get_centered_combobox_style()
+        base_style = UnifiedStyleHelper.get_instance().get_centered_combo_box_style()
         # 添加高度限制样式
         enhanced_style = base_style + """
             QComboBox {
@@ -1851,7 +1432,7 @@ class CenteredLineEdit(QLineEdit):
         # 设置文本居中对齐
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # 获取基础样式并添加居中对齐样式
-        base_style = StyleHelper.get_line_edit_style()
+        base_style = UnifiedStyleHelper.get_instance().get_line_edit_style()
         # 在样式表中添加高度限制，覆盖原有设置
         enhanced_style = base_style + """
             QLineEdit {
@@ -1873,7 +1454,7 @@ class TimeOffsetSpinBox(QSpinBox):
         self.setValue(0)
         
         # 设置样式表，保持与界面风格统一
-        base_style = StyleHelper.get_time_offset_spin_box_style()
+        base_style = UnifiedStyleHelper.get_instance().get_time_offset_spin_box_style()
         # 添加高度限制样式
         enhanced_style = base_style + """
             QSpinBox {
@@ -1963,8 +1544,8 @@ class ChineseMessageBox:
         # 添加自定义中文按钮
         ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
         
-        # 使用当前模块中的样式
-        ok_button.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        # 使用UnifiedStyleHelper设置样式
+        ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         
         # 不在Windows平台下调用任务栏图标修复，避免循环
         msg_box.exec()
@@ -1984,8 +1565,8 @@ class ChineseMessageBox:
         # 添加自定义中文按钮
         ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
         
-        # 使用当前模块中的样式
-        ok_button.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        # 使用UnifiedStyleHelper设置样式
+        ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         
         # 不在Windows平台下调用任务栏图标修复，避免循环
         msg_box.exec()
@@ -2005,8 +1586,8 @@ class ChineseMessageBox:
         # 添加自定义中文按钮
         ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
         
-        # 使用当前模块中的样式
-        ok_button.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        # 使用UnifiedStyleHelper设置样式
+        ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         
         # 不在Windows平台下调用任务栏图标修复，避免循环
         msg_box.exec()
@@ -2025,10 +1606,10 @@ class ChineseMessageBox:
         
         # 添加自定义中文按钮
         yes_button = msg_box.addButton("是", QMessageBox.ButtonRole.YesRole)
-        yes_button.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        yes_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         
         no_button = msg_box.addButton("否", QMessageBox.ButtonRole.NoRole)
-        no_button.setStyleSheet(StyleHelper.get_button_style())
+        no_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         
         msg_box.setDefaultButton(no_button)
         
@@ -2057,10 +1638,10 @@ class AnimatedButton(QPushButton):
         self.animation_duration = 100  # 动画持续时间(ms)
         
         # 设置基础样式
-        self.setStyleSheet(StyleHelper.get_button_style(accent, disabled))
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent, disabled))
         
         # 保存原始样式用于恢复
-        self.original_style = StyleHelper.get_button_style(accent, disabled)
+        self.original_style = UnifiedStyleHelper.get_instance().get_button_style(accent, disabled)
         
         # 连接鼠标事件
         self.pressed.connect(self._on_pressed)
@@ -2136,7 +1717,7 @@ class EventEditButton(AnimatedButton):
             self.setFixedWidth(fixed_width)
         
         # 获取基础按钮样式并添加显式的高度控制
-        base_style = StyleHelper.get_button_style(accent)
+        base_style = UnifiedStyleHelper.get_instance().get_button_style(accent)
         # 添加显式的高度控制样式，确保与其他UI元素高度一致
         enhanced_style = base_style + "\n"
         enhanced_style += "QPushButton {\n"

@@ -29,7 +29,16 @@ from version import version_manager
 # =============================================================================
 
 class SafeOutputCapture:
-    """安全的输出捕获类，避免递归问题"""
+    """安全的输出捕获类，避免递归问题
+    
+    用于捕获标准输出和标准错误，并将其重定向到日志文件，同时避免递归调用问题。
+    提供线程安全的缓冲区管理和写入机制。
+    
+    参数：
+    - original_stream: 原始流对象（stdout或stderr）
+    - logger: 日志记录器实例
+    - stream_name: 流名称（"STDOUT"或"STDERR"）
+    """
     
     def __init__(self, original_stream, logger, stream_name):
         self.original_stream = original_stream

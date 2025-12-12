@@ -7,7 +7,7 @@ from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtCore import QThread, pyqtSignal
 
 # 导入共享模块
-from styles import StyleHelper, ChineseMessageBox
+from styles import ChineseMessageBox
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table
 from debug_tools import get_global_debug_logger
 
@@ -59,6 +59,8 @@ class GenerateScriptThread(QThread):
                         script_event["mouseButton"] = "Left"
                     elif event_data[1] in ["右键按下", "右键释放"]:
                         script_event["mouseButton"] = "Right"
+                    elif event_data[1] in ["中键按下", "中键释放"]:
+                        script_event["mouseButton"] = "Middle"
                     
                     events.append(script_event)
             
@@ -294,20 +296,37 @@ class ImportScriptThread(QThread):
 
 
 class ScriptManager:
-    """脚本管理类，负责所有与脚本生成和管理相关的操作"""
+    """脚本管理类，负责所有与脚本生成、导入和管理相关的操作
+    
+    核心功能包括：
+    - 脚本生成：将事件表格数据转换为BetterGI可执行的脚本
+    - 脚本验证：检查事件成对性和完整性
+    - 脚本导出：保存生成的脚本到文件
+    - 脚本导入：从文件加载脚本并转换为事件表格数据
+    - 多线程处理：使用线程在后台执行耗时操作，确保UI响应流畅
+    """
     
     def __init__(self, main_window):
+        """初始化脚本管理器
+        
+        Args:
+            main_window: 主窗口实例，用于访问事件管理器和其他组件
+        """
         self.main_window = main_window
         self.debug_logger = get_global_debug_logger()
         self.script = None  # 存储生成的脚本
         
-        # 线程实例
+        # 线程实例，用于处理耗时操作
         self.generate_script_thread = None
         self.check_pairing_thread = None
         self.import_script_thread = None
     
     def on_generate_script(self):
-        """生成脚本"""
+        """启动脚本生成流程
+        
+        首先检查事件成对性，然后启动脚本生成线程。
+        处理脚本生成过程中的异常并显示错误信息。
+        """
         try:
             self.debug_logger.log_info("开始生成脚本...")
             
@@ -325,7 +344,14 @@ class ScriptManager:
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_pairing_check_complete(self, is_passed, issues):
-        """事件成对性检查完成回调"""
+        """事件成对性检查完成回调
+        
+        根据检查结果决定是否继续生成脚本，如果有问题则询问用户是否继续。
+        
+        Args:
+            is_passed: 布尔值，表示检查是否通过
+            issues: 字符串列表，包含检查出的问题
+        """
         if not is_passed:
             # 显示详细的问题信息，并询问是否继续
             message = "检测到以下事件成对性问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
@@ -341,7 +367,10 @@ class ScriptManager:
         self.start_generate_script_thread()
     
     def start_generate_script_thread(self):
-        """启动脚本生成线程"""
+        """启动脚本生成线程
+        
+        创建并启动脚本生成线程，连接相关信号处理程序。
+        """
         event_manager = self.main_window.event_manager
         
         # 创建并启动脚本生成线程

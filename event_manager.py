@@ -235,20 +235,44 @@ class SearchFilterThread(QThread):
 # =============================================================================
 
 class EventManager:
-    """事件管理类，负责所有与事件相关的操作"""
+    """事件管理类，负责所有与事件相关的操作
+    
+    核心功能包括：
+    - 事件表格的创建和管理
+    - 事件的添加、编辑、删除和复制
+    - 事件的排序和搜索过滤
+    - 事件的批量编辑
+    - 事件数据的导入和导出
+    
+    使用多线程处理耗时操作，确保UI响应流畅。
+    """
     
     def __init__(self, main_window):
+        """初始化事件管理器
+        
+        Args:
+            main_window: 主窗口实例，用于访问其他组件和功能
+        """
         self.main_window = main_window
         self.debug_logger = get_global_debug_logger()
         self.events_table = None
         
-        # 线程实例
+        # 线程实例，用于处理耗时操作
         self.sort_events_thread = None
         self.batch_edit_thread = None
         self.search_filter_thread = None
         
     def create_event_editor(self, parent=None):
-        """创建事件编辑器"""
+        """创建事件编辑器组件
+        
+        创建包含搜索过滤、事件表格和操作按钮的完整事件编辑界面。
+        
+        Args:
+            parent: 父部件，如果为None则创建新的QWidget
+        
+        Returns:
+            QWidget: 包含完整事件编辑功能的部件
+        """
         if parent is None:
             parent = QWidget()
             parent.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
@@ -275,7 +299,14 @@ class EventManager:
         return parent
     
     def create_search_filter_widgets(self, parent_layout):
-        """创建搜索和过滤组件"""
+        """创建搜索和过滤组件
+        
+        创建用于事件搜索和类型过滤的UI组件，包括搜索输入框、
+        事件类型下拉框和相关按钮。
+        
+        Args:
+            parent_layout: 父布局，用于放置搜索过滤组件
+        """
         # 创建搜索和过滤区域
         search_container = QWidget()
         search_container.setStyleSheet(UnifiedStyleHelper.get_instance().get_search_container_style())
@@ -325,7 +356,13 @@ class EventManager:
         self.filter_type_combo.keyPressEvent = lambda event: self.on_combo_key_press(event)
     
     def create_event_table(self, parent_layout):
-        """创建事件表格"""
+        """创建事件表格组件
+        
+        创建用于显示和编辑事件的表格，设置列头、列宽和右键菜单。
+        
+        Args:
+            parent_layout: 父布局，用于放置事件表格
+        """
         # 创建表格
         from main_window import ModernTableWidget
         self.events_table = ModernTableWidget(0, 8)  # 8列：行号 + 原有7列

@@ -18,16 +18,35 @@ from debug_tools import get_global_debug_logger
 # =============================================================================
 
 class SettingsPanel(QWidget):
-    """设置面板 - 包含循环设置和屏幕设置"""
+    """应用程序设置面板
+    
+    管理应用程序的核心设置，包括：
+    - 循环设置：控制脚本执行的循环次数和间隔时间
+    - 屏幕设置：管理目标屏幕分辨率和缩放比例
+    
+    提供UI界面用于设置调整和显示，以及相关的辅助方法。
+    """
     
     def __init__(self, parent=None):
+        """初始化设置面板
+        
+        Args:
+            parent: 父窗口或部件实例
+        """
         super().__init__(parent)
         self.parent_window = parent  # 重命名为更通用的parent_window
         self.debug_logger = get_global_debug_logger()
         self.setup_ui()
     
     def setup_ui(self):
-        """设置UI界面"""
+        """设置面板的UI布局和组件
+        
+        创建并布局面板的主要组件，包括：
+        - 循环设置区域
+        - 屏幕设置区域
+        
+        使用垂直布局组织所有设置组。
+        """
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -205,16 +224,39 @@ class SettingsPanel(QWidget):
 # =============================================================================
 
 class OperationsPanel(QWidget):
-    """操作面板 - 包含操作按钮"""
+    """应用程序操作面板
+    
+    提供应用程序的核心操作按钮，包括：
+    - 生成脚本：创建BetterGI可执行的脚本
+    - 保存脚本：将生成的脚本保存到文件
+    - 预览脚本：查看生成的脚本内容
+    - 导入脚本：从文件导入现有脚本
+    
+    所有操作按钮都与父窗口的对应方法绑定。
+    """
     
     def __init__(self, parent=None):
+        """初始化操作面板
+        
+        Args:
+            parent: 父窗口或部件实例
+        """
         super().__init__(parent)
         self.parent_window = parent  # 保存父窗口引用，避免使用main_window命名
         self.debug_logger = get_global_debug_logger()
         self.setup_ui()
     
     def setup_ui(self):
-        """设置UI界面"""
+        """设置操作面板的UI布局和组件
+        
+        创建并布局操作面板的主要组件，包括：
+        - 生成脚本按钮
+        - 保存脚本按钮
+        - 预览脚本按钮
+        - 导入脚本按钮
+        
+        使用垂直布局组织所有操作按钮，强调主要操作。
+        """
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -311,16 +353,37 @@ class OperationsPanel(QWidget):
 # =============================================================================
 
 class StatsPanel(QWidget):
-    """统计信息面板"""
+    """应用程序统计信息面板
+    
+    显示脚本和事件的统计信息，包括：
+    - 事件数量统计
+    - 执行时间计算
+    - 循环设置信息
+    - 屏幕设置信息
+    
+    实时更新以反映当前的脚本配置和事件数据。
+    """
     
     def __init__(self, parent=None):
+        """初始化统计信息面板
+        
+        Args:
+            parent: 父窗口或部件实例
+        """
         super().__init__(parent)
         self.parent_window = parent  # 保存父窗口引用，避免使用main_window命名
         self.debug_logger = get_global_debug_logger()
         self.setup_ui()
     
     def setup_ui(self):
-        """设置UI界面"""
+        """设置统计信息面板的UI布局和组件
+        
+        创建并布局统计信息面板的主要组件，包括：
+        - 统计信息显示区域
+        - 预设的统计信息文本格式
+        
+        使用文本编辑控件展示格式化的统计数据。
+        """
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)

@@ -149,7 +149,24 @@ class SimpleCoordinateCapture(QDialog):
 
 
 class EventEditDialog(StyledDialog):
-    """事件编辑对话框"""
+    """事件编辑对话框
+    
+    用于添加和编辑各种类型的键鼠事件，支持多种事件类型和参数设置。
+    提供直观的UI界面，允许用户设置事件名称、类型、键码、坐标和时间等参数。
+    
+    支持的事件类型包括：
+    - 按键按下/释放
+    - 鼠标移动
+    - 鼠标按键按下/释放（左、右、中键）
+    - 鼠标滚轮
+    
+    参数：
+    - parent: 父窗口实例
+    - event_data: 事件数据字典，用于编辑模式
+    - is_edit_mode: 是否为编辑模式
+    - insert_position: 插入位置（用于插入模式）
+    - insert_after_item: 插入后项目（用于插入模式）
+    """
     
     def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None):
         # 使用基类初始化方法设置窗口属性
@@ -723,7 +740,16 @@ class EventEditDialog(StyledDialog):
 # =============================================================================
 
 class PasteOptionsDialog(QDialog):
-    """粘贴选项对话框"""
+    """粘贴选项对话框
+    
+    用于设置事件粘贴时的选项，特别是时间修改策略。
+    允许用户选择粘贴事件时的时间处理方式，以适应不同的场景需求。
+    
+    提供的时间修改选项包括：
+    - 保持原始时间：直接使用事件的原始时间值
+    - 基于当前时间：将事件时间相对于当前位置调整
+    - 自定义偏移：为所有粘贴的事件添加自定义时间偏移
+    """
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -793,7 +819,17 @@ class PasteOptionsDialog(QDialog):
 # =============================================================================
 
 class DeleteOptionsDialog(QDialog):
-    """删除选项对话框"""
+    """删除选项对话框
+    
+    用于设置事件删除时的选项，特别是时间调整策略。
+    允许用户选择删除事件后如何处理后续事件的时间。
+    
+    提供的删除选项包括：
+    - 删除后调整后续事件时间：删除事件后，自动调整后续事件的相对时间
+    - 保持后续事件时间不变：删除事件后，后续事件的时间保持不变
+    
+    帮助用户在删除事件时灵活控制时间流的处理方式。
+    """
     
     def __init__(self, parent=None):
         super().__init__(parent)

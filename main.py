@@ -112,17 +112,11 @@ def setup_exe_environment():
     Returns:
         str: 应用程序的基础路径
     """
-    # 确定基础路径 - 复制utils.py中的get_base_path()逻辑，避免循环导入
-    if getattr(sys, 'frozen', False):
-        # 打包后的环境
-        if hasattr(sys, '_MEIPASS'):
-            # PyInstaller 临时目录
-            base_path = sys._MEIPASS
-        else:
-            base_path = os.path.dirname(sys.executable)
-    else:
-        # 开发环境
-        base_path = os.path.dirname(os.path.abspath(__file__))
+    # 导入utils模块，获取基础路径
+    from utils import get_base_path
+    
+    # 确定基础路径 - 使用utils.py中的get_base_path()函数
+    base_path = get_base_path()
     
     # 确保基础路径在sys.path中
     if base_path not in sys.path:
@@ -318,6 +312,33 @@ class BetterGIApplication:
     
     负责管理应用程序的完整生命周期，包括初始化、配置加载、主窗口创建和资源管理。
     作为应用程序的核心控制器，协调各组件间的交互并提供统一的错误处理机制。
+    
+    主要职责：
+    1. 初始化应用程序环境和配置
+    2. 设置Qt应用程序和全局样式
+    3. 配置平台特定功能
+    4. 初始化日志系统
+    5. 检查用户协议
+    6. 创建和显示主窗口
+    7. 运行应用程序主循环
+    8. 管理应用程序资源的清理
+    
+    应用程序启动流程：
+    - 初始化应用程序环境
+    - 设置Qt应用程序
+    - 配置平台特定功能
+    - 设置全局样式
+    - 初始化日志系统
+    - 检查用户协议
+    - 创建主窗口
+    - 显示主窗口
+    - 进入应用程序主循环
+    
+    应用程序退出流程：
+    - 退出主循环
+    - 清理应用程序资源
+    - 停止监控器
+    - 恢复输出流
     """
     
     def __init__(self):
