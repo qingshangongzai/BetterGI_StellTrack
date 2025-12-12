@@ -595,9 +595,7 @@ class CustomInputDialog(StyledDialog):
         
 
 
-        # 连接回车键
 
-        self.input_edit.returnPressed.connect(self.on_ok_clicked)
 
     
 
