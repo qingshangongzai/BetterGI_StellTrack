@@ -142,7 +142,8 @@ BetterGI StellTrack 采用模块化设计，代码结构清晰，便于维护和
 
 ```
 BetterGI_StellTrack/
-├── main.py                 # 应用程序入口，包含版本管理和生命周期管理
+├── main.py                 # 应用程序主入口，负责生命周期管理、环境配置、监控和主窗口创建
+├── version.py              # 版本管理器模块，负责管理应用程序的版本信息和元数据
 ├── main_window.py          # 主窗口类，包含界面布局和主要功能
 ├── event_manager.py        # 事件管理模块，处理事件的添加、编辑、删除等
 ├── script_manager.py       # 脚本管理模块，负责脚本的生成和保存

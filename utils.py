@@ -9,10 +9,10 @@ import ctypes
 from datetime import datetime
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter
 
 # 导入版本管理器
-from main import version_manager
+from version import version_manager
 
 # =============================================================================
 # 全局常量和映射
@@ -68,7 +68,8 @@ EVENT_TYPE_MAP = {
     "右键按下": 4,
     "右键释放": 5,
     "中键按下": 4,
-    "中键释放": 5
+    "中键释放": 5,
+    "鼠标滚轮": 6
 }
 
 # 排序提示文本
@@ -349,7 +350,7 @@ def set_app_user_model_id():
         version = version_manager.get_version()
         
         app_id = f'{app_info["company"]}.{app_info["name_en"]}.{version}'
-        result = ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
         print(f"[DEBUG] AppUserModelID设置成功: {app_id}")
         return True
     except Exception as e:
@@ -397,7 +398,9 @@ def fix_windows_taskbar_icon_for_window(window):
             if not pixmap.isNull():
                 h_icon = pixmap.toImage().bits()
             else:
-                print("[DEBUG] 无法加载PNG图标文件")
+                from debug_tools import get_global_debug_logger
+                debug_logger = get_global_debug_logger()
+                debug_logger.log_debug("无法加载PNG图标文件")
                 return False
         
         if h_icon:
@@ -408,14 +411,20 @@ def fix_windows_taskbar_icon_for_window(window):
             # 强制刷新任务栏
             user32.UpdateWindow(hwnd)
             
-            print(f"[DEBUG] 任务栏图标修复成功: {icon_path}")
+            from debug_tools import get_global_debug_logger
+            debug_logger = get_global_debug_logger()
+            debug_logger.log_debug(f"任务栏图标修复成功: {icon_path}")
             return True
         
-        print("[DEBUG] 图标句柄创建失败")
+        from debug_tools import get_global_debug_logger
+        debug_logger = get_global_debug_logger()
+        debug_logger.log_debug("图标句柄创建失败")
         return False
         
     except Exception as e:
-        print(f"[DEBUG] 修复任务栏图标失败: {e}")
+        from debug_tools import get_global_debug_logger
+        debug_logger = get_global_debug_logger()
+        debug_logger.log_error(f"修复任务栏图标失败: {e}")
         return False
 
 # =============================================================================
@@ -452,34 +461,28 @@ def find_resource_file(filename):
     搜索顺序：
     1. 基础路径
     2. 基础路径/assets
-    3. 可执行文件目录
-    4. 可执行文件目录/assets
-    5. _MEIPASS（打包环境）
-    6. _MEIPASS/assets
+    3. _MEIPASS（打包环境）
+    4. _MEIPASS/assets
     """
     base_path = get_base_path()
-    exe_dir = os.path.dirname(sys.executable) if hasattr(sys, 'executable') else None
     
-    # 构建搜索路径列表
-    search_paths = [
+    # 构建搜索路径列表，简化逻辑，合并重复路径
+    search_paths = []
+    
+    # 添加基础路径和基础路径/assets
+    search_paths.extend([
         base_path,
         os.path.join(base_path, "assets"),
-    ]
+    ])
     
-    # 添加可执行文件目录路径
-    if exe_dir and exe_dir != base_path:
-        search_paths.extend([
-            exe_dir,
-            os.path.join(exe_dir, "assets"),
-        ])
-    
-    # 添加 _MEIPASS 路径
+    # 添加 _MEIPASS 路径（如果存在）
     if hasattr(sys, '_MEIPASS'):
         meipass = sys._MEIPASS
-        search_paths.extend([
-            meipass,
-            os.path.join(meipass, "assets"),
-        ])
+        if meipass not in search_paths:
+            search_paths.extend([
+                meipass,
+                os.path.join(meipass, "assets"),
+            ])
     
     # 在所有路径中查找文件
     for path in search_paths:
@@ -490,7 +493,14 @@ def find_resource_file(filename):
     return None
 
 def get_resource_path(relative_path):
-    """获取资源文件的绝对路径（兼容函数）"""
+    """获取资源文件的绝对路径，是资源加载的主要接口
+    
+    Args:
+        relative_path: 资源文件的相对路径
+        
+    Returns:
+        str: 资源文件的绝对路径，如果找不到则返回基于基础路径的相对路径
+    """
     return find_resource_file(relative_path) or os.path.join(get_base_path(), relative_path)
 
 def load_icon_universal():
@@ -569,3 +579,88 @@ def get_current_app_info():
         dict: 包含应用程序名称、英文名称、公司、版权等元数据的字典
     """
     return version_manager.get_app_info()
+
+
+def check_event_pairing(events_table):
+    """
+    检查事件成对性
+    
+    Args:
+        events_table: 事件表格对象
+        
+    Returns:
+        list: 包含检查出的问题的列表
+    """
+    pressed_keys = set()  # 记录按下的按键
+    pressed_mouse_buttons = set()  # 记录按下的鼠标按钮
+    issues = []
+    
+    for row in range(events_table.rowCount()):
+        type_item = events_table.item(row, 2)  # 事件类型列
+        keycode_item = events_table.item(row, 3)  # 键码列
+        
+        if not type_item:
+            continue
+            
+        event_type = type_item.text()
+        keycode = keycode_item.text() if keycode_item else ""
+        
+        # 检查按键事件
+        if event_type == "按键按下":
+            if keycode in pressed_keys:
+                # 获取按键的中文名称
+                key_name_cn = get_key_chinese_name(keycode)
+                issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
+            else:
+                pressed_keys.add(keycode)
+        elif event_type == "按键释放":
+            if keycode not in pressed_keys:
+                # 获取按键的中文名称
+                key_name_cn = get_key_chinese_name(keycode)
+                issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
+            else:
+                pressed_keys.remove(keycode)
+        
+        # 检查鼠标事件
+        elif event_type == "左键按下":
+            if "Left" in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 左键重复按下")
+            else:
+                pressed_mouse_buttons.add("Left")
+        elif event_type == "左键释放":
+            if "Left" not in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 左键未按下就释放")
+            else:
+                pressed_mouse_buttons.remove("Left")
+                
+        elif event_type == "右键按下":
+            if "Right" in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 右键重复按下")
+            else:
+                pressed_mouse_buttons.add("Right")
+        elif event_type == "右键释放":
+            if "Right" not in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 右键未按下就释放")
+            else:
+                pressed_mouse_buttons.remove("Right")
+                
+        elif event_type == "中键按下":
+            if "Middle" in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 中键重复按下")
+            else:
+                pressed_mouse_buttons.add("Middle")
+        elif event_type == "中键释放":
+            if "Middle" not in pressed_mouse_buttons:
+                issues.append(f"第{row+1}行: 中键未按下就释放")
+            else:
+                pressed_mouse_buttons.remove("Middle")
+    
+    # 检查未释放的按键
+    for key in pressed_keys:
+        key_name_cn = get_key_chinese_name(key)
+        issues.append(f"按键{key_name_cn}被按下但未释放")
+    for button in pressed_mouse_buttons:
+        button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
+        issues.append(f"鼠标{button_name}按钮被按下但未释放")
+    
+    return issues

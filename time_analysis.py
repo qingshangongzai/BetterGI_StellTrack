@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 # 导入共享模块
-from styles import StyleHelper, ChineseMessageBox, ModernGroupBox, CenteredComboBox, StyledDialog, get_global_font_manager
+from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, CenteredComboBox, StyledDialog, get_global_font_manager
 
 
 class EventTimeAnalyzerDialog(StyledDialog):
@@ -32,8 +32,8 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 标题区域
         title_label = QLabel("📊 事件时间分析")
-        StyleHelper.set_smiley_font(title_label, 16, QFont.Weight.Bold)
-        title_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; margin-bottom: 8px;")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 8px;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
         
@@ -51,8 +51,8 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 起始事件标签
         start_event_label = QLabel("起始事件：")
-        StyleHelper.set_source_han_font(start_event_label, 10)
-        start_event_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+        UnifiedStyleHelper.get_instance().set_source_han_font(start_event_label, 10)
+        start_event_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         start_event_layout.addWidget(start_event_label)
         
         # 起始事件下拉框
@@ -68,8 +68,8 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 结束事件标签
         end_event_label = QLabel("结束事件：")
-        StyleHelper.set_source_han_font(end_event_label, 10)
-        end_event_label.setStyleSheet(f"color: {StyleHelper.COLORS['text']};")
+        UnifiedStyleHelper.get_instance().set_source_han_font(end_event_label, 10)
+        end_event_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         end_event_layout.addWidget(end_event_label)
         
         # 结束事件下拉框
@@ -89,7 +89,7 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 分析按钮
         analyze_btn = QPushButton("🔍 开始分析")
-        analyze_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
+        analyze_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         analyze_btn.setMinimumHeight(32)
         analyze_btn.clicked.connect(self.on_analyze)
         # 创建按钮容器并设置居中布局
@@ -110,21 +110,21 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 总时间
         self.total_time_label = QLabel("0 ms")
-        self.total_time_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; font-weight: bold; font-size: 12px;")
+        self.total_time_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-weight: bold; font-size: 12px;")
         self.total_time_label.setAlignment(Qt.AlignmentFlag.AlignLeft)  # 左对齐以更靠近标签
         result_grid.addWidget(QLabel("总时间："), 0, 0, Qt.AlignmentFlag.AlignRight)
         result_grid.addWidget(self.total_time_label, 0, 1)
         
         # 平均时间
         self.avg_time_label = QLabel("0 ms")
-        self.avg_time_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; font-weight: bold; font-size: 12px;")
+        self.avg_time_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-weight: bold; font-size: 12px;")
         self.avg_time_label.setAlignment(Qt.AlignmentFlag.AlignLeft)  # 左对齐以更靠近标签
         result_grid.addWidget(QLabel("平均时间："), 1, 0, Qt.AlignmentFlag.AlignRight)
         result_grid.addWidget(self.avg_time_label, 1, 1)
         
         # 重复次数
         self.repeat_count_label = QLabel("0")
-        self.repeat_count_label.setStyleSheet(f"color: {StyleHelper.COLORS['primary']}; font-weight: bold; font-size: 12px;")
+        self.repeat_count_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-weight: bold; font-size: 12px;")
         self.repeat_count_label.setAlignment(Qt.AlignmentFlag.AlignLeft)  # 左对齐以更靠近标签
         result_grid.addWidget(QLabel("重复次数："), 2, 0, Qt.AlignmentFlag.AlignRight)
         result_grid.addWidget(self.repeat_count_label, 2, 1)
@@ -134,7 +134,7 @@ class EventTimeAnalyzerDialog(StyledDialog):
         
         # 重置按钮
         reset_btn = QPushButton("🔄 重置")
-        reset_btn.setStyleSheet(StyleHelper.get_button_style())
+        reset_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         reset_btn.setMinimumHeight(30)
         reset_btn.clicked.connect(self.reset_results)
         # 创建按钮容器并设置居中布局

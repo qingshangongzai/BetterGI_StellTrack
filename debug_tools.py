@@ -17,19 +17,28 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
 # 导入共享模块
-from styles import StyleHelper, get_global_font_manager, StyledDialog, DialogFactory
+from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory
 from styles import ChineseMessageBox
 # 导入资源管理器（已从resource_manager合并到styles）
 from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info
 # 导入版本管理器
-from main import version_manager
+from version import version_manager
 
 # =============================================================================
 # 输出捕获类 - 简化版
 # =============================================================================
 
 class SafeOutputCapture:
-    """安全的输出捕获类，避免递归问题"""
+    """安全的输出捕获类，避免递归问题
+    
+    用于捕获标准输出和标准错误，并将其重定向到日志文件，同时避免递归调用问题。
+    提供线程安全的缓冲区管理和写入机制。
+    
+    参数：
+    - original_stream: 原始流对象（stdout或stderr）
+    - logger: 日志记录器实例
+    - stream_name: 流名称（"STDOUT"或"STDERR"）
+    """
     
     def __init__(self, original_stream, logger, stream_name):
         self.original_stream = original_stream
@@ -146,9 +155,9 @@ class SafeDebugLogger:
             if not os.path.exists(logs_dir):
                 os.makedirs(logs_dir)
             
-            # 使用版本管理器获取应用信息
-            app_info = get_current_app_info()
-            version = get_current_version()
+            # 直接使用version_manager获取应用信息
+            app_info = version_manager.get_app_info()
+            version = version_manager.get_version()
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             return os.path.join(logs_dir, f"{app_info['name_en']}_v{version}_{timestamp}.log")
@@ -159,31 +168,25 @@ class SafeDebugLogger:
     def setup_logging(self):
         """设置日志记录"""
         try:
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                handlers=[
-                    logging.FileHandler(self.log_file, encoding='utf-8'),
-                ]
-            )
+            # 直接使用version_manager获取应用信息
+            app_info = version_manager.get_app_info()
+            version = version_manager.get_version()
             
-            # 使用版本管理器获取应用信息
-            app_info = get_current_app_info()
-            version = get_current_version()
-            
+            # 创建日志记录器
             self.logger = logging.getLogger(f'{app_info["name_en"]}_Debug')
             self.logger.setLevel(logging.DEBUG)
+            self.logger.propagate = False
             
+            # 移除现有处理器
             for handler in self.logger.handlers[:]:
                 self.logger.removeHandler(handler)
             
+            # 添加文件处理器
             file_handler = logging.FileHandler(self.log_file, encoding='utf-8')
             file_handler.setLevel(logging.DEBUG)
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
-            
-            self.logger.propagate = False
             
             self.log_info("安全调试日志系统初始化完成")
             self.log_info(f"应用名称: {app_info['name']} v{version}")
@@ -200,30 +203,24 @@ class SafeDebugLogger:
         try:
             self.stdout_capture = SafeOutputCapture(
                 self.original_stdout, 
-                self.logger if hasattr(self, 'logger') else None, 
+                self.logger, 
                 "STDOUT"
             )
             sys.stdout = self.stdout_capture
             
             self.stderr_capture = SafeOutputCapture(
                 self.original_stderr, 
-                self.logger if hasattr(self, 'logger') else None, 
+                self.logger, 
                 "STDERR"
             )
             sys.stderr = self.stderr_capture
             
-            if hasattr(self, 'logger') and self.logger:
-                self.logger.info("安全输出捕获系统已启动")
+            self.logger.info("安全输出捕获系统已启动")
             
         except Exception as e:
             sys.stdout = self.original_stdout
             sys.stderr = self.original_stderr
-            
-            try:
-                if hasattr(self, 'logger') and self.logger:
-                    self.logger.error(f"设置输出捕获失败: {e}")
-            except:
-                print(f"设置输出捕获失败: {e}")
+            print(f"设置输出捕获失败: {e}")
     
     def restore_output(self):
         """恢复原始输出流"""
@@ -276,37 +273,40 @@ class SafeDebugLogger:
         try:
             import platform
             
-            # 使用版本管理器获取应用信息
-            app_info = get_current_app_info()
-            version = get_current_version()
+            # 直接使用version_manager获取应用信息
+            app_info = version_manager.get_app_info()
+            version = version_manager.get_version()
             version_info = version_manager.get_version_info()
             
-            system_info = []
-            system_info.append("=== 系统信息 ===")
-            system_info.append(f"应用程序: {app_info['name']} v{version}")
-            system_info.append(f"版本详情: {version_info['major']}.{version_info['minor']}.{version_info['patch']}.{version_info['build']}")
-            system_info.append(f"操作系统: {platform.system()} {platform.release()}")
-            system_info.append(f"系统版本: {platform.version()}")
-            system_info.append(f"处理器: {platform.processor()}")
-            system_info.append(f"架构: {platform.architecture()[0]}")
-            system_info.append(f"Python版本: {platform.python_version()}")
+            system_info = [
+                "=== 系统信息 ===",
+                f"应用程序: {app_info['name']} v{version}",
+                f"版本详情: {version_info['major']}.{version_info['minor']}.{version_info['patch']}.{version_info['build']}",
+                f"操作系统: {platform.system()} {platform.release()}",
+                f"系统版本: {platform.version()}",
+                f"处理器: {platform.processor()}",
+                f"架构: {platform.architecture()[0]}",
+                f"Python版本: {platform.python_version()}"
+            ]
             
             try:
                 import psutil
                 memory = psutil.virtual_memory()
-                system_info.append(f"总内存: {memory.total // (1024**3)} GB")
-                system_info.append(f"可用内存: {memory.available // (1024**3)} GB")
-                system_info.append(f"内存使用率: {memory.percent}%")
-                
                 disk = psutil.disk_usage('/')
-                system_info.append(f"总磁盘空间: {disk.total // (1024**3)} GB")
-                system_info.append(f"可用磁盘空间: {disk.free // (1024**3)} GB")
-                system_info.append(f"磁盘使用率: {disk.percent}%")
+                
+                system_info.extend([
+                    f"总内存: {memory.total // (1024**3)} GB",
+                    f"可用内存: {memory.available // (1024**3)} GB",
+                    f"内存使用率: {memory.percent}%",
+                    f"总磁盘空间: {disk.total // (1024**3)} GB",
+                    f"可用磁盘空间: {disk.free // (1024**3)} GB",
+                    f"磁盘使用率: {disk.percent}%"
+                ])
             except ImportError:
                 system_info.append("内存信息: 需要psutil库")
             
             system_info_text = "\n".join(system_info)
-            self.log_info("系统信息:\n" + system_info_text)
+            self.log_info(f"系统信息:\n{system_info_text}")
             
         except Exception as e:
             self.log_error(f"记录系统信息失败: {e}")
@@ -415,16 +415,11 @@ class SafeDebugLogger:
 class SafeLogMonitorThread(QThread):
     """安全的日志监控线程，用于实时监控日志文件和控制台输出变化
     
-    该线程通过定时检查日志文件大小变化和控制台输出缓冲区变化，
-    确保调试窗口能够实时显示最新的日志信息，同时避免递归问题。
-    
     信号:
         log_updated (str): 当日志文件内容更新时发出
-        console_updated (list): 当控制台输出更新时发出
     """
     
     log_updated = pyqtSignal(str)
-    console_updated = pyqtSignal(list)
     
     def __init__(self, debug_logger):
         """初始化监控线程
@@ -436,10 +431,9 @@ class SafeLogMonitorThread(QThread):
         self.debug_logger = debug_logger
         self.running = True
         self.last_size = 0
-        self.last_console_count = 0
     
     def run(self):
-        """运行监控线程，定期检查日志文件和控制台输出变化"""
+        """运行监控线程，定期检查日志文件变化"""
         while self.running:
             try:
                 # 检查日志文件是否存在并读取更新
@@ -449,43 +443,22 @@ class SafeLogMonitorThread(QThread):
                         self.last_size = current_size
                         try:
                             with open(self.debug_logger.log_file, 'r', encoding='utf-8') as f:
-                                f.seek(0)
                                 content = f.read()
                                 self.log_updated.emit(content)
                         except Exception as e:
                             print(f"读取日志文件失败: {e}")
-                            # 记录异常详情
-                            import traceback
-                            traceback.print_exc()
-                
-                # 检查控制台输出更新
-                console_output = self.debug_logger.get_console_output()
-                if len(console_output) != self.last_console_count:
-                    self.last_console_count = len(console_output)
-                    new_items = console_output[self.last_console_count - len(console_output):]
-                    if new_items:
-                        self.console_updated.emit(new_items)
                 
                 # 短暂休眠，避免资源占用过高
                 time.sleep(2)
                 
             except Exception as e:
                 print(f"日志监控错误: {e}")
-                # 记录异常详情
-                import traceback
-                traceback.print_exc()
                 # 错误发生时延长休眠时间，避免频繁报错
                 time.sleep(5)
     
     def stop(self):
         """安全停止监控线程"""
-        try:
-            self.running = False
-        except Exception as e:
-            print(f"停止监控线程失败: {e}")
-            # 记录异常详情
-            import traceback
-            traceback.print_exc()
+        self.running = False
 
 # =============================================================================
 # 密码验证对话框
@@ -531,14 +504,14 @@ class PasswordDialog(QDialog):
             
             # 标题标签
             title_label = QLabel("请输入调试工具访问密码")
-            title_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {StyleHelper.COLORS['primary']};")
+            title_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
             layout.addWidget(title_label)
             
             # 密码输入框
             self.password_input = QLineEdit()
             self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
             self.password_input.setPlaceholderText("输入密码...")
-            self.password_input.setStyleSheet(StyleHelper.get_line_edit_style())
+            self.password_input.setStyleSheet(UnifiedStyleHelper.get_instance().get_line_edit_style())
             self.password_input.returnPressed.connect(self.verify_password)
             layout.addWidget(self.password_input)
             
@@ -668,9 +641,9 @@ class SafeDebugWindow(StyledDialog):
             
             # 创建标题
             title_label = QLabel("安全调试工具")
-            # 使用StyleHelper统一设置字体
-            StyleHelper.set_smiley_font(title_label, 18, QFont.Weight.Bold)
-            title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {StyleHelper.COLORS['primary']}; margin: 5px;")
+            # 使用UnifiedStyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 18, QFont.Weight.Bold)
+            title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin: 5px;")
             layout.addWidget(title_label)
             
             # 创建各个功能区域
@@ -725,25 +698,25 @@ class SafeDebugWindow(StyledDialog):
             # 添加应用名称信息行
             info_layout.addWidget(QLabel("应用名称:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
             app_name_label = QLabel(f"{app_info.get('name', '未知应用')} ({app_info.get('name_en', 'Unknown App')})")
-            app_name_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            app_name_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(app_name_label, 0, 1)
             
             # 添加当前版本信息行
             info_layout.addWidget(QLabel("当前版本:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
             version_label = QLabel(version)
-            version_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(version_label, 1, 1)
             
             # 添加版本详情信息行
             info_layout.addWidget(QLabel("版本详情:"), 2, 0, Qt.AlignmentFlag.AlignLeft)
             version_detail_label = QLabel(f"{version_info.get('major', 0)}.{version_info.get('minor', 0)}.{version_info.get('patch', 0)}.{version_info.get('build', 0)}")
-            version_detail_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            version_detail_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(version_detail_label, 2, 1)
             
             # 添加开发公司信息行
             info_layout.addWidget(QLabel("开发公司:"), 3, 0, Qt.AlignmentFlag.AlignLeft)
             company_label = QLabel(app_info.get("company", "未知公司"))
-            company_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            company_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(company_label, 3, 1)
             
             # 将信息分组框添加到父布局
@@ -799,13 +772,13 @@ class SafeDebugWindow(StyledDialog):
             info_layout.addWidget(QLabel("文件大小:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
             size_text = f"{file_info['size']} 字节" if file_info['exists'] else "文件不存在"
             self.size_label = QLabel(size_text)
-            self.size_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            self.size_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(self.size_label, 1, 1)
             
             # 添加修改时间信息行
             info_layout.addWidget(QLabel("修改时间:"), 2, 0, Qt.AlignmentFlag.AlignLeft)
             self.modified_label = QLabel(file_info['modified'])
-            self.modified_label.setStyleSheet(f"color: {StyleHelper.COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
+            self.modified_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS.get('text_secondary', '#666666')}; font-size: 10px;")
             info_layout.addWidget(self.modified_label, 2, 1)
             
             # 将信息分组框添加到父布局
@@ -838,7 +811,7 @@ class SafeDebugWindow(StyledDialog):
             self.log_display = QTextEdit()
             self.log_display.setReadOnly(True)  # 设置为只读模式
             # 配置暗色主题样式，提高长时间阅读的舒适度
-            self.log_display.setStyleSheet(StyleHelper.get_log_display_style())
+            self.log_display.setStyleSheet(UnifiedStyleHelper.get_instance().get_log_display_style())
             log_layout.addWidget(self.log_display)
             
             # 将日志显示区域添加到父布局
@@ -882,25 +855,25 @@ class SafeDebugWindow(StyledDialog):
             # 创建刷新日志按钮
             self.refresh_btn = QPushButton("刷新日志")
             self.refresh_btn.setFixedWidth(100)
-            self.refresh_btn.setStyleSheet(StyleHelper.get_button_style())
+            self.refresh_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
             self.refresh_btn.clicked.connect(self.refresh_log_display)
             
             # 创建清空日志按钮
             self.clear_btn = QPushButton("清空日志")
             self.clear_btn.setFixedWidth(100)
-            self.clear_btn.setStyleSheet(StyleHelper.get_button_style())
+            self.clear_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
             self.clear_btn.clicked.connect(self.clear_log)
             
             # 创建导出日志按钮，使用强调样式
             self.export_btn = QPushButton("导出日志")
             self.export_btn.setFixedWidth(100)
-            self.export_btn.setStyleSheet(StyleHelper.get_button_style(accent=True))
+            self.export_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
             self.export_btn.clicked.connect(self.export_log)
             
             # 创建打开日志目录按钮
             self.open_logs_dir_btn = QPushButton("打开日志目录")
             self.open_logs_dir_btn.setFixedWidth(120)
-            self.open_logs_dir_btn.setStyleSheet(StyleHelper.get_button_style())
+            self.open_logs_dir_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
             self.open_logs_dir_btn.clicked.connect(self.open_logs_directory)
             
             # 按钮布局，两边添加伸缩项确保按钮居中
@@ -935,17 +908,17 @@ class SafeDebugWindow(StyledDialog):
         
         self.test_log_btn = QPushButton("测试日志记录")
         self.test_log_btn.setFixedWidth(120)
-        self.test_log_btn.setStyleSheet(StyleHelper.get_button_style())
+        self.test_log_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         self.test_log_btn.clicked.connect(self.test_logging)
         
         self.test_exception_btn = QPushButton("测试异常捕获")
         self.test_exception_btn.setFixedWidth(120)
-        self.test_exception_btn.setStyleSheet(StyleHelper.get_button_style())
+        self.test_exception_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         self.test_exception_btn.clicked.connect(self.test_exception)
         
         self.system_info_btn = QPushButton("系统信息")
         self.system_info_btn.setFixedWidth(100)
-        self.system_info_btn.setStyleSheet(StyleHelper.get_button_style())
+        self.system_info_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         self.system_info_btn.clicked.connect(self.show_system_info)
         
         test_h_layout.addStretch()
@@ -957,7 +930,7 @@ class SafeDebugWindow(StyledDialog):
         test_layout.addWidget(test_container)
         
         test_explanation = QLabel("测试功能用于验证调试系统的正常运行，不会影响程序主功能")
-        test_explanation.setStyleSheet(f"color: {StyleHelper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px;")
+        test_explanation.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px;")
         test_explanation.setAlignment(Qt.AlignmentFlag.AlignCenter)
         test_layout.addWidget(test_explanation)
         
@@ -975,7 +948,6 @@ class SafeDebugWindow(StyledDialog):
         try:
             self.monitor_thread = SafeLogMonitorThread(self.debug_logger)
             self.monitor_thread.log_updated.connect(self.append_log_content)
-            self.monitor_thread.console_updated.connect(self.update_console_display)
             self.monitor_thread.start()
         except Exception as e:
             print(f"启动监控线程失败: {e}")
@@ -1029,9 +1001,7 @@ class SafeDebugWindow(StyledDialog):
         except Exception as e:
             print(f"追加日志内容失败: {e}")
     
-    def update_console_display(self, new_lines):
-        """更新控制台显示"""
-        pass
+
     
     def clear_log(self):
         """清空日志"""
