@@ -1,0 +1,37 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(2025,12,13,2),
+    prodvers=(3,6,2,0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x4,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          u'080404B0',
+          [
+            StringStruct(u'CompanyName', u'HXiaoStudio'),
+            StringStruct(u'FileDescription', u'BetterGI 星轨 - BetterGI StellTrack'),
+            StringStruct(u'FileVersion', u'2025.12.13'),
+            StringStruct(u'InternalName', u'BetterGI_StellTrack'),
+            StringStruct(u'LegalCopyright', u'© 2025 HXiaoStudio'),
+            StringStruct(u'OriginalFilename', u'BetterGI_StellTrack.exe'),
+            StringStruct(u'ProductName', u'BetterGI 星轨'),
+            StringStruct(u'ProductVersion', u'3.6.2'),
+            StringStruct(u'Comments', u'基于Python语言开发的专用软件，主要为BetterGI提供键鼠脚本生成功能')
+          ]
+        )
+      ]
+    ),
+    VarFileInfo(
+      [
+        VarStruct(u'Translation', [2052, 1200])
+      ]
+    )
+  ]
+)
