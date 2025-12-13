@@ -681,7 +681,7 @@ class EventEditDialog(StyledDialog):
             except ValueError:
                 # 如果键码不是数字，忽略
                 pass
-        elif self.type_combo.currentText() in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放"] and keycode.strip():
+        elif self.type_combo.currentText() in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"] and keycode.strip():
             # 鼠标事件时输入了键码，提示冲突
             ChineseMessageBox.show_warning(self, "事件类型冲突", "鼠标事件不需要键码，请清空键码输入框")
             self.keycode_edit.clear()
