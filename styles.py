@@ -257,7 +257,15 @@ class WindowIconMixin:
     def _fix_icon_safe(self):
         """安全修复任务栏图标"""
         try:
+            # 检查是否已经修复过，避免重复执行
+            if hasattr(self, '_icon_fixed') and self._icon_fixed:
+                return True
+            
             success = fix_windows_taskbar_icon_for_window(self)
+            # 修复完成后设置标志，防止重复修复
+            if hasattr(self, '_icon_fixed'):
+                self._icon_fixed = True
+            
             if hasattr(self, 'debug_logger') and hasattr(self.debug_logger, 'log_info'):
                 self.debug_logger.log_info("任务栏图标修复完成")
             self.icon_fixed.emit(success)
