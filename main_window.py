@@ -98,7 +98,7 @@ class BatchEditDialog(StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(650, 400)  # 调整窗口大小，宽度增加200px，高度保持不变
+        self.setFixedSize(485, 400)  # 调整窗口大小，宽度再缩小50px，高度保持不变
 
         
 
@@ -156,7 +156,7 @@ class BatchEditDialog(StyledDialog):
 
         offset_label_unit = QLabel("ms")
         offset_label_unit.setFixedWidth(20)
-        offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
 
         operation_layout.addWidget(offset_label, 0, 0)
         operation_layout.addWidget(self.offset_input, 0, 1)
@@ -175,7 +175,7 @@ class BatchEditDialog(StyledDialog):
 
         rel_time_label_unit = QLabel("ms")
         rel_time_label_unit.setFixedWidth(20)
-        rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
 
         operation_layout.addWidget(rel_time_label, 1, 0)
         operation_layout.addWidget(self.rel_time_input, 1, 1)
@@ -203,24 +203,24 @@ class BatchEditDialog(StyledDialog):
         # 基本事件类型（移除了"按键按下"和"按键释放"）
         base_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
-        self.old_type_combo = ModernComboBox()
+        # 确保old_type_combo宽度一致
+        self.old_type_combo = ModernComboBox(width=input_width)
         self.old_type_combo.addItem("不替换类型")
         self.old_type_combo.addItems(base_event_types)
         # 添加具体按键事件到old_type_combo，只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.old_type_combo.addItem(event_name)
-        self.old_type_combo.setFixedWidth(input_width)
 
         type_arrow_label = QLabel("→")
         type_arrow_label.setFixedWidth(20)
         type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.new_type_combo = ModernComboBox()
+        # 确保new_type_combo宽度一致
+        self.new_type_combo = ModernComboBox(width=input_width)
         self.new_type_combo.addItems(base_event_types)
         # 添加具体按键事件到new_type_combo，只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.new_type_combo.addItem(event_name)
-        self.new_type_combo.setFixedWidth(input_width)
 
         operation_layout.addWidget(QLabel("事件类型替换:"), 2, 0)
         operation_layout.addWidget(self.old_type_combo, 2, 1)
@@ -233,7 +233,7 @@ class BatchEditDialog(StyledDialog):
         # 创建水平布局来容纳统一坐标的所有组件
         unified_coords_layout = QHBoxLayout()
         unified_coords_layout.setContentsMargins(0, 0, 0, 0)
-        unified_coords_layout.setSpacing(10)
+        unified_coords_layout.setSpacing(0)
         
         # 1. 统一坐标复选框
         self.unified_coords_checkbox = QCheckBox()
@@ -245,10 +245,10 @@ class BatchEditDialog(StyledDialog):
         unified_coords_layout.addWidget(unified_label)
         
         # 3. 空白间距
-        unified_coords_layout.addSpacing(10)
+        unified_coords_layout.addSpacing(20)
         
         # 4. x坐标标签
-        x_label = QLabel("x坐标:")
+        x_label = QLabel("X坐标:")
         x_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         unified_coords_layout.addWidget(x_label)
         
@@ -259,10 +259,10 @@ class BatchEditDialog(StyledDialog):
         unified_coords_layout.addWidget(self.x_input)
         
         # 6. 空白间距
-        unified_coords_layout.addSpacing(20)
+        unified_coords_layout.addSpacing(3)
         
         # 7. y坐标标签
-        y_label = QLabel("y坐标:")
+        y_label = QLabel("Y坐标:")
         y_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         unified_coords_layout.addWidget(y_label)
         

@@ -828,16 +828,9 @@ class BetterGIApplication:
             traceback.print_exc()
 
 # =============================================================================
-# 版本获取工具函数（简化版）
+# 导入版本获取工具函数
 # =============================================================================
-
-def get_current_version():
-    """获取当前版本号"""
-    return version_manager.get_version()
-
-def get_app_info():
-    """获取应用程序信息"""
-    return version_manager.get_app_info()
+from utils import get_current_version
 
 # =============================================================================
 # 主函数
