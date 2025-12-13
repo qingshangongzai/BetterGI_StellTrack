@@ -483,7 +483,7 @@ class BetterGIApplication:
         if os.name == 'nt':
             print("[DEBUG] 设置AppUserModelID")
             try:
-                from user_agreement import set_app_user_model_id
+                from utils import set_app_user_model_id
                 set_app_user_model_id()
                 print("[DEBUG] AppUserModelID设置成功")
             except Exception as e:

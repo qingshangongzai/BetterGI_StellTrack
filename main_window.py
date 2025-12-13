@@ -2261,7 +2261,7 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
         # 修复状态栏样式 - 纯白色背景
 
-        self.status_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_status_bar_white_style())
+        self.status_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_status_bar_style())
 
         
 

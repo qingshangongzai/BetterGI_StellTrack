@@ -84,7 +84,6 @@ class UserAgreementWindow(StyledMainWindow):
         
         # 副标题
         subtitle_label = QLabel("请仔细阅读以下协议内容")
-        from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         subtitle_label.setFont(font_manager.get_source_han_font(11))
         subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
@@ -109,7 +108,6 @@ class UserAgreementWindow(StyledMainWindow):
     
     def create_buttons(self, parent_layout):
         """创建按钮区域"""
-        from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         
         # 使用DialogFactory创建关闭按钮布局
@@ -306,7 +304,6 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
     def create_action_button(self, text):
         """创建操作按钮"""
         button = QPushButton(text)
-        from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         button.setFont(font_manager.get_source_han_font(9))
         button.setMinimumHeight(32)
@@ -325,7 +322,6 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
             "基于GPL v3开源，仅供学习交流使用，切勿用于商用项目。"
         )
         copyright_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        from styles import get_global_font_manager
         font_manager = get_global_font_manager()
         copyright_text.setFont(font_manager.get_source_han_font(8))
         copyright_text.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']};")

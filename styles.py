@@ -574,9 +574,7 @@ class UnifiedStyleHelper:
         """获取容器背景样式"""
         return "background-color: #ffffff;"
     
-    def get_capture_status_style(self):
-        """获取捕获状态样式"""
-        return f"color: {self.COLORS['text_secondary']}; font-size: 10px;"
+    
     
     def get_quick_keys_label_style(self):
         """获取快速按键标签样式"""
@@ -692,10 +690,10 @@ class UnifiedStyleHelper:
         """
     
     def get_spin_box_style(self):
-        """获取整数输入框样式"""
+        """获取整数和浮点数输入框样式"""
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
-            QSpinBox {{
+            QSpinBox, QDoubleSpinBox {{
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 6px;
                 padding: 6px 4px 6px 4px;
@@ -707,16 +705,16 @@ class UnifiedStyleHelper:
                 min-height: 20px;
                 max-height: 20px;
             }}
-            QSpinBox:focus {{
+            QSpinBox:focus, QDoubleSpinBox:focus {{
                 border-color: {self.COLORS['primary']};
                 background-color: #fafafa;
                 border-width: 1.5px;
             }}
-            QSpinBox:hover {{
+            QSpinBox:hover, QDoubleSpinBox:hover {{
                 border-color: #a0a0a0;
                 background-color: #fafafa;
             }}
-            QSpinBox::up-button {{
+            QSpinBox::up-button, QDoubleSpinBox::up-button {{
                 subcontrol-origin: border;
                 subcontrol-position: top right;
                 width: 24px;
@@ -729,14 +727,14 @@ class UnifiedStyleHelper:
                 font-weight: bold;
                 color: #666;
             }}
-            QSpinBox::up-button:hover {{
+            QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
                 background-color: {self.COLORS['primary_hover']};
                 color: white;
             }}
-            QSpinBox::up-button:pressed {{
+            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{
                 background-color: {self.COLORS['primary_pressed']};
             }}
-            QSpinBox::down-button {{
+            QSpinBox::down-button, QDoubleSpinBox::down-button {{
                 subcontrol-origin: border;
                 subcontrol-position: bottom right;
                 width: 24px;
@@ -749,90 +747,12 @@ class UnifiedStyleHelper:
                 font-weight: bold;
                 color: #666;
             }}
-            QSpinBox::down-button:hover {{
+            QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
                 background-color: {self.COLORS['primary_hover']};
                 color: white;
             }}
-            QSpinBox::down-button:pressed {{
+            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
                 background-color: {self.COLORS['primary_pressed']};
-            }}
-        """
-    
-    def get_double_spin_box_style(self):
-        """获取浮点数输入框样式"""
-        # 使用系统默认字体，避免硬编码字体名称
-        return f"""
-            QDoubleSpinBox {{
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
-                padding: 6px 4px 6px 4px;
-                background-color: white;
-                font-size: 11px;
-                selection-background-color: {self.COLORS['primary']};
-                text-align: center;
-                {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
-            }}
-            QDoubleSpinBox:focus {{
-                border-color: {self.COLORS['primary']};
-                background-color: #fafafa;
-                border-width: 1.5px;
-            }}
-            QDoubleSpinBox:hover {{
-                border-color: #a0a0a0;
-                background-color: #fafafa;
-            }}
-            QDoubleSpinBox::up-button {{
-                subcontrol-origin: border;
-                subcontrol-position: top right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-top-right-radius: 5px;
-                background-color: transparent;
-                margin: 1px 1px 0px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QDoubleSpinBox::up-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QDoubleSpinBox::up-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-            QDoubleSpinBox::down-button {{
-                subcontrol-origin: border;
-                subcontrol-position: bottom right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-bottom-right-radius: 5px;
-                background-color: transparent;
-                margin: 0px 1px 1px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QDoubleSpinBox::down-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QDoubleSpinBox::down-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-        """
-    
-    def get_status_bar_white_style(self):
-        """获取纯白色状态栏样式"""
-        return f"""
-            QStatusBar {{ 
-                background-color: #ffffff;
-                color: {self.COLORS['text']};
-                border-top: 1px solid {self.COLORS['border']};
-                font-size: 10px;
             }}
         """
     
@@ -1176,17 +1096,22 @@ class UnifiedStyleHelper:
         """获取绝对时间信息标签样式"""
         return f"color: {self.COLORS['text_secondary']}; font-size: 9px;"
     
-    def get_capture_status_active_style(self):
-        """获取捕获状态激活样式"""
-        return f"color: {self.COLORS['primary']};"
-    
-    def get_capture_status_inactive_style(self):
-        """获取捕获状态非激活样式"""
+    def get_capture_status_style(self, status="inactive"):
+        """获取捕获状态样式
+        
+        Args:
+            status: 状态类型，可选值："active"、"inactive"、"bold"
+        
+        Returns:
+            对应的样式字符串
+        """
+        if status == "active":
+            return f"color: {self.COLORS['primary']};"
+        elif status == "inactive":
+            return f"color: {self.COLORS['text_secondary']};"
+        elif status == "bold":
+            return f"color: {self.COLORS['primary']}; font-weight: bold;"
         return f"color: {self.COLORS['text_secondary']};"
-    
-    def get_capture_status_bold_style(self):
-        """获取捕获状态加粗样式"""
-        return f"color: {self.COLORS['primary']}; font-weight: bold;"
     
     def setup_global_style(self, app):
         """设置全局样式"""
@@ -1381,7 +1306,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.PlusMinus)
-        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_double_spin_box_style())
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
 
 
 class CenteredComboBox(QComboBox):

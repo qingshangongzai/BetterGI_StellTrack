@@ -588,11 +588,9 @@ class EventEditDialog(StyledDialog):
             x_text = self.x_edit.text().strip()
             y_text = self.y_edit.text().strip()
             
-            x_value = int(x_text) if x_text else 0
-            y_value = int(y_text) if y_text else 0
-            
-            # TimeOffsetSpinBox的value()已经是整数，不需要转换
-            time_value = self.time_edit.value()
+            # 验证坐标格式
+            int(x_text) if x_text else 0
+            int(y_text) if y_text else 0
             
             # 如果是键盘事件，验证键码
             if self.keycode_edit.text().strip() and self.type_combo.currentText() in ["按键按下", "按键释放"]:
@@ -608,7 +606,7 @@ class EventEditDialog(StyledDialog):
         self.key_capture_active = True
         self.capture_btn.setText("取消捕获")
         self.capture_status.setText("等待按键...")
-        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_active_style())
+        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_style("active"))
         
         # 设置焦点以便捕获按键
         self.setFocus()
@@ -618,7 +616,7 @@ class EventEditDialog(StyledDialog):
         self.key_capture_active = False
         self.capture_btn.setText("按键捕获")
         self.capture_status.setText("已取消")
-        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_inactive_style())
+        self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_style("inactive"))
 
     def on_common_key_clicked(self):
         """常用按键点击"""
