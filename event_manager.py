@@ -12,7 +12,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox
+from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, ModernMenu
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, generate_key_event_name, SORT_TIP_TEXT, get_event_data_from_table
 from event_dialogs import EventEditDialog, PasteOptionsDialog, DeleteOptionsDialog
 from debug_tools import get_global_debug_logger
@@ -438,8 +438,12 @@ class EventManager:
         self.sort_events_btn.clicked.connect(self.sort_events_by_absolute_time)
     
     def on_show_event_context_menu(self, position):
-        """显示事件表格的右键菜单"""
-        context_menu = QMenu(self.main_window)
+        """显示事件表格的右键菜单
+        
+        使用 ModernMenu 以修复 Windows 系统下菜单圆角显示问题。
+        """
+        # 使用 ModernMenu 代替 QMenu
+        context_menu = ModernMenu(self.main_window)
         
         # 获取选中的行
         selected_rows = self.get_selected_event_rows()
@@ -847,8 +851,15 @@ class EventManager:
     
     def recalculate_relative_times(self):
         """重新计算所有事件的相对时间，保持绝对时间不变"""
-        if self.events_table.rowCount() < 2:
+        if self.events_table.rowCount() == 0:
             return
+        
+        # 处理第一个事件：相对时间 = 绝对时间
+        first_abs_time_item = self.events_table.item(0, 7)
+        first_rel_time_item = self.events_table.item(0, 6)
+        if first_abs_time_item and first_rel_time_item:
+            first_abs_time = int(first_abs_time_item.text()) if first_abs_time_item.text().isdigit() else 0
+            first_rel_time_item.setText(str(first_abs_time))
         
         # 从第二个事件开始，根据绝对时间计算相对时间
         for i in range(1, self.events_table.rowCount()):
@@ -982,12 +993,16 @@ class EventManager:
             self.main_window._batch_operation = True
             
             try:
-                # 创建事件编辑对话框，传入插入位置信息
+                # 获取前一个事件的绝对时间，用于计算绝对偏移时间
+                prev_absolute_time = self.get_prev_absolute_time(insert_position)
+                
+                # 创建事件编辑对话框，传入插入位置信息和前一个事件的绝对时间
                 dialog = EventEditDialog(
                     self.main_window, 
                     is_edit_mode=False, 
                     insert_position=insert_position,
-                    insert_after_item=insert_after_item
+                    insert_after_item=insert_after_item,
+                    prev_absolute_time=prev_absolute_time
                 )
                 
                 # 更新插入位置信息
@@ -1070,8 +1085,16 @@ class EventManager:
                 # 获取当前事件数据
                 event_data = get_event_data_from_table(self.events_table, row)
                 
-                # 打开编辑对话框
-                dialog = EventEditDialog(self.main_window, event_data=event_data, is_edit_mode=True)
+                # 获取前一个事件的绝对时间，用于计算绝对偏移时间
+                prev_absolute_time = self.get_prev_absolute_time(row)
+                
+                # 打开编辑对话框，传入前一个事件的绝对时间
+                dialog = EventEditDialog(
+                    self.main_window, 
+                    event_data=event_data, 
+                    is_edit_mode=True,
+                    prev_absolute_time=prev_absolute_time
+                )
                 if dialog.exec() == QDialog.DialogCode.Accepted:
                     new_event_data = dialog.get_event_data()
                     time_option = dialog.get_time_option()

@@ -22,7 +22,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog
+from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog, ModernMenuBar
 
 from styles import WindowIconMixin, DialogFactory
 
@@ -1183,9 +1183,13 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
         
         构建包含文件、编辑、工具、设置和帮助等菜单的菜单栏，
         并为每个菜单项连接相应的操作。
+        
+        使用 ModernMenuBar 以修复 Windows 系统下菜单圆角显示问题。
         """
 
-        menubar = self.menuBar()
+        # 创建现代化菜单栏，自动为所有菜单应用无边框样式
+        menubar = ModernMenuBar(self)
+        self.setMenuBar(menubar)
 
         
 

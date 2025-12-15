@@ -1,9 +1,9 @@
 # styles.py - 全局样式和字体管理模块
 import os
 import sys
-from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout
+from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem, QPainterPath, QPen, QRegion, QBitmap, QImage
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect
+from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout, QVBoxLayout, QLabel, QMenu, QMenuBar
 
 # 导入资源管理器函数
 from utils import get_base_path, find_resource_file, get_resource_path, load_icon_universal, create_fallback_icon, fix_windows_taskbar_icon_for_window
@@ -252,7 +252,6 @@ class WindowIconMixin:
             self._fix_timer.setSingleShot(True)
             self._fix_timer.timeout.connect(self._fix_icon_safe)
             self._fix_timer.start(delay_ms)
-            self._icon_fixed = True
     
     def _fix_icon_safe(self):
         """安全修复任务栏图标"""
@@ -998,6 +997,22 @@ class UnifiedStyleHelper:
             }}
         """
     
+    def get_absolute_time_edit_style(self):
+        """获取绝对偏移时间显示框样式"""
+        return f"""
+            QLineEdit {{ 
+                border: 1px solid {self.COLORS['border']}; 
+                border-radius: 6px;
+                padding: 6px 8px;
+                background-color: {self.COLORS['bg']}; /* 使用纯白色背景 */
+                font-size: 11px;
+                selection-background-color: {self.COLORS['primary']};
+                {self.SHADOWS['small']}
+                min-height: 20px;
+                max-height: 20px;
+            }}
+        """
+    
     def set_smiley_font(self, widget, size=12, weight=QFont.Weight.Normal):
         """为组件设置得意黑字体"""
         font_manager = get_global_font_manager()
@@ -1121,6 +1136,26 @@ class UnifiedStyleHelper:
             return f"color: {self.COLORS['primary']}; font-weight: bold;"
         return f"color: {self.COLORS['text_secondary']};"
     
+    def get_checkbox_style(self):
+        """获取复选框样式
+        
+        使用简洁的样式，让Qt使用系统默认的勾选标记
+        
+        Returns:
+            对应的样式字符串
+        """
+        return f"""
+            QCheckBox {{
+                color: {self.COLORS['text']};
+                spacing: 6px;
+            }}
+            
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+            }}
+        """
+    
     def setup_global_style(self, app):
         """设置全局样式"""
         from PyQt6.QtWidgets import QApplication
@@ -1135,113 +1170,254 @@ class UnifiedStyleHelper:
         # 获取滚动条样式
         scroll_bar_style = self.get_scroll_bar_style()
         
-        # 设置应用程序样式表
-        # 尝试直接在QApplication实例上设置样式表
-        if hasattr(q_app, 'setStyleSheet'):
-            q_app.setStyleSheet(f"""
-                QMainWindow {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QDialog {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QWidget {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QGroupBox {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QMenuBar {{
-                    background-color: {self.COLORS['bg']};
-                    border: none;
-                    padding: 4px;
-                }}
-                QMenuBar::item {{
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                }}
-                QMenuBar::item:selected {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                QMenu {{ 
-                    background-color: {self.COLORS['bg']};
-                    border: 1px solid {self.COLORS['border']};
-                    border-radius: 4px;
-                    padding: 4px;
-                    {self.SHADOWS['small']}
-                }}
-                QMenu::item {{
-                    padding: 4px 16px;
-                    border-radius: 4px;
-                }}
-                QMenu::item:selected {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                QAction::hover {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                
-                /* 滚动条样式 */
-                {scroll_bar_style}
-            """)
+        # 构建全局样式表
+        global_stylesheet = f"""
+            QMainWindow {{
+                background-color: {self.COLORS['bg']};
+            }}
+            QDialog {{
+                background-color: {self.COLORS['bg']};
+            }}
+            QWidget {{
+                background-color: {self.COLORS['bg']};
+            }}
+            QGroupBox {{
+                background-color: {self.COLORS['bg']};
+            }}
+            QMenuBar {{
+                background-color: {self.COLORS['bg']};
+                border: none;
+                padding: 4px;
+            }}
+            QMenuBar::item {{
+                padding: 4px 8px;
+                border-radius: 4px;
+            }}
+            QMenuBar::item:selected {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QMenu {{ 
+                background-color: {self.COLORS['bg']};
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 6px;
+                padding: 6px;
+                {self.SHADOWS['small']}
+            }}
+            QMenu::item {{
+                padding: 6px 16px;
+                border-radius: 4px;
+                margin: 2px 2px;
+            }}
+            QMenu::item:selected {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background-color: {self.COLORS['border_light']};
+                margin: 4px 8px;
+            }}
+            QAction::hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            
+            /* 复选框样式 - 使用系统默认勾选标记 */
+            QCheckBox {{
+                color: {self.COLORS['text']};
+                spacing: 6px;
+            }}
+            
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+            }}
+            
+            /* 滚动条样式 */
+            {scroll_bar_style}
+        """
+        
+        # 尝试在QApplication实例上设置样式表
+        if q_app and hasattr(q_app, 'setStyleSheet'):
+            q_app.setStyleSheet(global_stylesheet)
         # 如果QApplication实例不可用，尝试在传入的app对象上设置
         elif hasattr(app, 'setStyleSheet'):
-            app.setStyleSheet(f"""
-                QMainWindow {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QDialog {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QWidget {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QGroupBox {{
-                    background-color: {self.COLORS['bg']};
-                }}
-                QMenuBar {{
-                    background-color: {self.COLORS['bg']};
-                    border: none;
-                    padding: 4px;
-                }}
-                QMenuBar::item {{
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                }}
-                QMenuBar::item:selected {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                QMenu {{ 
-                    background-color: {self.COLORS['bg']};
-                    border: 1px solid {self.COLORS['border']};
-                    border-radius: 4px;
-                    padding: 4px;
-                    {self.SHADOWS['small']}
-                }}
-                QMenu::item {{
-                    padding: 4px 16px;
-                    border-radius: 4px;
-                }}
-                QMenu::item:selected {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                QAction::hover {{
-                    background-color: {self.COLORS['primary_hover']};
-                    color: white;
-                }}
-                
-                /* 滚动条样式 */
-                {scroll_bar_style}
-            """)
+            app.setStyleSheet(global_stylesheet)
 
 # =============================================================================
 # 现代化控件类
 # =============================================================================
+
+class ModernMenu(QMenu):
+    """现代化的菜单，使用 setMask 修复 Windows 系统下圆角显示问题
+    
+    通过设置窗口遮罩为圆角形状，直接裁剪窗口。
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # 设置窗口标志
+        self.setWindowFlags(
+            Qt.WindowType.Popup | 
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.NoDropShadowWindowHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        
+        # 应用菜单样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        menu_style = f"""
+            QMenu {{ 
+                background-color: {style_helper.COLORS['bg']};
+                border: 1px solid {style_helper.COLORS['border']};
+                padding: 6px;
+            }}
+            QMenu::item {{
+                padding: 6px 16px;
+                border-radius: 4px;
+                margin: 2px 2px;
+            }}
+            QMenu::item:selected {{
+                background-color: {style_helper.COLORS['primary_hover']};
+                color: white;
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background-color: {style_helper.COLORS['border_light']};
+                margin: 4px 8px;
+            }}
+        """
+        self.setStyleSheet(menu_style)
+    
+    def showEvent(self, event):
+        """菜单显示时设置圆角遮罩"""
+        super().showEvent(event)
+        
+        # 在 Windows 上使用 Windows API 移除窗口边框
+        if os.name == 'nt':
+            try:
+                import ctypes
+                
+                # 获取窗口句柄
+                hwnd = int(self.winId())
+                
+                # Windows API 常量
+                GWL_STYLE = -16
+                GWL_EXSTYLE = -20
+                WS_POPUP = 0x80000000
+                WS_BORDER = 0x00800000
+                WS_DLGFRAME = 0x00400000
+                WS_THICKFRAME = 0x00040000
+                WS_EX_DLGMODALFRAME = 0x00000001
+                WS_EX_WINDOWEDGE = 0x00000100
+                WS_EX_CLIENTEDGE = 0x00000200
+                WS_EX_STATICEDGE = 0x00020000
+                
+                # 获取当前窗口样式
+                style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
+                ex_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                
+                # 移除所有边框样式
+                style &= ~(WS_BORDER | WS_DLGFRAME | WS_THICKFRAME)
+                style |= WS_POPUP
+                ex_style &= ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE)
+                
+                # 设置新样式
+                ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
+                ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style)
+                
+                # 刷新窗口
+                SWP_FRAMECHANGED = 0x0020
+                SWP_NOMOVE = 0x0002
+                SWP_NOSIZE = 0x0001
+                SWP_NOZORDER = 0x0004
+                ctypes.windll.user32.SetWindowPos(
+                    hwnd, 0, 0, 0, 0, 0,
+                    SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+                )
+            except Exception:
+                pass
+        
+        # 设置圆角遮罩 - 使用更简单可靠的方法
+        QTimer.singleShot(0, self._update_rounded_mask)
+    
+    def resizeEvent(self, event):
+        """窗口大小改变时更新遮罩"""
+        super().resizeEvent(event)
+        # 延迟更新遮罩，确保窗口大小已经确定
+        QTimer.singleShot(0, self._update_rounded_mask)
+    
+    def _update_rounded_mask(self):
+        """更新圆角遮罩，使用简单的 QRegion 方法"""
+        # 创建圆角路径
+        path = QPainterPath()
+        rect = QRectF(self.rect())
+        path.addRoundedRect(rect, 6.0, 6.0)
+        
+        # 转换为区域并设置遮罩
+        region = QRegion(path.toFillPolygon().toPolygon())
+        self.setMask(region)
+    
+    def addMenu(self, *args):
+        """重写 addMenu 方法，确保子菜单也使用 ModernMenu
+        
+        支持两种调用方式：
+        1. addMenu(title: str) -> QMenu
+        2. addMenu(menu: QMenu) -> QAction
+        """
+        if len(args) == 1:
+            if isinstance(args[0], str):
+                # 创建新子菜单，使用 ModernMenu
+                submenu = ModernMenu(self)
+                submenu.setTitle(args[0])
+                action = super().addMenu(submenu)
+                return submenu
+            elif isinstance(args[0], QMenu):
+                # 添加已有菜单，设置窗口标志
+                menu = args[0]
+                menu.setWindowFlags(
+                    Qt.WindowType.Popup | 
+                    Qt.WindowType.FramelessWindowHint |
+                    Qt.WindowType.NoDropShadowWindowHint
+                )
+                menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+                return super().addMenu(menu)
+        return super().addMenu(*args)
+
+class ModernMenuBar(QMenuBar):
+    """现代化的菜单栏，为其创建的菜单自动应用无边框样式
+    
+    重写 addMenu 方法，确保所有菜单都使用 ModernMenu 类，
+    自动应用无边框和透明背景属性。
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+    
+    def addMenu(self, *args):
+        """重写 addMenu 方法，创建 ModernMenu 实例
+        
+        支持两种调用方式：
+        1. addMenu(title: str) -> QMenu
+        2. addMenu(menu: QMenu) -> QAction
+        """
+        if len(args) == 1:
+            if isinstance(args[0], str):
+                # 创建新菜单，使用 ModernMenu
+                menu = ModernMenu(self)
+                menu.setTitle(args[0])
+                action = super().addMenu(menu)
+                return menu
+            elif isinstance(args[0], QMenu):
+                # 添加已有菜单，设置窗口标志
+                menu = args[0]
+                menu.setWindowFlags(
+                    Qt.WindowType.Popup | 
+                    Qt.WindowType.FramelessWindowHint |
+                    Qt.WindowType.NoDropShadowWindowHint
+                )
+                menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+                return super().addMenu(menu)
+        return super().addMenu(*args)
 
 class ModernGroupBox(QGroupBox):
     """现代化的分组框"""
@@ -1465,95 +1641,178 @@ class ChineseMessageBox:
     @staticmethod
     def show_warning(parent, title, message):
         """显示警告消息"""
-        msg_box = QMessageBox(parent)
-        msg_box.setIcon(QMessageBox.Icon.Warning)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setWindowIcon(load_icon_universal())
+        # 创建自定义对话框
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setWindowIcon(load_icon_universal())
+        dialog.setMinimumWidth(200)
+        dialog.setMaximumWidth(400)
         
-        # 清除所有标准按钮
-        msg_box.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        # 设置对话框样式
+        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
         
-        # 添加自定义中文按钮
-        ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
+        # 创建布局
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
         
-        # 使用UnifiedStyleHelper设置样式
+        # 添加消息内容
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        layout.addWidget(message_label)
+        
+        # 添加按钮布局
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 创建按钮
+        ok_button = QPushButton("确定")
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
+        ok_button.clicked.connect(dialog.accept)
         
-        # 不在Windows平台下调用任务栏图标修复，避免循环
-        msg_box.exec()
+        # 添加按钮到布局
+        button_layout.addWidget(ok_button)
+        
+        # 添加按钮布局到主布局
+        layout.addLayout(button_layout)
+        
+        # 显示对话框
+        result = dialog.exec()
+        return result == QDialog.DialogCode.Accepted
     
     @staticmethod
     def show_error(parent, title, message):
         """显示错误消息"""
-        msg_box = QMessageBox(parent)
-        msg_box.setIcon(QMessageBox.Icon.Critical)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setWindowIcon(load_icon_universal())
+        # 创建自定义对话框
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setWindowIcon(load_icon_universal())
+        dialog.setMinimumWidth(200)
+        dialog.setMaximumWidth(400)
         
-        # 清除所有标准按钮
-        msg_box.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        # 设置对话框样式
+        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
         
-        # 添加自定义中文按钮
-        ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
+        # 创建布局
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
         
-        # 使用UnifiedStyleHelper设置样式
+        # 添加消息内容
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        layout.addWidget(message_label)
+        
+        # 添加按钮布局
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 创建按钮
+        ok_button = QPushButton("确定")
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
+        ok_button.clicked.connect(dialog.accept)
         
-        # 不在Windows平台下调用任务栏图标修复，避免循环
-        msg_box.exec()
+        # 添加按钮到布局
+        button_layout.addWidget(ok_button)
+        
+        # 添加按钮布局到主布局
+        layout.addLayout(button_layout)
+        
+        # 显示对话框
+        dialog.exec()
     
     @staticmethod
     def show_info(parent, title, message):
         """显示信息消息"""
-        msg_box = QMessageBox(parent)
-        msg_box.setIcon(QMessageBox.Icon.Information)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setWindowIcon(load_icon_universal())
+        # 创建自定义对话框
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setWindowIcon(load_icon_universal())
+        dialog.setMinimumWidth(200)
+        dialog.setMaximumWidth(400)
         
-        # 清除所有标准按钮
-        msg_box.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        # 设置对话框样式
+        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
         
-        # 添加自定义中文按钮
-        ok_button = msg_box.addButton("确定", QMessageBox.ButtonRole.AcceptRole)
+        # 创建布局
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
         
-        # 使用UnifiedStyleHelper设置样式
+        # 添加消息内容
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        layout.addWidget(message_label)
+        
+        # 添加按钮布局
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 创建按钮
+        ok_button = QPushButton("确定")
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
+        ok_button.clicked.connect(dialog.accept)
         
-        # 不在Windows平台下调用任务栏图标修复，避免循环
-        msg_box.exec()
+        # 添加按钮到布局
+        button_layout.addWidget(ok_button)
+        
+        # 添加按钮布局到主布局
+        layout.addLayout(button_layout)
+        
+        # 显示对话框
+        dialog.exec()
     
     @staticmethod
     def show_question(parent, title, message):
         """显示询问消息"""
-        msg_box = QMessageBox(parent)
-        msg_box.setIcon(QMessageBox.Icon.Question)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setWindowIcon(load_icon_universal())
+        # 创建自定义对话框
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setWindowIcon(load_icon_universal())
+        dialog.setMinimumWidth(200)
+        dialog.setMaximumWidth(400)
         
-        # 清除所有标准按钮
-        msg_box.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        # 设置对话框样式
+        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
         
-        # 添加自定义中文按钮
-        yes_button = msg_box.addButton("是", QMessageBox.ButtonRole.YesRole)
+        # 创建布局
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # 添加消息内容
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        layout.addWidget(message_label)
+        
+        # 添加按钮布局
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        button_layout.setSpacing(10)
+        
+        # 创建按钮
+        yes_button = QPushButton("是")
         yes_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
+        yes_button.clicked.connect(dialog.accept)
         
-        no_button = msg_box.addButton("否", QMessageBox.ButtonRole.NoRole)
+        no_button = QPushButton("否")
         no_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
+        no_button.clicked.connect(dialog.reject)
         
-        msg_box.setDefaultButton(no_button)
+        # 添加按钮到布局
+        button_layout.addWidget(yes_button)
+        button_layout.addWidget(no_button)
         
-        # 不在Windows平台下调用任务栏图标修复，避免循环
-        result = msg_box.exec()
+        # 添加按钮布局到主布局
+        layout.addLayout(button_layout)
         
-        # 修复：检查点击的按钮而不是对话框结果
-        user_choice = "是" if msg_box.clickedButton() == yes_button else "否"
-        print(f"[DEBUG] 用户选择: {user_choice}")
-        
-        return msg_box.clickedButton() == yes_button
+        # 显示对话框
+        result = dialog.exec()
+        return result == QDialog.DialogCode.Accepted
 
 
 # =============================================================================

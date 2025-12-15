@@ -168,7 +168,7 @@ class EventEditDialog(StyledDialog):
     - insert_after_item: 插入后项目（用于插入模式）
     """
     
-    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None):
+    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
@@ -178,11 +178,12 @@ class EventEditDialog(StyledDialog):
         self.is_edit_mode = is_edit_mode
         self.insert_position = insert_position
         self.insert_after_item = insert_after_item
+        self.prev_absolute_time = prev_absolute_time
         self.key_capture_active = False
         
         try:
             # 设置最小尺寸
-            self.setMinimumSize(550, 650)
+            self.setMinimumSize(500, 800)
             
             # 设置背景样式
             self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
@@ -371,7 +372,17 @@ class EventEditDialog(StyledDialog):
         self.time_unit_combo.setMinimumWidth(80)
         time_input_layout.addWidget(self.time_unit_combo)
         
+        # 添加伸缩空间，将绝对偏移时间组件推到右侧
         time_input_layout.addStretch()
+        
+        # 绝对偏移时间显示
+        time_input_layout.addWidget(QLabel("绝对偏移时间:"))
+        self.absolute_time_edit = CenteredLineEdit()
+        self.absolute_time_edit.setMaximumWidth(120)
+        self.absolute_time_edit.setReadOnly(True)
+        self.absolute_time_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_absolute_time_edit_style())
+        time_input_layout.addWidget(self.absolute_time_edit)
+        
         time_layout.addLayout(time_input_layout, 0, 1)
         
         # 快速时间按钮 - 分两行显示
@@ -479,6 +490,10 @@ class EventEditDialog(StyledDialog):
         
         # 键码变化
         self.keycode_edit.textChanged.connect(self.on_keycode_changed)
+        
+        # 时间相关变化 - 新增
+        self.time_edit.valueChanged.connect(self.update_absolute_time)
+        self.time_unit_combo.currentTextChanged.connect(self.update_absolute_time)
 
     def toggle_key_capture(self):
         """切换按键捕获状态"""
@@ -510,34 +525,54 @@ class EventEditDialog(StyledDialog):
     def load_event_data(self, event_data):
         """加载事件数据"""
         if len(event_data) >= 7:
-            self.name_edit.setText(event_data[0])
-            self.type_combo.setCurrentText(event_data[1])
-            self.keycode_edit.setText(event_data[2])
-            self.x_edit.setText(event_data[3])
-            self.y_edit.setText(event_data[4])
+            # 设置加载数据标志，防止on_event_type_changed覆盖自定义名称
+            self._loading_data = True
             
-            # 关键修复：正确处理相对时间
-            relative_time = event_data[5]  # 这应该是毫秒值
-            
-            # 如果相对时间大于等于1000，转换为秒显示
             try:
-                relative_time_ms = int(relative_time)
-                if relative_time_ms >= 60000:
-                    # 大于1分钟，显示为分钟
-                    self.time_edit.setValue(relative_time_ms // 60000)
-                    self.time_unit_combo.setCurrentText("min")
-                elif relative_time_ms >= 1000:
-                    # 大于1秒，显示为秒
-                    self.time_edit.setValue(relative_time_ms // 1000)
-                    self.time_unit_combo.setCurrentText("s")
-                else:
-                    # 小于1秒，显示为毫秒
-                    self.time_edit.setValue(relative_time_ms)
+                # 先保存事件数据
+                saved_name = event_data[0]
+                event_type = event_data[1]
+                keycode = event_data[2]
+                x = event_data[3]
+                y = event_data[4]
+                
+                # 关键修复：正确处理相对时间
+                relative_time = event_data[5]  # 这应该是毫秒值
+                
+                # 先加载除事件类型外的所有数据
+                self.keycode_edit.setText(keycode)
+                self.x_edit.setText(x)
+                self.y_edit.setText(y)
+                
+                # 处理时间数据
+                try:
+                    relative_time_ms = int(relative_time)
+                    if relative_time_ms >= 60000:
+                        # 大于1分钟，显示为分钟
+                        self.time_edit.setValue(relative_time_ms // 60000)
+                        self.time_unit_combo.setCurrentText("min")
+                    elif relative_time_ms >= 1000:
+                        # 大于1秒，显示为秒
+                        self.time_edit.setValue(relative_time_ms // 1000)
+                        self.time_unit_combo.setCurrentText("s")
+                    else:
+                        # 小于1秒，显示为毫秒
+                        self.time_edit.setValue(relative_time_ms)
+                        self.time_unit_combo.setCurrentText("ms")
+                except ValueError:
+                    # 如果转换失败，默认显示100ms
+                    self.time_edit.setValue(100)
                     self.time_unit_combo.setCurrentText("ms")
-            except ValueError:
-                # 如果转换失败，默认显示100ms
-                self.time_edit.setValue(100)
-                self.time_unit_combo.setCurrentText("ms")
+                
+                # 更新绝对偏移时间显示 - 新增
+                self.update_absolute_time()
+                
+                # 最后加载事件名称和事件类型
+                self.name_edit.setText(saved_name)
+                self.type_combo.setCurrentText(event_type)
+            finally:
+                # 清除加载数据标志
+                self._loading_data = False
 
     def get_event_data(self):
         """获取事件数据"""
@@ -645,26 +680,88 @@ class EventEditDialog(StyledDialog):
 
     def on_event_type_changed(self, event_type):
         """事件类型变化"""
-        if event_type in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]:
-            # 选择鼠标事件：自动设置事件名称
-            self.name_edit.setText(event_type)
+        # 获取当前事件名称
+        current_name = self.name_edit.text().strip()
+        
+        # 判断是否为加载事件数据时触发
+        # 如果是，不自动更新事件名称
+        if hasattr(self, '_loading_data') and self._loading_data:
+            return
+        
+        # 定义鼠标事件类型列表
+        mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+        
+        # 判断是否为自定义名称的辅助函数
+        def is_custom_name(name):
+            """判断是否为自定义名称（非系统自动生成）"""
+            import re
+            # 1. 空名称不是自定义
+            if not name:
+                return False
+            # 2. 包含数字后缀的是自定义（如 "按下回车-1", "鼠标滚轮-2"）
+            if re.search(r'-\d+$', name):
+                return True
+            # 3. 精确匹配系统生成的鼠标事件名称
+            if name in mouse_event_types:
+                return False
+            # 4. 精确匹配系统生成的按键事件名称格式："按下XXX" 或 "释放XXX"
+            # 系统格式：动作在前，按键名称在后，且前面没有其他内容
+            if re.match(r'^(按下|释放).+$', name):
+                # 检查是否严格匹配系统格式（动作必须在开头，且后面是按键名称）
+                if re.match(r'^(按下|释放)[^按下释放]+$', name):
+                    # 这可能是系统生成的，但如果不在常见按键名称中，则是自定义
+                    # 为安全起见，只有完全匹配已知格式才认为是系统生成
+                    return False
+            # 5. 其他所有情况都是自定义（如 "a按下回车", "自定义操作" 等）
+            return True
+        
+        if event_type in mouse_event_types:
+            # 选择鼠标事件
+            # 只有非自定义名称才自动填充
+            if not is_custom_name(current_name):
+                # 更新为鼠标事件名称
+                self.name_edit.setText(event_type)
             # 清空键码（鼠标事件不需要键码）
             self.keycode_edit.clear()
         elif event_type in ["按键按下", "按键释放"]:
-            # 如果是按键事件，且有键码，则更新事件名称
-            keycode = self.keycode_edit.text().strip()
-            if keycode:
-                try:
-                    keycode_int = int(keycode)
-                    # 使用虚拟键码映射
-                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-                    # 转换为中文名称
-                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-                    action = "按下" if event_type == "按键按下" else "释放"
-                    self.name_edit.setText(f"{action}{key_name_cn}")
-                except ValueError:
-                    # 如果键码不是数字，忽略
-                    pass
+            # 选择按键事件
+            # 检查是否需要自动填充
+            should_auto_fill = False
+            
+            # 情况1：名称为空
+            if not current_name:
+                should_auto_fill = True
+            # 情况2：当前是鼠标事件名称
+            elif current_name in mouse_event_types:
+                should_auto_fill = True
+            # 情况3：当前是系统生成的按键事件，但动作不匹配
+            elif not is_custom_name(current_name):
+                expected_action = "按下" if event_type == "按键按下" else "释放"
+                if expected_action not in current_name:
+                    should_auto_fill = True
+                else:
+                    # 动作匹配的系统生成名称也需要更新
+                    should_auto_fill = True
+            
+            if should_auto_fill:
+                # 如果有键码，更新事件名称
+                keycode = self.keycode_edit.text().strip()
+                if keycode:
+                    try:
+                        keycode_int = int(keycode)
+                        # 使用虚拟键码映射
+                        key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
+                        # 转换为中文名称
+                        key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+                        action = "按下" if event_type == "按键按下" else "释放"
+                        auto_name = f"{action}{key_name_cn}"
+                        self.name_edit.setText(auto_name)
+                    except ValueError:
+                        # 如果键码不是数字，忽略
+                        pass
+                else:
+                    # 如果没有键码，清空事件名称
+                    self.name_edit.clear()
 
     def on_keycode_changed(self, keycode):
         """键码变化"""
@@ -677,15 +774,70 @@ class EventEditDialog(StyledDialog):
                 key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
                 event_type = self.type_combo.currentText()
                 action = "按下" if event_type == "按键按下" else "释放"
-                self.name_edit.setText(f"{action}{key_name_cn}")
+                auto_name = f"{action}{key_name_cn}"
+                
+                # 获取当前事件名称
+                current_name = self.name_edit.text().strip()
+                
+                # 判断是否为自定义名称
+                import re
+                def is_custom_name(name):
+                    """判断是否为自定义名称（非系统自动生成）"""
+                    if not name:
+                        return False
+                    # 包含数字后缀的是自定义
+                    if re.search(r'-\d+$', name):
+                        return True
+                    # 精确匹配系统生成的鼠标事件名称
+                    mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+                    if name in mouse_event_types:
+                        return False
+                    # 精确匹配系统生成的按键事件名称格式
+                    if re.match(r'^(按下|释放).+$', name):
+                        if re.match(r'^(按下|释放)[^按下释放]+$', name):
+                            return False
+                    # 其他情况都是自定义
+                    return True
+                
+                # 只有非自定义名称才自动填充
+                if not is_custom_name(current_name):
+                    self.name_edit.setText(auto_name)
             except ValueError:
                 # 如果键码不是数字，忽略
                 pass
         elif self.type_combo.currentText() in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"] and keycode.strip():
             # 鼠标事件时输入了键码，提示冲突
-            ChineseMessageBox.show_warning(self, "事件类型冲突", "鼠标事件不需要键码，请清空键码输入框")
+            ChineseMessageBox.show_warning(self, "事件类型冲突", "鼠标事件不需要键码")
             self.keycode_edit.clear()
 
+    def calculate_absolute_offset(self):
+        """计算绝对偏移时间
+        
+        绝对偏移时间 = 前面所有事件的累计相对时间 + 当前事件的相对时间
+        """
+        try:
+            # 获取当前事件的相对时间（转换为ms）
+            relative_time = self.time_edit.value()
+            time_unit = self.time_unit_combo.currentText()
+            
+            if time_unit == "s":
+                relative_time *= 1000
+            elif time_unit == "min":
+                relative_time *= 60000
+            
+            # 计算绝对偏移时间：前面事件累计时间 + 当前事件相对时间
+            absolute_offset = self.prev_absolute_time + relative_time
+            
+            return absolute_offset
+        except Exception as e:
+            print(f"计算绝对偏移时间错误: {e}")
+            return 0
+    
+    def update_absolute_time(self):
+        """更新绝对偏移时间显示"""
+        absolute_offset = self.calculate_absolute_offset()
+        self.absolute_time_edit.setText(f"{absolute_offset}")
+    
     def keyPressEvent(self, event):
         """按键事件 - 用于捕获按键"""
         if self.key_capture_active:
