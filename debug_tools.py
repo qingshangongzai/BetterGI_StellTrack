@@ -49,16 +49,8 @@ class SafeOutputCapture:
         self._is_recursing = False
 
     def write(self, text):
-        """写入文本到原始流和日志"""
-        if self.original_stream is None:
-            return
-            
+        """写入文本到日志，不输出到控制台"""
         if self._is_recursing:
-            try:
-                self.original_stream.write(text)
-                self.original_stream.flush()
-            except:
-                pass
             return
             
         self._is_recursing = True
@@ -80,22 +72,12 @@ class SafeOutputCapture:
                             self.logger.error(text.strip())
                 except:
                     pass
-            
-            try:
-                self.original_stream.write(text)
-                self.original_stream.flush()
-            except:
-                pass
         finally:
             self._is_recursing = False
     
     def flush(self):
-        """刷新原始流"""
-        try:
-            if self.original_stream is not None:
-                self.original_stream.flush()
-        except:
-            pass
+        """刷新方法，由于不再使用原始流，所以为空实现"""
+        pass
     
     def get_buffer(self):
         """获取缓冲区内容"""

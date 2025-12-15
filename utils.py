@@ -591,8 +591,8 @@ def check_event_pairing(events_table):
     Returns:
         list: 包含检查出的问题的列表
     """
-    pressed_keys = set()  # 记录按下的按键
-    pressed_mouse_buttons = set()  # 记录按下的鼠标按钮
+    pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
+    pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
     issues = []
     
     for row in range(events_table.rowCount()):
@@ -612,55 +612,55 @@ def check_event_pairing(events_table):
                 key_name_cn = get_key_chinese_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
-                pressed_keys.add(keycode)
+                pressed_keys[keycode] = row + 1  # 记录按下的行号
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
                 # 获取按键的中文名称
                 key_name_cn = get_key_chinese_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
-                pressed_keys.remove(keycode)
+                del pressed_keys[keycode]
         
         # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键重复按下")
             else:
-                pressed_mouse_buttons.add("Left")
+                pressed_mouse_buttons["Left"] = row + 1  # 记录按下的行号
         elif event_type == "左键释放":
             if "Left" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Left")
+                del pressed_mouse_buttons["Left"]
                 
         elif event_type == "右键按下":
             if "Right" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键重复按下")
             else:
-                pressed_mouse_buttons.add("Right")
+                pressed_mouse_buttons["Right"] = row + 1  # 记录按下的行号
         elif event_type == "右键释放":
             if "Right" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Right")
+                del pressed_mouse_buttons["Right"]
                 
         elif event_type == "中键按下":
             if "Middle" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键重复按下")
             else:
-                pressed_mouse_buttons.add("Middle")
+                pressed_mouse_buttons["Middle"] = row + 1  # 记录按下的行号
         elif event_type == "中键释放":
             if "Middle" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Middle")
+                del pressed_mouse_buttons["Middle"]
     
     # 检查未释放的按键
-    for key in pressed_keys:
+    for key, row_num in pressed_keys.items():
         key_name_cn = get_key_chinese_name(key)
-        issues.append(f"按键{key_name_cn}被按下但未释放")
-    for button in pressed_mouse_buttons:
+        issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
+    for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
-        issues.append(f"鼠标{button_name}按钮被按下但未释放")
+        issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
     
     return issues
