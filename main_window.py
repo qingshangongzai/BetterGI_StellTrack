@@ -2768,8 +2768,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             else:
                 app_dir = os.path.dirname(os.path.abspath(__file__))
             
+            # 确定logs目录路径
+            if getattr(sys, 'frozen', False):
+                logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
+            else:
+                logs_dir = os.path.join(app_dir, "logs")
+            
+            # 确保logs目录存在
+            if not os.path.exists(logs_dir):
+                os.makedirs(logs_dir)
+            
             # 设置文件路径
-            state_file = os.path.join(app_dir, "BetterGI_StellTrack_state.json")
+            state_file = os.path.join(logs_dir, "BetterGI_StellTrack_state.json")
             self.debug_logger.log_info(f"尝试从 {state_file} 加载保存的状态")
             
             if os.path.exists(state_file):
@@ -2823,8 +2833,18 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
             else:
                 app_dir = os.path.dirname(os.path.abspath(__file__))
             
+            # 确定logs目录路径
+            if getattr(sys, 'frozen', False):
+                logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
+            else:
+                logs_dir = os.path.join(app_dir, "logs")
+            
+            # 确保logs目录存在
+            if not os.path.exists(logs_dir):
+                os.makedirs(logs_dir)
+            
             # 设置文件路径
-            state_file = os.path.join(app_dir, "BetterGI_StellTrack_state.json")
+            state_file = os.path.join(logs_dir, "BetterGI_StellTrack_state.json")
             self.debug_logger.log_info(f"尝试将状态保存到 {state_file}")
             
             # 构建状态数据

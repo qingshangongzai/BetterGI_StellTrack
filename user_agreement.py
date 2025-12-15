@@ -394,8 +394,18 @@ def check_user_agreement():
         # 使用版本管理器获取应用信息
         app_info = version_manager.get_app_info()
 
+        # 确定logs目录路径
+        if getattr(sys, 'frozen', False):
+            logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
+        else:
+            logs_dir = os.path.join(base_path, "logs")
+        
+        # 确保logs目录存在
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+        
         # 同意状态文件路径
-        agreement_file = os.path.join(base_path, f"{app_info['name_en']}_agreement_accepted.txt")
+        agreement_file = os.path.join(logs_dir, f"{app_info['name_en']}_agreement_accepted.txt")
         
         print(f"[DEBUG] 检查协议文件: {agreement_file}")
         print(f"[DEBUG] 协议文件存在: {os.path.exists(agreement_file)}")
@@ -486,9 +496,6 @@ def check_user_agreement():
             # 用户同意协议，创建标记文件
             print("[DEBUG] 用户同意协议，创建标记文件")
             try:
-                # 确保目录存在
-                os.makedirs(base_path, exist_ok=True)
-                
                 # 写入协议信息，包含协议哈希和目录路径哈希
                 with open(agreement_file, 'w', encoding='utf-8') as f:
                     content = f"{app_info['name']} 用户协议同意时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
