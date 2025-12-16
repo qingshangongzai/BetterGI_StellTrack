@@ -461,27 +461,39 @@ def find_resource_file(filename):
     搜索顺序：
     1. 基础路径
     2. 基础路径/assets
-    3. _MEIPASS（打包环境）
-    4. _MEIPASS/assets
+    3. 基础路径/fonts
+    4. 基础路径/file
+    5. 基础路径/logo
+    6. _MEIPASS（打包环境）
+    7. _MEIPASS/assets
+    8. _MEIPASS/fonts
+    9. _MEIPASS/file
+    10. _MEIPASS/logo
     """
     base_path = get_base_path()
     
     # 构建搜索路径列表，简化逻辑，合并重复路径
     search_paths = []
     
-    # 添加基础路径和基础路径/assets
+    # 添加基础路径及其子目录
     search_paths.extend([
         base_path,
         os.path.join(base_path, "assets"),
+        os.path.join(base_path, "fonts"),
+        os.path.join(base_path, "file"),
+        os.path.join(base_path, "logo"),
     ])
     
-    # 添加 _MEIPASS 路径（如果存在）
+    # 添加 _MEIPASS 路径及其子目录（如果存在）
     if hasattr(sys, '_MEIPASS'):
         meipass = sys._MEIPASS
         if meipass not in search_paths:
             search_paths.extend([
                 meipass,
                 os.path.join(meipass, "assets"),
+                os.path.join(meipass, "fonts"),
+                os.path.join(meipass, "file"),
+                os.path.join(meipass, "logo"),
             ])
     
     # 在所有路径中查找文件
@@ -591,8 +603,8 @@ def check_event_pairing(events_table):
     Returns:
         list: 包含检查出的问题的列表
     """
-    pressed_keys = set()  # 记录按下的按键
-    pressed_mouse_buttons = set()  # 记录按下的鼠标按钮
+    pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
+    pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
     issues = []
     
     for row in range(events_table.rowCount()):
@@ -612,55 +624,55 @@ def check_event_pairing(events_table):
                 key_name_cn = get_key_chinese_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
-                pressed_keys.add(keycode)
+                pressed_keys[keycode] = row + 1  # 记录按下的行号
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
                 # 获取按键的中文名称
                 key_name_cn = get_key_chinese_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
-                pressed_keys.remove(keycode)
+                del pressed_keys[keycode]
         
         # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键重复按下")
             else:
-                pressed_mouse_buttons.add("Left")
+                pressed_mouse_buttons["Left"] = row + 1  # 记录按下的行号
         elif event_type == "左键释放":
             if "Left" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Left")
+                del pressed_mouse_buttons["Left"]
                 
         elif event_type == "右键按下":
             if "Right" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键重复按下")
             else:
-                pressed_mouse_buttons.add("Right")
+                pressed_mouse_buttons["Right"] = row + 1  # 记录按下的行号
         elif event_type == "右键释放":
             if "Right" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Right")
+                del pressed_mouse_buttons["Right"]
                 
         elif event_type == "中键按下":
             if "Middle" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键重复按下")
             else:
-                pressed_mouse_buttons.add("Middle")
+                pressed_mouse_buttons["Middle"] = row + 1  # 记录按下的行号
         elif event_type == "中键释放":
             if "Middle" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键未按下就释放")
             else:
-                pressed_mouse_buttons.remove("Middle")
+                del pressed_mouse_buttons["Middle"]
     
     # 检查未释放的按键
-    for key in pressed_keys:
+    for key, row_num in pressed_keys.items():
         key_name_cn = get_key_chinese_name(key)
-        issues.append(f"按键{key_name_cn}被按下但未释放")
-    for button in pressed_mouse_buttons:
+        issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
+    for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
-        issues.append(f"鼠标{button_name}按钮被按下但未释放")
+        issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
     
     return issues
