@@ -48,7 +48,7 @@ def load_icon_exe_safe():
 # =============================================================================
 
 def load_user_agreement_html():
-    """加载用户协议HTML文件内容"""
+    """加载用户协议HTML文件内容，并注入程序字体"""
     try:
         # 查找用户协议HTML文件
         html_files = [
@@ -57,28 +57,87 @@ def load_user_agreement_html():
             "docs/UserAgreement.html"
         ]
         
+        html_content = None
         for html_file in html_files:
             html_path = find_resource_file(html_file)
             if html_path and os.path.exists(html_path):
                 with open(html_path, 'r', encoding='utf-8') as f:
-                    return f.read()
+                    html_content = f.read()
+                break
         
-        # 如果找不到HTML文件，返回错误信息
-        error_html = """
-        <div style="font-family: SourceHanSerifCN; font-size: 12px; line-height: 1.5; padding: 20px; text-align: center;">
-            <h2 style="color: #d13438;">用户协议显示错误</h2>
-            <p>无法加载用户协议文件，请更新软件到最新版本。</p>
-            <p>如果您已经是最新版本，请联系开发者获取帮助。</p>
-        </div>
+        if not html_content:
+            # 如果找不到HTML文件，返回错误信息
+            error_html = """
+            <div style="font-family: 'Microsoft YaHei', sans-serif; font-size: 12px; line-height: 1.5; padding: 20px; text-align: center;">
+                <h2 style="color: #d13438;">用户协议显示错误</h2>
+                <p>无法加载用户协议文件，请更新软件到最新版本。</p>
+                <p>如果您已经是最新版本，请联系开发者获取帮助。</p>
+            </div>
+            """
+            return error_html
+        
+        # 获取实际加载的字体family名称
+        font_manager = get_global_font_manager()
+        
+        # 获取思源宋体的实际字体家族名称
+        source_han_font = font_manager.get_source_han_font()
+        source_han_family = source_han_font.family()
+        print(f"[DEBUG] 思源宋体字体family: {source_han_family}")
+        
+        # 获取得意黑的实际字体家族名称
+        smiley_font = font_manager.get_smiley_font()
+        smiley_family = smiley_font.family()
+        print(f"[DEBUG] 得意黑字体family: {smiley_family}")
+        
+        # 注入自定义样式，使用实际的字体family名称
+        style_helper = UnifiedStyleHelper.get_instance()
+        custom_style = f"""
+        <style>
+            body {{
+                font-family: '{source_han_family}', 'Microsoft YaHei', 'SimSun', sans-serif !important;
+                background-color: #ffffff !important;
+                color: {style_helper.COLORS['text']} !important;
+            }}
+            .container {{
+                background-color: #ffffff !important;
+            }}
+            h1, h2, h3, h4, h5, h6 {{
+                font-family: '{smiley_family}', '{source_han_family}', 'Microsoft YaHei', sans-serif !important;
+                color: {style_helper.COLORS['primary']} !important;
+            }}
+            h2 {{
+                border-left-color: {style_helper.COLORS['primary']} !important;
+            }}
+            .warning {{
+                color: #d13438 !important;
+            }}
+            .important {{
+                color: #ff6b35 !important;
+            }}
+            a {{
+                color: {style_helper.COLORS['primary']} !important;
+            }}
+            strong, b {{
+                color: {style_helper.COLORS['text']};
+            }}
+        </style>
         """
-        return error_html
+        
+        # 在</head>标签前插入自定义样式
+        if "</head>" in html_content:
+            html_content = html_content.replace("</head>", f"{custom_style}</head>")
+        else:
+            # 如果没有head标签，在开头添加
+            html_content = custom_style + html_content
+        
+        return html_content
         
     except Exception as e:
         error_msg = f"加载用户协议HTML文件失败: {e}"
         print(f"[DEBUG] {error_msg}")
         
         error_html = f"""
-        <div style="font-family: SourceHanSerifCN; font-size: 12px; line-height: 1.5; padding: 20px; text-align: center;">
+        <div style="font-family: 'Microsoft YaHei', sans-serif; font-size: 12px; line-height: 1.5; padding: 20px; text-align: center;">
             <h2 style="color: #d13438;">用户协议显示错误</h2>
             <p>无法加载用户协议文件：{str(e)}</p>
             <p>请更新软件到最新版本或联系开发者获取帮助。</p>
@@ -184,7 +243,39 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
+        
+        # 设置字体
+        font_manager = get_global_font_manager()
+        self.agreement_browser.setFont(font_manager.get_source_han_font(10))
+        
+        # 设置样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        browser_style = f"""
+            QTextBrowser {{
+                background-color: #ffffff;
+                border: 1px solid {style_helper.COLORS['border']};
+                border-radius: 4px;
+                padding: 10px;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: #f0f0f0;
+                width: 10px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {style_helper.COLORS['border']};
+                border-radius: 5px;
+                min-height: 20px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: {style_helper.COLORS['primary']};
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+        """
+        self.agreement_browser.setStyleSheet(browser_style)
         
         # 设置协议内容
         self.set_agreement_content()
@@ -343,7 +434,39 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         # 创建文本浏览器（自带滚动条）
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
-        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
+        
+        # 设置字体
+        font_manager = get_global_font_manager()
+        self.agreement_browser.setFont(font_manager.get_source_han_font(10))
+        
+        # 设置样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        browser_style = f"""
+            QTextBrowser {{
+                background-color: #ffffff;
+                border: 1px solid {style_helper.COLORS['border']};
+                border-radius: 4px;
+                padding: 10px;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: #f0f0f0;
+                width: 10px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {style_helper.COLORS['border']};
+                border-radius: 5px;
+                min-height: 20px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: {style_helper.COLORS['primary']};
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+        """
+        self.agreement_browser.setStyleSheet(browser_style)
         
         # 设置协议内容
         self.set_agreement_content()
@@ -394,8 +517,18 @@ def check_user_agreement():
         # 使用版本管理器获取应用信息
         app_info = version_manager.get_app_info()
 
+        # 确定logs目录路径
+        if getattr(sys, 'frozen', False):
+            logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
+        else:
+            logs_dir = os.path.join(base_path, "logs")
+        
+        # 确保logs目录存在
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+        
         # 同意状态文件路径
-        agreement_file = os.path.join(base_path, f"{app_info['name_en']}_agreement_accepted.txt")
+        agreement_file = os.path.join(logs_dir, f"{app_info['name_en']}_agreement_accepted.txt")
         
         print(f"[DEBUG] 检查协议文件: {agreement_file}")
         print(f"[DEBUG] 协议文件存在: {os.path.exists(agreement_file)}")
@@ -486,9 +619,6 @@ def check_user_agreement():
             # 用户同意协议，创建标记文件
             print("[DEBUG] 用户同意协议，创建标记文件")
             try:
-                # 确保目录存在
-                os.makedirs(base_path, exist_ok=True)
-                
                 # 写入协议信息，包含协议哈希和目录路径哈希
                 with open(agreement_file, 'w', encoding='utf-8') as f:
                     content = f"{app_info['name']} 用户协议同意时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"

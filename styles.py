@@ -1187,11 +1187,12 @@ class UnifiedStyleHelper:
             QMenuBar {{
                 background-color: {self.COLORS['bg']};
                 border: none;
+                border-radius: 6px;
                 padding: 4px;
             }}
             QMenuBar::item {{
                 padding: 4px 8px;
-                border-radius: 4px;
+                border-radius: 6px;
             }}
             QMenuBar::item:selected {{
                 background-color: {self.COLORS['primary_hover']};
@@ -1348,15 +1349,27 @@ class ModernMenu(QMenu):
         QTimer.singleShot(0, self._update_rounded_mask)
     
     def _update_rounded_mask(self):
-        """更新圆角遮罩，使用简单的 QRegion 方法"""
-        # 创建圆角路径
-        path = QPainterPath()
-        rect = QRectF(self.rect())
-        path.addRoundedRect(rect, 6.0, 6.0)
+        """更新圆角遮罩，使用 QBitmap 创建光滑的圆角"""
+        if self.width() <= 0 or self.height() <= 0:
+            return
+            
+        # 创建位图遮罩
+        bitmap = QBitmap(self.size())
+        bitmap.fill(Qt.GlobalColor.color0)  # 透明
         
-        # 转换为区域并设置遮罩
-        region = QRegion(path.toFillPolygon().toPolygon())
-        self.setMask(region)
+        # 创建画家绘制圆角
+        painter = QPainter(bitmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setBrush(Qt.GlobalColor.color1)  # 不透明
+        painter.setPen(Qt.PenStyle.NoPen)
+        
+        # 绘制圆角矩形
+        rect = QRectF(0, 0, self.width(), self.height())
+        painter.drawRoundedRect(rect, 6.0, 6.0)
+        painter.end()
+        
+        # 设置遮罩
+        self.setMask(bitmap)
     
     def addMenu(self, *args):
         """重写 addMenu 方法，确保子菜单也使用 ModernMenu
