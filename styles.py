@@ -559,7 +559,7 @@ class UnifiedStyleHelper:
                 border-right: 1px solid #e0e0e0;
                 border-bottom: 1px solid #e0e0e0;
                 font-weight: bold;
-                font-size: 10px;
+                font-size: 12px;
                 color: #333333;
                 text-align: center;
                 min-height: 20px;
@@ -712,7 +712,7 @@ class UnifiedStyleHelper:
                 border-radius: 4px;
                 padding: 10px;
                 font-family: SourceHanSerifCN;
-                font-size: 10px;
+                font-size: 12px;
                 line-height: 1.3;
             }}
         """
