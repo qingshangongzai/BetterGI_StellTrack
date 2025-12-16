@@ -26,7 +26,7 @@ from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBo
 
 from styles import WindowIconMixin, DialogFactory
 
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_num_to_str_with_button, generate_key_event_name, load_icon_universal, load_logo, get_current_version, get_current_app_info
+from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_num_to_str_with_button, generate_key_event_name, load_icon_universal, load_logo, get_current_version, get_current_app_info, get_user_data_dir
 
 # 导入关于窗口模块
 
@@ -2762,21 +2762,12 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
     def load_saved_state(self):
         """加载保存的状态"""
         try:
-            # 获取程序所在目录
-            if getattr(sys, 'frozen', False):
-                app_dir = os.path.dirname(sys.executable)
-            else:
-                app_dir = os.path.dirname(os.path.abspath(__file__))
-            
-            # 确定logs目录路径
-            if getattr(sys, 'frozen', False):
-                logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
-            else:
-                logs_dir = os.path.join(app_dir, "logs")
+            # 使用用户数据目录作为日志目录
+            logs_dir = os.path.join(get_user_data_dir(), "logs")
             
             # 确保logs目录存在
             if not os.path.exists(logs_dir):
-                os.makedirs(logs_dir)
+                os.makedirs(logs_dir, exist_ok=True)
             
             # 设置文件路径
             state_file = os.path.join(logs_dir, "BetterGI_StellTrack_state.json")
@@ -2827,21 +2818,12 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
     def save_saved_state(self):
         """保存当前状态到文件"""
         try:
-            # 获取程序所在目录
-            if getattr(sys, 'frozen', False):
-                app_dir = os.path.dirname(sys.executable)
-            else:
-                app_dir = os.path.dirname(os.path.abspath(__file__))
-            
-            # 确定logs目录路径
-            if getattr(sys, 'frozen', False):
-                logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
-            else:
-                logs_dir = os.path.join(app_dir, "logs")
+            # 使用用户数据目录作为日志目录
+            logs_dir = os.path.join(get_user_data_dir(), "logs")
             
             # 确保logs目录存在
             if not os.path.exists(logs_dir):
-                os.makedirs(logs_dir)
+                os.makedirs(logs_dir, exist_ok=True)
             
             # 设置文件路径
             state_file = os.path.join(logs_dir, "BetterGI_StellTrack_state.json")

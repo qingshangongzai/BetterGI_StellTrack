@@ -30,7 +30,8 @@ from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, get_glob
 from utils import (VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
                   convert_event_type_num_to_str_with_button, generate_key_event_name,
                   set_app_user_model_id, fix_windows_taskbar_icon_for_window, load_icon_universal, load_logo,
-                  get_base_path, find_resource_file, get_resource_path, get_current_version, get_current_app_info)
+                  get_base_path, find_resource_file, get_resource_path, get_current_version, get_current_app_info,
+                  get_user_data_dir)
 
 # 导入窗口图标混入类
 from styles import WindowIconMixin
@@ -517,15 +518,12 @@ def check_user_agreement():
         # 使用版本管理器获取应用信息
         app_info = version_manager.get_app_info()
 
-        # 确定logs目录路径
-        if getattr(sys, 'frozen', False):
-            logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
-        else:
-            logs_dir = os.path.join(base_path, "logs")
+        # 使用用户数据目录作为日志目录
+        logs_dir = os.path.join(get_user_data_dir(), "logs")
         
         # 确保logs目录存在
         if not os.path.exists(logs_dir):
-            os.makedirs(logs_dir)
+            os.makedirs(logs_dir, exist_ok=True)
         
         # 同意状态文件路径
         agreement_file = os.path.join(logs_dir, f"{app_info['name_en']}_agreement_accepted.txt")

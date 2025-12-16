@@ -455,6 +455,34 @@ def get_base_path():
         base_path = os.path.dirname(os.path.abspath(__file__))
     return base_path
 
+def get_user_data_dir():
+    """获取用户数据目录，用于保存日志和配置文件
+    
+    在Windows上，返回: C:/Users/<用户名>/AppData/Local/BetterGI StellTrack
+    在Linux上，返回: ~/.local/share/BetterGI StellTrack
+    在macOS上，返回: ~/Library/Application Support/BetterGI StellTrack
+    """
+    app_name = "BetterGI StellTrack"
+    
+    if sys.platform == "win32":
+        # Windows使用AppData\Local目录
+        appdata_dir = os.getenv("LOCALAPPDATA")
+        if not appdata_dir:
+            appdata_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        data_dir = os.path.join(appdata_dir, app_name)
+    elif sys.platform == "darwin":
+        # macOS使用Library/Application Support目录
+        data_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", app_name)
+    else:
+        # Linux使用~/.local/share目录
+        data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", app_name)
+    
+    # 确保目录存在
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir, exist_ok=True)
+    
+    return data_dir
+
 def find_resource_file(filename):
     """查找资源文件，返回找到的路径或None
     
