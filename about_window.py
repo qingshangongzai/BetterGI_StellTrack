@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QDesktopServices, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager
+from styles import UnifiedStyleHelper, get_global_font_manager, FadeInWindowMixin
 from styles import ChineseMessageBox, DialogFactory
 from user_agreement import load_user_agreement_html
 # 导入调试工具模块
@@ -23,8 +23,7 @@ from main import version_manager
 # =============================================================================
 
 from styles import StyledMainWindow
-
-class UserAgreementWindow(StyledMainWindow):
+class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
     """用户协议窗口"""
     
     def __init__(self, parent=None):
@@ -134,7 +133,7 @@ class UserAgreementWindow(StyledMainWindow):
 # 关于窗口 - 简化版
 # =============================================================================
 
-class AboutWindowQt(StyledMainWindow, WindowIconMixin):
+class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     """基于PyQt6的关于窗口"""
     
     # 定义信号

@@ -200,6 +200,7 @@ BetterGI StellTrack 采用 GPL V3.0 许可证，详细信息请查看 [LICENSE.h
 - **Gitee开源地址**：[https://gitee.com/qingshangongzai/BetterGI_StellTrack](https://gitee.com/qingshangongzai/BetterGI_StellTrack)
 - **123网盘下载链接**：[https://www.123865.com/s/8f6rjv-07ohh?pwd=qsgz#](https://www.123865.com/s/8f6rjv-07ohh?pwd=qsgz#)
 - **作者主页**：[https://b23.tv/KO3m8zU](https://b23.tv/KO3m8zU)
+- **联系邮箱**：[qingshangongzai@163.com](mailto:qingshangongzai@163.com)
 - **使用说明**：[使用说明.pdf](使用说明.pdf)
 
 ### 开源说明

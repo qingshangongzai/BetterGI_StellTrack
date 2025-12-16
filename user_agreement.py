@@ -18,7 +18,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 from main import version_manager
 
 # 导入共享模块
-from styles import DialogFactory, UnifiedStyleHelper
+from styles import DialogFactory, UnifiedStyleHelper, FadeInWindowMixin
 
 # =============================================================================
 # 从styles模块导入样式和字体管理相关组件
@@ -150,7 +150,7 @@ def load_user_agreement_html():
 # 用户协议确认对话框
 # =============================================================================
 
-class UserAgreementDialog(StyledDialog, WindowIconMixin):
+class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
     """用户协议确认对话框"""
     
     def __init__(self, parent=None):
@@ -342,7 +342,7 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
 # 用户协议窗口
 # =============================================================================
 
-class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
+class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     """用户协议窗口"""
     
     def __init__(self, parent=None):

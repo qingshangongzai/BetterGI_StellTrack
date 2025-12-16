@@ -6,10 +6,10 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, CenteredComboBox, StyledDialog, get_global_font_manager
+from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, CenteredComboBox, StyledDialog, get_global_font_manager, FadeInWindowMixin
 
 
-class EventTimeAnalyzerDialog(StyledDialog):
+class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
     """事件时间分析对话框"""
     
     def __init__(self, parent=None, events_table=None):

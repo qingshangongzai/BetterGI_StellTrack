@@ -17,7 +17,7 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory
+from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin
 from styles import ChineseMessageBox
 # 导入资源管理器（已从resource_manager合并到styles）
 from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info, get_user_data_dir
@@ -550,7 +550,7 @@ class PasswordDialog(QDialog):
 # 调试窗口
 # =============================================================================
 
-class SafeDebugWindow(StyledDialog):
+class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
     """安全的调试窗口，用于显示和管理应用程序的日志和调试信息
     
     该窗口提供了实时日志监控、系统信息展示、日志文件管理等功能，

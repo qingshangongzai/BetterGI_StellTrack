@@ -22,7 +22,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog, ModernMenuBar
+from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog, ModernMenuBar, FadeInWindowMixin
 
 from styles import WindowIconMixin, DialogFactory
 
@@ -73,7 +73,7 @@ from time_analysis import EventTimeAnalyzerDialog
 
 
 
-class BatchEditDialog(StyledDialog):
+class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
     """批量编辑对话框"""
 
@@ -382,7 +382,7 @@ class BatchEditDialog(StyledDialog):
 
 
 
-class CustomInputDialog(StyledDialog):
+class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
     """自定义输入对话框，与程序风格保持一致"""
 
