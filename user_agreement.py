@@ -156,8 +156,6 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
         print("[DEBUG] 初始化用户协议对话框")
-        # 直接设置对话框背景为纯白色
-        self.setStyleSheet(f"QDialog {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -249,34 +247,9 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         font_manager = get_global_font_manager()
         self.agreement_browser.setFont(font_manager.get_source_han_font(10))
         
-        # 设置样式
+        # 设置样式 - 使用统一的样式管理方式
         style_helper = UnifiedStyleHelper.get_instance()
-        browser_style = f"""
-            QTextBrowser {{
-                background-color: #ffffff;
-                border: 1px solid {style_helper.COLORS['border']};
-                border-radius: 4px;
-                padding: 10px;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: #f0f0f0;
-                width: 10px;
-                border-radius: 5px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {style_helper.COLORS['border']};
-                border-radius: 5px;
-                min-height: 20px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: {style_helper.COLORS['primary']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-        self.agreement_browser.setStyleSheet(browser_style)
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -335,7 +308,7 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         print(f"[DEBUG] 用户协议复选框状态: {'同意' if state == Qt.CheckState.Checked.value else '未同意'}")
     
 
-    
+
 
 
 # =============================================================================
@@ -348,7 +321,6 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 直接设置窗口背景为纯白色
-        self.setStyleSheet(f"QMainWindow {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -440,34 +412,9 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         font_manager = get_global_font_manager()
         self.agreement_browser.setFont(font_manager.get_source_han_font(10))
         
-        # 设置样式
+        # 设置样式 - 使用统一的样式管理方式
         style_helper = UnifiedStyleHelper.get_instance()
-        browser_style = f"""
-            QTextBrowser {{
-                background-color: #ffffff;
-                border: 1px solid {style_helper.COLORS['border']};
-                border-radius: 4px;
-                padding: 10px;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: #f0f0f0;
-                width: 10px;
-                border-radius: 5px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {style_helper.COLORS['border']};
-                border-radius: 5px;
-                min-height: 20px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: {style_helper.COLORS['primary']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-        self.agreement_browser.setStyleSheet(browser_style)
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()

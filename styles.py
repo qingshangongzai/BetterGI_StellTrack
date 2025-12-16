@@ -939,24 +939,26 @@ class UnifiedStyleHelper:
         """ % (self.COLORS['border'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
     
     def get_scroll_bar_style(self):
-        """获取滚动条样式"""
+        """获取滚动条样式 - Fluent Design风格"""
         return """
             /* 垂直滚动条 */
             QScrollBar:vertical {
-                background-color: %s;
-                width: 8px;
-                margin: 0px;
+                background-color: transparent;
+                width: 10px;
+                margin: 10px 0;
             }
             
             QScrollBar::groove:vertical {
-                background-color: %s;
-                border-radius: 4px;
+                background-color: rgba(0, 0, 0, 0.08);
+                border-radius: 5px;
+                margin: 0 4px;
             }
             
             QScrollBar::handle:vertical {
                 background-color: %s;
-                border-radius: 4px;
+                border-radius: 5px;
                 min-height: 20px;
+                margin: 0 4px;
             }
             
             QScrollBar::handle:vertical:hover {
@@ -982,20 +984,22 @@ class UnifiedStyleHelper:
             
             /* 水平滚动条 */
             QScrollBar:horizontal {
-                background-color: %s;
-                height: 8px;
-                margin: 0px;
+                background-color: transparent;
+                height: 10px;
+                margin: 0 10px;
             }
             
             QScrollBar::groove:horizontal {
-                background-color: %s;
-                border-radius: 4px;
+                background-color: rgba(0, 0, 0, 0.08);
+                border-radius: 5px;
+                margin: 4px 0;
             }
             
             QScrollBar::handle:horizontal {
                 background-color: %s;
-                border-radius: 4px;
+                border-radius: 5px;
                 min-width: 20px;
+                margin: 4px 0;
             }
             
             QScrollBar::handle:horizontal:hover {
@@ -1018,14 +1022,25 @@ class UnifiedStyleHelper:
             QScrollBar::sub-page:horizontal {
                 background-color: transparent;
             }
+            
+            /* 滚动区域 */
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            
+            QScrollArea > QWidget > QWidget {
+                background-color: transparent;
+            }
+            
+            /* 滚动条容器 */
+            QAbstractScrollArea {
+                background-color: transparent;
+            }
         """ % (
-            self.COLORS['bg'],
-            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed'],
-            self.COLORS['bg'],
-            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed']
