@@ -461,27 +461,39 @@ def find_resource_file(filename):
     搜索顺序：
     1. 基础路径
     2. 基础路径/assets
-    3. _MEIPASS（打包环境）
-    4. _MEIPASS/assets
+    3. 基础路径/fonts
+    4. 基础路径/file
+    5. 基础路径/logo
+    6. _MEIPASS（打包环境）
+    7. _MEIPASS/assets
+    8. _MEIPASS/fonts
+    9. _MEIPASS/file
+    10. _MEIPASS/logo
     """
     base_path = get_base_path()
     
     # 构建搜索路径列表，简化逻辑，合并重复路径
     search_paths = []
     
-    # 添加基础路径和基础路径/assets
+    # 添加基础路径及其子目录
     search_paths.extend([
         base_path,
         os.path.join(base_path, "assets"),
+        os.path.join(base_path, "fonts"),
+        os.path.join(base_path, "file"),
+        os.path.join(base_path, "logo"),
     ])
     
-    # 添加 _MEIPASS 路径（如果存在）
+    # 添加 _MEIPASS 路径及其子目录（如果存在）
     if hasattr(sys, '_MEIPASS'):
         meipass = sys._MEIPASS
         if meipass not in search_paths:
             search_paths.extend([
                 meipass,
                 os.path.join(meipass, "assets"),
+                os.path.join(meipass, "fonts"),
+                os.path.join(meipass, "file"),
+                os.path.join(meipass, "logo"),
             ])
     
     # 在所有路径中查找文件
