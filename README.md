@@ -39,8 +39,8 @@ BetterGI StellTrack（BetterGI 星轨）是一款专为 BetterGI（一款《原�
 
 ### 环境要求
 
-- 操作系统：Windows 10/11
-- Python 版本：3.8 及以上
+- 操作系统：Windows 10/11 64位
+- Python 版本：Python 3.14 64位（推荐），兼容 Python 3.8 及以上 64位版本
 - 内存：推荐 4GB 以上
 - 硬盘空间：至少 100MB 可用空间
 
