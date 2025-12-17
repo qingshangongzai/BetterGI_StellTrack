@@ -210,7 +210,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
         # 标题区域
         title_layout = QVBoxLayout()
-        title_layout.setSpacing(2)  # 减少主副标题间距，与主窗口一致
+        title_layout.setSpacing(2) 
         
         # 中文标题 - 使用得意黑字体
         title_label = QLabel("BetterGI 星轨")
