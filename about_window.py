@@ -151,9 +151,6 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
         
-        # 居中显示窗口
-        self.center()
-        
         # 创建中央部件
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -185,6 +182,21 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 设置信号连接 - 确保在所有按钮创建完成后再调用
         self.setup_connections()
         
+    def showEvent(self, event):
+        """关于窗口显示事件 - 首次显示时居中并触发淡入动画"""
+        if not hasattr(self, "_about_first_show_done"):
+            self._about_first_show_done = True
+            # 首次显示前进行居中
+            try:
+                self.center()
+            except Exception:
+                pass
+            # 确保动画从完全透明开始
+            try:
+                self.setWindowOpacity(0.0)
+            except Exception:
+                pass
+        super().showEvent(event)
     def setup_connections(self):
         """设置信号连接"""
         # 按钮连接

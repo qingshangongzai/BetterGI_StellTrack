@@ -811,6 +811,9 @@ class ModernTableWidget(QTableWidget):
         # 设置右键菜单策略
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        
+        # 设置表头右键菜单策略
+        self.horizontalHeader().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
 
 
@@ -972,7 +975,7 @@ class HeaderWidget(QFrame):
 
 
 
-class MainWindow(StyledMainWindow, WindowIconMixin):
+class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     """应用程序主窗口类
     
     作为应用程序的核心界面，管理所有UI组件、事件处理和功能模块。
@@ -2048,6 +2051,26 @@ class MainWindow(StyledMainWindow, WindowIconMixin):
 
             print(error_msg)
 
+
+
+
+    def showEvent(self, event):
+
+        """主窗口显示事件 - 首次显示时触发淡入动画"""
+
+        if not hasattr(self, "_main_first_show_done"):
+
+            self._main_first_show_done = True
+
+            try:
+
+                self.setWindowOpacity(0.0)
+
+            except Exception:
+
+                pass
+
+        super().showEvent(event)
 
 
 
