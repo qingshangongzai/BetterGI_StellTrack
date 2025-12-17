@@ -17,10 +17,10 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory
+from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin
 from styles import ChineseMessageBox
 # 导入资源管理器（已从resource_manager合并到styles）
-from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info
+from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info, get_user_data_dir
 # 导入版本管理器
 from version import version_manager
 
@@ -127,15 +127,11 @@ class SafeDebugLogger:
     def get_log_file_path(self):
         """获取日志文件路径"""
         try:
-            base_path = get_base_path()
-            
-            if getattr(sys, 'frozen', False):
-                logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
-            else:
-                logs_dir = os.path.join(base_path, "logs")
+            # 使用用户数据目录作为日志目录
+            logs_dir = os.path.join(get_user_data_dir(), "logs")
             
             if not os.path.exists(logs_dir):
-                os.makedirs(logs_dir)
+                os.makedirs(logs_dir, exist_ok=True)
             
             # 直接使用version_manager获取应用信息
             app_info = version_manager.get_app_info()
@@ -554,7 +550,7 @@ class PasswordDialog(QDialog):
 # 调试窗口
 # =============================================================================
 
-class SafeDebugWindow(StyledDialog):
+class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
     """安全的调试窗口，用于显示和管理应用程序的日志和调试信息
     
     该窗口提供了实时日志监控、系统信息展示、日志文件管理等功能，

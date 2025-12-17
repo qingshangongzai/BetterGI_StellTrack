@@ -339,6 +339,8 @@ def update_app_state(main_window, event_manager=None):
 # Windows 任务栏图标修复相关函数
 # =============================================================================
 
+TASKBAR_ICON_FIXED = False
+
 def set_app_user_model_id():
     """设置AppUserModelID - 使用版本管理器"""
     if os.name != 'nt':
@@ -357,14 +359,24 @@ def set_app_user_model_id():
         print(f"[DEBUG] 设置AppUserModelID失败: {e}")
         return False
 
+
 def fix_windows_taskbar_icon_for_window(window):
-    """为特定窗口修复Windows任务栏图标"""
+    """为特定窗口修复Windows任务栏图标
+    
+    仅在首次调用时实际修复任务栏图标，后续调用直接返回，避免重复触发窗口显示和位置抖动。
+    """
     if os.name != 'nt':
         return False
     
+    global TASKBAR_ICON_FIXED
+    # 如果已经修复过任务栏图标，则不再重复执行
+    if TASKBAR_ICON_FIXED:
+        return False
+    
     try:
-        # 确保窗口已经显示
-        window.show()
+        # 确保窗口已经显示：如果已经可见，就不要重复 show，避免位置/动画抖动
+        if not window.isVisible():
+            window.show()
         window.raise_()
         window.activateWindow()
         
@@ -414,6 +426,9 @@ def fix_windows_taskbar_icon_for_window(window):
             from debug_tools import get_global_debug_logger
             debug_logger = get_global_debug_logger()
             debug_logger.log_debug(f"任务栏图标修复成功: {icon_path}")
+            
+            # 标记已修复，后续不再重复执行
+            TASKBAR_ICON_FIXED = True
             return True
         
         from debug_tools import get_global_debug_logger
@@ -454,6 +469,34 @@ def get_base_path():
         # 开发环境
         base_path = os.path.dirname(os.path.abspath(__file__))
     return base_path
+
+def get_user_data_dir():
+    """获取用户数据目录，用于保存日志和配置文件
+    
+    在Windows上，返回: C:/Users/<用户名>/AppData/Local/BetterGI StellTrack
+    在Linux上，返回: ~/.local/share/BetterGI StellTrack
+    在macOS上，返回: ~/Library/Application Support/BetterGI StellTrack
+    """
+    app_name = "BetterGI StellTrack"
+    
+    if sys.platform == "win32":
+        # Windows使用AppData\Local目录
+        appdata_dir = os.getenv("LOCALAPPDATA")
+        if not appdata_dir:
+            appdata_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        data_dir = os.path.join(appdata_dir, app_name)
+    elif sys.platform == "darwin":
+        # macOS使用Library/Application Support目录
+        data_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", app_name)
+    else:
+        # Linux使用~/.local/share目录
+        data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", app_name)
+    
+    # 确保目录存在
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir, exist_ok=True)
+    
+    return data_dir
 
 def find_resource_file(filename):
     """查找资源文件，返回找到的路径或None
