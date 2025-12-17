@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 
 from styles import UnifiedStyleHelper
-from styles import ModernGroupBox, ModernLineEdit, ModernComboBox, ModernSpinBox, ModernDoubleSpinBox, ChineseMessageBox, DialogFactory
+from styles import ModernGroupBox, ModernLineEdit, ModernComboBox, ModernSpinBox, ModernDoubleSpinBox, ChineseMessageBox, DialogFactory, AnimatedDialog
 from debug_tools import get_global_debug_logger
 
 # =============================================================================
@@ -304,7 +304,7 @@ class OperationsPanel(QWidget):
                 return
             
             # 创建预览对话框
-            preview_dialog = QDialog(self)
+            preview_dialog = AnimatedDialog(self)
             preview_dialog.setWindowTitle("脚本预览")
             preview_dialog.resize(500, 700)  # 修改宽度为500px
             

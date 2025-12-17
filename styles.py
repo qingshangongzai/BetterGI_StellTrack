@@ -2,7 +2,7 @@
 import os
 import sys
 from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem, QPainterPath, QPen, QRegion, QBitmap, QImage
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect, QPropertyAnimation
 from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout, QVBoxLayout, QLabel, QMenu, QMenuBar
 
 # 导入资源管理器函数
@@ -223,6 +223,62 @@ class StyledMainWindow(QMainWindow):
                     self.setWindowIcon(icon)
             except Exception:
                 pass
+
+
+class FadeInWindowMixin:
+    """窗口淡入/淡出动画混入类，用于在打开和关闭时添加简单的过渡动画"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._first_show_animation_done = False
+        self._closing_via_animation = False
+        # 初始设置为完全透明，避免窗口创建时的闪烁
+        self.setWindowOpacity(0.0)
+    
+    def showEvent(self, event):
+        """在窗口首次显示时播放淡入动画"""
+        if not self._first_show_animation_done:
+            self._first_show_animation_done = True
+            try:
+                self._fade_anim = QPropertyAnimation(self, b"windowOpacity", self)
+                self._fade_anim.setDuration(180)
+                self._fade_anim.setStartValue(0.0)
+                self._fade_anim.setEndValue(1.0)
+                self._fade_anim.start()
+            except Exception:
+                # 动画失败时不影响窗口正常显示
+                self.setWindowOpacity(1.0)
+        
+        super().showEvent(event)
+    
+    def closeEvent(self, event):
+        """在窗口关闭时播放淡出动画"""
+        # 避免递归触发关闭动画
+        if self._closing_via_animation:
+            return super().closeEvent(event)
+        
+        # 拦截第一次关闭事件，先执行淡出动画
+        event.ignore()
+        self._closing_via_animation = True
+        try:
+            start_opacity = self.windowOpacity()
+            self._fade_out_anim = QPropertyAnimation(self, b"windowOpacity", self)
+            self._fade_out_anim.setDuration(180)
+            self._fade_out_anim.setStartValue(start_opacity)
+            self._fade_out_anim.setEndValue(0.0)
+            
+            def _on_fade_out_finished():
+                try:
+                    super(type(self), self).close()
+                finally:
+                    self._closing_via_animation = False
+            
+            self._fade_out_anim.finished.connect(_on_fade_out_finished)
+            self._fade_out_anim.start()
+        except Exception:
+            # 动画失败时直接关闭
+            self._closing_via_animation = False
+            super().closeEvent(event)
 
 
 class WindowIconMixin:
@@ -503,7 +559,7 @@ class UnifiedStyleHelper:
                 border-right: 1px solid #e0e0e0;
                 border-bottom: 1px solid #e0e0e0;
                 font-weight: bold;
-                font-size: 10px;
+                font-size: 12px;
                 color: #333333;
                 text-align: center;
                 min-height: 20px;
@@ -656,7 +712,7 @@ class UnifiedStyleHelper:
                 border-radius: 4px;
                 padding: 10px;
                 font-family: SourceHanSerifCN;
-                font-size: 10px;
+                font-size: 12px;
                 line-height: 1.3;
             }}
         """
@@ -883,24 +939,26 @@ class UnifiedStyleHelper:
         """ % (self.COLORS['border'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
     
     def get_scroll_bar_style(self):
-        """获取滚动条样式"""
+        """获取滚动条样式 - Fluent Design风格"""
         return """
             /* 垂直滚动条 */
             QScrollBar:vertical {
-                background-color: %s;
-                width: 8px;
-                margin: 0px;
+                background-color: transparent;
+                width: 10px;
+                margin: 10px 0;
             }
             
             QScrollBar::groove:vertical {
-                background-color: %s;
-                border-radius: 4px;
+                background-color: rgba(0, 0, 0, 0.08);
+                border-radius: 5px;
+                margin: 0 4px;
             }
             
             QScrollBar::handle:vertical {
                 background-color: %s;
-                border-radius: 4px;
+                border-radius: 5px;
                 min-height: 20px;
+                margin: 0 4px;
             }
             
             QScrollBar::handle:vertical:hover {
@@ -926,20 +984,22 @@ class UnifiedStyleHelper:
             
             /* 水平滚动条 */
             QScrollBar:horizontal {
-                background-color: %s;
-                height: 8px;
-                margin: 0px;
+                background-color: transparent;
+                height: 10px;
+                margin: 0 10px;
             }
             
             QScrollBar::groove:horizontal {
-                background-color: %s;
-                border-radius: 4px;
+                background-color: rgba(0, 0, 0, 0.08);
+                border-radius: 5px;
+                margin: 4px 0;
             }
             
             QScrollBar::handle:horizontal {
                 background-color: %s;
-                border-radius: 4px;
+                border-radius: 5px;
                 min-width: 20px;
+                margin: 4px 0;
             }
             
             QScrollBar::handle:horizontal:hover {
@@ -962,14 +1022,25 @@ class UnifiedStyleHelper:
             QScrollBar::sub-page:horizontal {
                 background-color: transparent;
             }
+            
+            /* 滚动区域 */
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            
+            QScrollArea > QWidget > QWidget {
+                background-color: transparent;
+            }
+            
+            /* 滚动条容器 */
+            QAbstractScrollArea {
+                background-color: transparent;
+            }
         """ % (
-            self.COLORS['bg'],
-            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed'],
-            self.COLORS['bg'],
-            self.COLORS['bg'],  # 将槽的背景色改为纯白色
             self.COLORS['border'],
             self.COLORS['primary_hover'],
             self.COLORS['primary_pressed']
@@ -1648,6 +1719,13 @@ class DialogFactory:
 # 自定义消息框类
 # =============================================================================
 
+class AnimatedDialog(FadeInWindowMixin, QDialog):
+    """带淡入淡出动画的基础对话框"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
 class ChineseMessageBox:
     """自定义消息框，确保按钮显示中文"""
     
@@ -1655,7 +1733,7 @@ class ChineseMessageBox:
     def show_warning(parent, title, message):
         """显示警告消息"""
         # 创建自定义对话框
-        dialog = QDialog(parent)
+        dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
         dialog.setMinimumWidth(200)
@@ -1698,7 +1776,7 @@ class ChineseMessageBox:
     def show_error(parent, title, message):
         """显示错误消息"""
         # 创建自定义对话框
-        dialog = QDialog(parent)
+        dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
         dialog.setMinimumWidth(200)
@@ -1740,7 +1818,7 @@ class ChineseMessageBox:
     def show_info(parent, title, message):
         """显示信息消息"""
         # 创建自定义对话框
-        dialog = QDialog(parent)
+        dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
         dialog.setMinimumWidth(200)
@@ -1782,7 +1860,7 @@ class ChineseMessageBox:
     def show_question(parent, title, message):
         """显示询问消息"""
         # 创建自定义对话框
-        dialog = QDialog(parent)
+        dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
         dialog.setMinimumWidth(200)

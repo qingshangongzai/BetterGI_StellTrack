@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog
+from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin
 from styles import ChineseMessageBox, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING
 # 导入资源管理器（从utils模块）
@@ -148,7 +148,7 @@ class SimpleCoordinateCapture(QDialog):
 
 
 
-class EventEditDialog(StyledDialog):
+class EventEditDialog(FadeInWindowMixin, StyledDialog):
     """事件编辑对话框
     
     用于添加和编辑各种类型的键鼠事件，支持多种事件类型和参数设置。

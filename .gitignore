@@ -62,3 +62,5 @@ test_user_agreement.py
 运行.venv.txt
 /output
 代码质量分析报告.md
+/打包
+依赖关系分析.md

@@ -18,7 +18,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 from main import version_manager
 
 # 导入共享模块
-from styles import DialogFactory, UnifiedStyleHelper
+from styles import DialogFactory, UnifiedStyleHelper, FadeInWindowMixin
 
 # =============================================================================
 # 从styles模块导入样式和字体管理相关组件
@@ -30,7 +30,8 @@ from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, get_glob
 from utils import (VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
                   convert_event_type_num_to_str_with_button, generate_key_event_name,
                   set_app_user_model_id, fix_windows_taskbar_icon_for_window, load_icon_universal, load_logo,
-                  get_base_path, find_resource_file, get_resource_path, get_current_version, get_current_app_info)
+                  get_base_path, find_resource_file, get_resource_path, get_current_version, get_current_app_info,
+                  get_user_data_dir)
 
 # 导入窗口图标混入类
 from styles import WindowIconMixin
@@ -149,14 +150,12 @@ def load_user_agreement_html():
 # 用户协议确认对话框
 # =============================================================================
 
-class UserAgreementDialog(StyledDialog, WindowIconMixin):
+class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
     """用户协议确认对话框"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
         print("[DEBUG] 初始化用户协议对话框")
-        # 直接设置对话框背景为纯白色
-        self.setStyleSheet(f"QDialog {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -248,34 +247,9 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         font_manager = get_global_font_manager()
         self.agreement_browser.setFont(font_manager.get_source_han_font(10))
         
-        # 设置样式
+        # 设置样式 - 使用统一的样式管理方式
         style_helper = UnifiedStyleHelper.get_instance()
-        browser_style = f"""
-            QTextBrowser {{
-                background-color: #ffffff;
-                border: 1px solid {style_helper.COLORS['border']};
-                border-radius: 4px;
-                padding: 10px;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: #f0f0f0;
-                width: 10px;
-                border-radius: 5px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {style_helper.COLORS['border']};
-                border-radius: 5px;
-                min-height: 20px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: {style_helper.COLORS['primary']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-        self.agreement_browser.setStyleSheet(browser_style)
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -334,20 +308,19 @@ class UserAgreementDialog(StyledDialog, WindowIconMixin):
         print(f"[DEBUG] 用户协议复选框状态: {'同意' if state == Qt.CheckState.Checked.value else '未同意'}")
     
 
-    
+
 
 
 # =============================================================================
 # 用户协议窗口
 # =============================================================================
 
-class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
+class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     """用户协议窗口"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
         # 直接设置窗口背景为纯白色
-        self.setStyleSheet(f"QMainWindow {{ background-color: #ffffff; }}")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
@@ -439,34 +412,9 @@ class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
         font_manager = get_global_font_manager()
         self.agreement_browser.setFont(font_manager.get_source_han_font(10))
         
-        # 设置样式
+        # 设置样式 - 使用统一的样式管理方式
         style_helper = UnifiedStyleHelper.get_instance()
-        browser_style = f"""
-            QTextBrowser {{
-                background-color: #ffffff;
-                border: 1px solid {style_helper.COLORS['border']};
-                border-radius: 4px;
-                padding: 10px;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: #f0f0f0;
-                width: 10px;
-                border-radius: 5px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {style_helper.COLORS['border']};
-                border-radius: 5px;
-                min-height: 20px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: {style_helper.COLORS['primary']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """
-        self.agreement_browser.setStyleSheet(browser_style)
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
         # 设置协议内容
         self.set_agreement_content()
@@ -517,15 +465,12 @@ def check_user_agreement():
         # 使用版本管理器获取应用信息
         app_info = version_manager.get_app_info()
 
-        # 确定logs目录路径
-        if getattr(sys, 'frozen', False):
-            logs_dir = os.path.join(os.path.dirname(sys.executable), "logs")
-        else:
-            logs_dir = os.path.join(base_path, "logs")
+        # 使用用户数据目录作为日志目录
+        logs_dir = os.path.join(get_user_data_dir(), "logs")
         
         # 确保logs目录存在
         if not os.path.exists(logs_dir):
-            os.makedirs(logs_dir)
+            os.makedirs(logs_dir, exist_ok=True)
         
         # 同意状态文件路径
         agreement_file = os.path.join(logs_dir, f"{app_info['name_en']}_agreement_accepted.txt")

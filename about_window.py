@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QDesktopServices, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager
+from styles import UnifiedStyleHelper, get_global_font_manager, FadeInWindowMixin
 from styles import ChineseMessageBox, DialogFactory
 from user_agreement import load_user_agreement_html
 # 导入调试工具模块
@@ -19,12 +19,11 @@ from styles import WindowIconMixin
 from main import version_manager
 
 # =============================================================================
-# 用户协议窗口 - 简化版
+# 用户协议窗口
 # =============================================================================
 
 from styles import StyledMainWindow
-
-class UserAgreementWindow(StyledMainWindow):
+class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
     """用户协议窗口"""
     
     def __init__(self, parent=None):
@@ -131,10 +130,10 @@ class UserAgreementWindow(StyledMainWindow):
 
 
 # =============================================================================
-# 关于窗口 - 简化版
+# 关于窗口
 # =============================================================================
 
-class AboutWindowQt(StyledMainWindow, WindowIconMixin):
+class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     """基于PyQt6的关于窗口"""
     
     # 定义信号
@@ -190,7 +189,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
         """设置信号连接"""
         # 按钮连接
         self.dev_button.clicked.connect(lambda: self.open_url("https://b23.tv/KO3m8zU"))
-        self.project_button.clicked.connect(lambda: self.open_url("https://github.com/qingshangongzai/BetterGI_Macro"))
+        self.project_button.clicked.connect(lambda: self.open_url("https://gitee.com/qingshangongzai/BetterGI_StellTrack"))
         self.agreement_button.clicked.connect(self.show_user_agreement)
         self.manual_button.clicked.connect(self.open_manual)
         self.license_button.clicked.connect(self.open_license)
@@ -331,7 +330,7 @@ class AboutWindowQt(StyledMainWindow, WindowIconMixin):
     
     def set_info_content(self):
         """设置信息内容 - 使用纯文本格式，仅开头段落首行缩进"""
-        content = """　　BetterGI 星轨（BetterGI StellTrack）是一款由 AI 大模型驱动、基于 Python 开发的创新软件，专为 BetterGI（一款《原神》自动化辅助工具）打造，致力于生成强大的键鼠自动化脚本。通过可视化界面，用户可以创建复杂的自动化操作序列，提升游戏体验和效率。
+        content = """　　BetterGI StellTrack（BetterGI 星轨）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的“留影机”赋予生命的工具。
 
 
 【注意事项】
