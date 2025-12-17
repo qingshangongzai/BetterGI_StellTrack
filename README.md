@@ -4,18 +4,20 @@
 
 BetterGI StellTrack（BetterGI 星轨）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的“留影机”赋予生命的工具。
 
+**开发模式**：本项目主要采用 AI 编写代码，结合人工设计和调试，是零代码基础人群开发 GUI 应用的一次实践。
+
+**开源协议**：本项目采用 GPL 3.0 开源协议，所有代码和文档均遵循该协议的条款和条件。
+
 ### 项目发展历程
 
 这个项目的诞生源于一个简单的想法：创建一个可以设置循环次数的键鼠脚本，方便我在《原神》中的延时摄影创作。随着需求的不断扩展，我用AI工具将其可视化成GUI应用，并最终打造出这个界面还算美观、富有设计感的一个脚本编辑器。
 
 项目的开发历程充满了技术探索与演进：
 
-- **AI协作开发**：最初的代码主要由Deepseek生成，后来引入了智谱清言（GLM）参与开发。随着项目体积不断膨胀，传统大语言模型已无法胜任，于是引入了AI IDE工具开发。
+- **AI协作开发**：最初的代码主要由Deepseek生成，后来引入了智谱清言（GLM）参与开发。随着项目体积不断膨胀，传统大语言模型（LLM）已无法胜任，于是引入了AI IDE工具开发。
 - **名称演变**：项目最初名为“BetterGI 键鼠自动循环脚本生成器”，后来通过Deepseek赋予英文名“BetterGI Macro”。在2.0版本升级时，我认为这个名字不够贴切，便请智谱清言重新命名为“BetterGI 星轨（BetterGI StellTrack）”，这个富有诗意的名字一直沿用至今。
 - **Logo设计**：项目共有两款Logo。1.0时期的Logo是我在Adobe Illustrator中使用“得意黑”设计的“自”字图标；2.0版本时，我请智谱清言基于“BetterGI StellTrack”名称生成了Logo创意，随后以此为原型用Adobe Illustrator绘制了现在的官方Logo。
 - **技术栈演进**：1.0-2.0版本基于Python的TK标准库开发，但我逐渐觉得TK的视觉效果不符合我的审美追求。于是在3.0版本时，我基于PyQt6对项目进行了全面重构，并引入了模块化设计理念，使项目结构日趋规范和成熟。
-
-**开发说明**：本项目主要由人工设计，代码主要通过AI编写，结合了自动化工具和人工调试，是零代码基础人群开发GUI应用的一次试验。
 
 ### 核心功能
 
@@ -156,14 +158,23 @@ BetterGI_StellTrack/
 ├── event_dialogs.py        # 事件对话框模块，包含各种事件编辑对话框
 ├── user_agreement.py       # 用户协议模块
 ├── requirements.txt        # 项目依赖列表
-├── LICENSE.html            # 许可证文件
-├── UserAgreement.html      # 用户协议文件
-├── logo.ico                # 应用程序图标
-├── logo.png                # 应用程序图标
-├──使用说明.pdf          # 应用程序使用说明
-├── SmileySans-Oblique.ttf  # 字体文件
-├── SourceHanSerifCN-Regular-1.otf  # 字体文件
-└── README.md               # 项目说明文档
+├── .gitignore              # Git忽略文件配置
+├── version_info.txt        # 版本信息文本文件
+├── README.md               # 项目说明文档
+├── file/                   # 文件资源目录
+│   ├── LICENSE.html            # 许可证文件
+│   ├── UserAgreement.html      # 用户协议文件
+│   └── 使用说明.pdf
+├── fonts/                  # 字体文件目录
+│   ├── SmileySans-Oblique.ttf
+│   └── SourceHanSerifCN-Regular-1.otf
+├── logo/                   # Logo资源目录
+│   ├── logo.ico
+│   └── logo.png
+└── 规范/                   # 开发规范目录
+    ├── 事件处理逻辑.md
+    ├── 开发规范.md
+    └── 设计语言规范.md
 ```
 
 ## 贡献指南
@@ -179,11 +190,39 @@ BetterGI_StellTrack/
 
 1. Fork 项目仓库
 2. 创建新的分支：`git checkout -b feature/your-feature-name`
-3. 提交代码修改：`git commit -m "Add your feature description"`
+3. 提交代码修改：`git commit -m "Add your feature description"`，请在提交信息中留下您的署名
 4. 推送分支到 GitHub：`git push origin feature/your-feature-name`
-5. 创建 Pull Request，详细描述您的修改内容
+5. 创建 Pull Request，将您的分支合并到 Dev 分支，详细描述您的修改内容
+6. 由项目维护者（青山公仔）将 Dev 分支合并到主分支
 
-### 3. 代码规范
+**注意**：所有贡献代码请先合并到 Dev 分支，不要直接合并到主分支。
+
+### 3. AI IDE 开发指南
+
+如果您使用 AI IDE 进行开发，请遵循以下规范：
+
+- 确保生成的代码符合本项目的代码规范和命名约定
+- 对 AI 生成的代码进行充分审查，确保其质量、安全性和可维护性
+- 避免过度依赖 AI 生成复杂逻辑，关键算法和核心功能应进行人工验证
+- 生成代码后，添加适当的文档字符串和注释，便于后续维护
+- 利用 AI IDE 的测试生成功能，为关键功能生成测试用例
+- 使用 AI IDE 的版本控制集成功能，确保代码变更的可追溯性
+
+### 4. 开发规范遵循
+
+所有开发工作必须严格遵循项目的以下规范：
+
+- **开发规范**：定义了代码组织、AI IDE开发、人类程序员开发、样式统一引用等规范
+- **设计语言规范**：定义了应用程序的外观样式，包括颜色、字体、控件样式等
+- **事件处理逻辑**：定义了事件的数据结构、时间管理、脚本生成等逻辑
+
+详细规范请查看项目中的相关文档：
+
+- [开发规范](规范/开发规范.md)
+- [设计语言规范](规范/设计语言规范.md)
+- [事件处理逻辑](规范/事件处理逻辑.md)
+
+### 5. 代码规范
 
 - 遵循 PEP 8 代码风格
 - 使用 Black 进行代码格式化
@@ -201,7 +240,7 @@ BetterGI StellTrack 采用 GPL V3.0 许可证，详细信息请查看 [LICENSE.h
 - **123网盘下载链接**：[https://www.123865.com/s/8f6rjv-07ohh?pwd=qsgz#](https://www.123865.com/s/8f6rjv-07ohh?pwd=qsgz#)
 - **作者主页**：[https://b23.tv/KO3m8zU](https://b23.tv/KO3m8zU)
 - **联系邮箱**：[qingshangongzai@163.com](mailto:qingshangongzai@163.com)
-- **使用说明**：[使用说明.pdf](使用说明.pdf)
+- **使用说明**：[使用说明.pdf](file/ 使用说明.pdf)
 
 ### 开源说明
 
