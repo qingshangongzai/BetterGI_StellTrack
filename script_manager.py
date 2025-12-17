@@ -391,6 +391,17 @@ class ScriptManager:
     def on_import_script(self):
         """导入脚本"""
         try:
+            # 显示警告弹窗
+            reply = ChineseMessageBox.show_question(
+                self.main_window,
+                "导入脚本警告",
+                "导入脚本会清空现有事件列表！\n请确保已保存当前事件列表后再导入。\n\n是否继续导入？"
+            )
+            
+            if not reply:
+                self.debug_logger.log_info("用户取消导入脚本")
+                return
+            
             # 打开文件对话框选择要导入的脚本文件
             filename, _ = QFileDialog.getOpenFileName(
                 self.main_window,
