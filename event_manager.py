@@ -382,6 +382,9 @@ class EventManager:
         # 连接右键菜单信号
         self.events_table.customContextMenuRequested.connect(self.on_show_event_context_menu)
         
+        # 连接表头右键菜单信号
+        self.events_table.horizontalHeader().customContextMenuRequested.connect(self.on_show_header_context_menu)
+        
         parent_layout.addWidget(self.events_table, 1)
     
     def create_event_buttons(self, parent_layout):
@@ -507,6 +510,25 @@ class EventManager:
         
         # 显示菜单
         context_menu.exec(self.events_table.viewport().mapToGlobal(position))
+    
+    def on_show_header_context_menu(self, position):
+        """显示表头区域的右键菜单
+        
+        当用户点击表头区域时，显示一个菜单，允许用户将事件粘贴到列表的第一个位置。
+        
+        Args:
+            position: 鼠标点击位置
+        """
+        # 使用 ModernMenu 代替 QMenu
+        context_menu = ModernMenu(self.main_window)
+        
+        # 添加粘贴到第一个位置菜单项
+        paste_to_first_action = QAction("📎 粘贴到第一个位置", self.main_window)
+        paste_to_first_action.triggered.connect(self.on_paste_to_first_position)
+        context_menu.addAction(paste_to_first_action)
+        
+        # 显示菜单
+        context_menu.exec(self.events_table.horizontalHeader().mapToGlobal(position))
     
     def on_search_filter_changed(self):
         """搜索过滤条件改变时调用"""
@@ -1427,6 +1449,116 @@ class EventManager:
             
             self.main_window.status_bar.showMessage(f"✅ 已粘贴 {len(self.main_window.copied_events)} 个事件")
             self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件，使用逻辑: {time_option}")
+            
+            # 立即更新预计总时间
+            self.main_window.on_calculate_total_time()
+        finally:
+            # 结束批量操作
+            self.main_window._batch_operation = False
+    
+    def on_paste_to_first_position(self):
+        """粘贴事件到第一个位置
+        
+        将剪贴板中的事件粘贴到事件列表的第一个位置（位置0）。
+        此功能通常由表头右键菜单触发。
+        """
+        if not self.main_window.copied_events:
+            self.debug_logger.log_warning("尝试粘贴但没有复制的事件")
+            ChineseMessageBox.show_warning(self.main_window, "警告", "没有可粘贴的事件")
+            return
+        
+        # 粘贴到第一个位置不在末尾，需要根据设置决定是否显示弹窗
+        paste_logic = self.main_window.get_paste_logic()
+        time_option = None
+        
+        # 根据设置决定是否弹出提示
+        if paste_logic == 'prompt':
+            # 显示粘贴选项对话框
+            paste_dialog = PasteOptionsDialog(self.main_window)
+            if paste_dialog.exec() != QDialog.DialogCode.Accepted:
+                self.debug_logger.log_info("用户取消粘贴事件到第一个位置")
+                return
+            time_option = paste_dialog.get_time_option()
+        else:
+            # 使用默认设置
+            time_option = "仅修改当前事件时间" if paste_logic == 'current' else "修改后重新计算后续事件时间"
+        
+        # 保存当前状态到撤销栈
+        self.main_window.save_state_to_undo_stack()
+        
+        # 开始批量操作
+        self.main_window._batch_operation = True
+        
+        try:
+            # 粘贴位置固定为0（第一个位置）
+            paste_position = 0
+            
+            # 第一个位置的前一个事件的绝对时间为0
+            prev_absolute_time = 0
+            
+            # 粘贴事件
+            for i, event_data in enumerate(self.main_window.copied_events):
+                # 计算新事件的相对时间
+                relative_time = int(event_data[5]) if event_data[5] else 100
+                
+                # 计算新事件的绝对时间
+                new_absolute_time = prev_absolute_time + relative_time
+                
+                # 插入新行
+                insert_position = paste_position + i
+                self.events_table.insertRow(insert_position)
+                new_row_data = [
+                    str(insert_position + 1),  # 行号
+                    event_data[0],  # 事件名称
+                    event_data[1],  # 事件类型
+                    event_data[2],  # 键码
+                    event_data[3],  # X坐标
+                    event_data[4],  # Y坐标
+                    str(relative_time),  # 相对偏移
+                    str(new_absolute_time)  # 绝对偏移
+                ]
+                
+                for col, data in enumerate(new_row_data):
+                    item = QTableWidgetItem(str(data))
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.events_table.setItem(insert_position, col, item)
+                
+                # 更新前一个事件的绝对时间
+                prev_absolute_time = new_absolute_time
+            
+            # 更新行号
+            self.update_row_numbers()
+            
+            # 根据时间修改选项调整后续事件
+            if time_option == "修改后重新计算后续事件时间":
+                # 重新计算后续所有事件的绝对时间
+                self.recalculate_time_from_row(len(self.main_window.copied_events))
+            elif time_option == "仅修改当前事件时间":
+                # 仅重新计算粘贴位置后一个事件的相对时间
+                next_row_index = len(self.main_window.copied_events)
+                if next_row_index < self.events_table.rowCount():
+                    # 获取粘贴位置后一个事件的绝对时间
+                    next_item = self.events_table.item(next_row_index, 7)  # 绝对偏移列
+                    if next_item and next_item.text().isdigit():
+                        next_absolute_time = int(next_item.text())
+                        # 获取粘贴的最后一个事件的绝对时间
+                        last_paste_item = self.events_table.item(next_row_index - 1, 7)  # 绝对偏移列
+                        if last_paste_item and last_paste_item.text().isdigit():
+                            last_paste_absolute_time = int(last_paste_item.text())
+                            # 计算新的相对时间
+                            new_relative_time = next_absolute_time - last_paste_absolute_time
+                            # 更新相对时间
+                            rel_time_item = self.events_table.item(next_row_index, 6)  # 相对偏移列
+                            if rel_time_item:
+                                rel_time_item.setText(str(new_relative_time))
+            
+            self.update_stats()
+            
+            # 标记状态变更
+            self.main_window.mark_state_dirty()
+            
+            self.main_window.status_bar.showMessage(f"✅ 已粘贴 {len(self.main_window.copied_events)} 个事件到第一个位置")
+            self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件到第一个位置，使用逻辑: {time_option}")
             
             # 立即更新预计总时间
             self.main_window.on_calculate_total_time()
