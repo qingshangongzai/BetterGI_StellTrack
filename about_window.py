@@ -377,15 +377,22 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
   项目地址：https://www.riverbankcomputing.com/software/pyqt/
   许可详情：https://www.riverbankcomputing.com/software/pyqt/license/
 
+· 本程序使用了多个第三方库，主要许可证包括：
+  - GPL-3.0-only：PyQt6, PyQt6-WebEngine
+  - BSD 3-Clause License：pandas, lxml, psutil, matplotlib, seaborn
+  - Apache-2.0：requests
+  - MIT License：beautifulsoup4, PyYAML, colorlog, pytest, pytest-qt, pytest-cov, flake8, black, isort, mypy, setuptools, build, wheel, logging_tree
+  - 其他许可证：numpy, json5, cryptography, pycryptodome, pywin32
+
 · 本程序使用auto-py-to-exe工具打包发行。
   项目地址：https://github.com/brentvollebregt/auto-py-to-exe
 
 
 【特别鸣谢】
-· 感谢BetterGI团队开发的原神辅助工具为玩家提供了便利。
+· 感谢BetterGI团队开发的原神辅助工具为玩家提供了便利。感谢BetterGI团队开发了这款优秀的原神辅助工具，为玩家提供了便利
   BetterGI团队：https://b23.tv/8rQCOI5
-· 感谢得意黑与思源宋体的版权方设计的开源字体。
-· 感谢Deepseek、智谱清言、阿里通义千问开发的大语言模型，阿里Qoder、字节跳动Trae、腾讯CodeBuddy开发的IDE工具为零代码基础人群开发程序提供了便利。"""
+· 感谢得意黑与思源宋体的版权方设计的开源字体，为项目提供了精美的视觉呈现
+· 感谢深度求索（Deepseek）、阿里巴巴、智谱华章（智谱清言/GML）、字节跳动、腾讯等厂商开发的AI大模型（LLM）和AI IDE工具为零代码基础人群开发程序提供了便利。"""
     
         self.info_edit.setPlainText(content)
     
