@@ -938,8 +938,24 @@ class EventManager:
         self.recalculate_time_from_row(1)
     
     def get_selected_event_rows(self):
-        """获取选中的事件行"""
-        return self.events_table.selectionModel().selectedRows()
+        """获取选中的事件行
+        
+        获取表格中当前选中的事件行,自动过滤掉隐藏的行。
+        这样可以确保在筛选模式下,只返回可见的选中行。
+        
+        Returns:
+            list: 可见的选中行索引列表(QModelIndex对象)
+        """
+        # 获取所有选中的行
+        all_selected_rows = self.events_table.selectionModel().selectedRows()
+        
+        # 过滤掉隐藏的行,只返回可见的行
+        visible_selected_rows = [
+            row for row in all_selected_rows 
+            if not self.events_table.isRowHidden(row.row())
+        ]
+        
+        return visible_selected_rows
     
     def update_row_numbers(self):
         """更新行号"""
@@ -1178,8 +1194,15 @@ class EventManager:
         first_deleted_index = min(selected_row_numbers)
         last_deleted_index = max(selected_row_numbers)
         
-        # 检测是否删除的是末尾事件
-        is_deleting_end_events = last_deleted_index == last_row_before_delete
+        # 检测是否删除的是末尾事件：必须满足两个条件
+        # 1. 最后一个被删除的事件是表格的最后一行
+        # 2. 所有选中的事件必须是从某位置到末尾的连续事件
+        is_deleting_end_events = False
+        if last_deleted_index == last_row_before_delete:
+            # 检查是否是连续的末尾事件
+            expected_rows = set(range(first_deleted_index, last_row_before_delete + 1))
+            actual_rows = set(selected_row_numbers)
+            is_deleting_end_events = (expected_rows == actual_rows)
         
         # 获取删除逻辑设置和跳过弹窗开关
         delete_logic = self.main_window.get_delete_logic()
@@ -1220,8 +1243,15 @@ class EventManager:
             first_deleted_index = min(selected_row_numbers)
             last_deleted_index = max(selected_row_numbers)
 
-            # 检测是否删除的是末尾事件
-            is_deleting_end_events = last_deleted_index == last_row_before_delete
+            # 检测是否删除的是末尾事件：必须满足两个条件
+            # 1. 最后一个被删除的事件是表格的最后一行
+            # 2. 所有选中的事件必须是从某位置到末尾的连续事件
+            is_deleting_end_events = False
+            if last_deleted_index == last_row_before_delete:
+                # 检查是否是连续的末尾事件
+                expected_rows = set(range(first_deleted_index, last_row_before_delete + 1))
+                actual_rows = set(selected_row_numbers)
+                is_deleting_end_events = (expected_rows == actual_rows)
 
             # 执行删除
             for row in sorted(selected_row_numbers, reverse=True):
