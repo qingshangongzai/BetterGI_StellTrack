@@ -163,7 +163,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         self.visit_button.setMinimumHeight(35)
         self.visit_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         self.visit_button.clicked.connect(self.open_release_page)
-        self.visit_button.setEnabled(False)
+        self.visit_button.setEnabled(True)  # 默认启用，允许用户随时访问
         button_layout.addWidget(self.visit_button)
         
         # 重新检查按钮
@@ -193,7 +193,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         self.status_text.setPlainText("正在连接到 Gitee 仓库...\n请稍候...")
         self.progress_bar.setRange(0, 0)
         self.progress_bar.setVisible(True)
-        self.visit_button.setEnabled(False)
+        # self.visit_button.setEnabled(False)  # 不禁用按钮，允许用户随时访问
         self.recheck_button.setEnabled(False)
         
         # 创建并启动检查线程
@@ -206,6 +206,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         # 停止进度条
         self.progress_bar.setVisible(False)
         self.recheck_button.setEnabled(True)
+        self.visit_button.setEnabled(True)  # 始终启用访问按钮
         
         if success:
             # 比较版本
@@ -221,12 +222,10 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
                     status_msg = f"恭喜！您使用的是最新版本 {latest_version}\n\n无需更新。"
                 else:
                     status_msg = f"您使用的版本 {self.current_version} 比官方最新版本 {latest_version} 更新\n\n这可能是开发版本或测试版本。"
-                self.visit_button.setEnabled(False)
             else:
                 # 有新版本
                 self.latest_version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
                 status_msg = f"发现新版本！\n\n最新版本: {latest_version}\n当前版本: {self.current_version}\n\n建议您更新到最新版本以获得更好的体验和功能。"
-                self.visit_button.setEnabled(True)
             
             self.status_text.setPlainText(status_msg)
         else:
@@ -236,7 +235,6 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
             self.latest_version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['error']};")
             status_msg = f"检查更新失败\n\n{error_msg}\n\n请检查网络连接后重试，或手动访问项目页面查看最新版本。"
             self.status_text.setPlainText(status_msg)
-            self.visit_button.setEnabled(True)  # 即使失败也允许访问页面
             
     def compare_versions(self, current, latest):
         """
@@ -273,8 +271,34 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         
     def open_release_page(self):
         """打开Gitee发行版页面"""
-        url = "https://gitee.com/qingshangongzai/BetterGI_StellTrack/releases"
-        QDesktopServices.openUrl(QUrl(url))
+        print("[调试] 点击了访问发行版页面按钮")  # 调试信息
+        try:
+            url = "https://gitee.com/qingshangongzai/BetterGI_StellTrack/releases"
+            print(f"[调试] 尝试打开URL: {url}")  # 调试信息
+            
+            # 直接使用 webbrowser ，更稳定
+            import webbrowser
+            result = webbrowser.open(url)
+            print(f"[调试] webbrowser.open 返回值: {result}")  # 调试信息
+            
+            if not result:
+                # 如果 webbrowser 失败，尝试 QDesktopServices
+                print("[调试] webbrowser 失败，尝试 QDesktopServices")  # 调试信息
+                success = QDesktopServices.openUrl(QUrl(url))
+                print(f"[调试] QDesktopServices.openUrl 返回值: {success}")  # 调试信息
+                
+                if not success:
+                    raise Exception("两种方法都无法打开浏览器")
+                    
+        except Exception as e:
+            print(f"[调试] 异常: {str(e)}")  # 调试信息
+            # 如果出现异常，记录错误并提示用户
+            from utils import ChineseMessageBox
+            ChineseMessageBox.show_error(
+                self,
+                "打开失败",
+                f"无法打开浏览器\n\n请手动复制以下链接到浏览器访问:\n{url}\n\n错误信息: {str(e)}"
+            )
         
     def showEvent(self, event):
         """对话框显示事件 - 首次显示时居中并触发淡入动画"""
