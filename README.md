@@ -154,6 +154,7 @@ BetterGI_StellTrack/
 ├── utils.py                # 工具函数模块，提供各种辅助功能
 ├── time_analysis.py        # 时间分析模块，提供事件时间分析功能
 ├── debug_tools.py          # 调试工具模块，包含调试相关功能
+├── update_dialog.py        # 更新检查模块，负责版本更新检查和云端数据同步
 ├── about_window.py         # 关于窗口模块
 ├── event_dialogs.py        # 事件对话框模块，包含各种事件编辑对话框
 ├── user_agreement.py       # 用户协议模块
