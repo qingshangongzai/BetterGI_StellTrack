@@ -73,7 +73,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         super().__init__(
             parent,
             title="检查更新",
-            size=(500, 350),
+            size=(380, 320),
             window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
         )
         
@@ -92,75 +92,87 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
     def setup_ui(self):
         """设置UI界面"""
         layout = QVBoxLayout(self)
-        layout.setSpacing(15)
+        layout.setSpacing(12)
         layout.setContentsMargins(20, 20, 20, 20)
         
         # 标题
         title_label = QLabel("检查更新")
         UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
-        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 10px;")
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 8px;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title_label)
         
         # 当前版本信息
         version_layout = QHBoxLayout()
         version_layout.setSpacing(10)
+        version_layout.addStretch()  # 左侧弹簧
         
         current_label = QLabel("当前版本:")
         font_manager = get_global_font_manager()
-        current_label.setFont(font_manager.get_source_han_font(11))
+        current_label.setFont(font_manager.get_source_han_font(10))
         current_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         version_layout.addWidget(current_label)
         
         self.current_version_label = QLabel(self.current_version)
-        UnifiedStyleHelper.get_instance().set_smiley_font(self.current_version_label, 11, QFont.Weight.Bold)
+        UnifiedStyleHelper.get_instance().set_smiley_font(self.current_version_label, 10, QFont.Weight.Bold)
         self.current_version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
         version_layout.addWidget(self.current_version_label)
         
-        version_layout.addStretch()
+        version_layout.addStretch()  # 右侧弹簧
         layout.addLayout(version_layout)
         
         # 最新版本信息
         latest_layout = QHBoxLayout()
         latest_layout.setSpacing(10)
+        latest_layout.addStretch()  # 左侧弹簧
         
         latest_label = QLabel("最新版本:")
-        latest_label.setFont(font_manager.get_source_han_font(11))
+        latest_label.setFont(font_manager.get_source_han_font(10))
         latest_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
         latest_layout.addWidget(latest_label)
         
         self.latest_version_label = QLabel("检查中...")
-        UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 11, QFont.Weight.Bold)
+        UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 10, QFont.Weight.Bold)
         self.latest_version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']};")
         latest_layout.addWidget(self.latest_version_label)
         
-        latest_layout.addStretch()
+        latest_layout.addStretch()  # 右侧弹簧
         layout.addLayout(latest_layout)
         
         # 进度条
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)  # 不确定进度
         self.progress_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_progress_bar_style())
-        self.progress_bar.setFixedHeight(8)
+        self.progress_bar.setFixedHeight(6)
         layout.addWidget(self.progress_bar)
         
         # 状态信息文本框
         self.status_text = QTextEdit()
         self.status_text.setReadOnly(True)
-        self.status_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_text_edit_style())
-        self.status_text.setFixedHeight(120)
-        self.status_text.setFont(font_manager.get_source_han_font(10))
+        self.status_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_text_edit_style() + """
+            QTextEdit {
+                text-align: center;
+            }
+        """)
+        self.status_text.setFixedHeight(100)
+        self.status_text.setFont(font_manager.get_source_han_font(9))
+        # 设置文本居中对齐
+        from PyQt6.QtGui import QTextOption
+        self.status_text.document().setDefaultTextOption(
+            QTextOption(Qt.AlignmentFlag.AlignCenter)
+        )
         self.status_text.setPlainText("正在连接到 Gitee 仓库...\n请稍候...")
         layout.addWidget(self.status_text)
         
         # 按钮区域
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
+        button_layout.setSpacing(8)
+        button_layout.addStretch()  # 左侧弹簧使按钮居中
         
-        # 访问发行版页面按钮
-        self.visit_button = QPushButton("访问发行版页面")
-        self.visit_button.setFont(font_manager.get_source_han_font(10))
-        self.visit_button.setMinimumHeight(35)
+        # 访问发行页面按钮
+        self.visit_button = QPushButton("访问发行页面")
+        self.visit_button.setFont(font_manager.get_source_han_font(9))
+        self.visit_button.setFixedSize(100, 28)
         self.visit_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         self.visit_button.clicked.connect(self.open_release_page)
         self.visit_button.setEnabled(True)  # 默认启用，允许用户随时访问
@@ -168,21 +180,14 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         
         # 重新检查按钮
         self.recheck_button = QPushButton("重新检查")
-        self.recheck_button.setFont(font_manager.get_source_han_font(10))
-        self.recheck_button.setMinimumHeight(35)
+        self.recheck_button.setFont(font_manager.get_source_han_font(9))
+        self.recheck_button.setFixedSize(80, 28)
         self.recheck_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         self.recheck_button.clicked.connect(self.start_check)
         self.recheck_button.setEnabled(False)
         button_layout.addWidget(self.recheck_button)
         
-        # 关闭按钮
-        close_button = QPushButton("关闭")
-        close_button.setFont(font_manager.get_source_han_font(10))
-        close_button.setMinimumHeight(35)
-        close_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
-        close_button.clicked.connect(self.close)
-        button_layout.addWidget(close_button)
-        
+        button_layout.addStretch()  # 右侧弹簧使按钮居中
         layout.addLayout(button_layout)
         
     def start_check(self):
@@ -213,7 +218,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
             is_latest = self.compare_versions(self.current_version, latest_version)
             
             self.latest_version_label.setText(latest_version)
-            UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 11, QFont.Weight.Bold)
+            UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 10, QFont.Weight.Bold)
             
             if is_latest >= 0:
                 # 当前版本是最新或更新
@@ -231,7 +236,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         else:
             # 检查失败
             self.latest_version_label.setText("检查失败")
-            UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 11, QFont.Weight.Bold)
+            UnifiedStyleHelper.get_instance().set_smiley_font(self.latest_version_label, 10, QFont.Weight.Bold)
             self.latest_version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['error']};")
             status_msg = f"检查更新失败\n\n{error_msg}\n\n请检查网络连接后重试，或手动访问项目页面查看最新版本。"
             self.status_text.setPlainText(status_msg)
