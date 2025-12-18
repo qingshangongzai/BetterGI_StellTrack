@@ -819,6 +819,36 @@ class UnifiedStyleHelper:
             }}
         """
     
+    def get_progress_bar_style(self):
+        """获取进度条样式"""
+        return f"""
+            QProgressBar {{
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 4px;
+                text-align: center;
+                background-color: #f0f0f0;
+                font-size: 10px;
+            }}
+            QProgressBar::chunk {{
+                background-color: {self.COLORS['primary']};
+                border-radius: 3px;
+            }}
+        """
+    
+    def get_text_edit_style(self):
+        """获取文本编辑框样式"""
+        return f"""
+            QTextEdit {{
+                background-color: #ffffff;
+                border: 1px solid {self.COLORS['border_light']};
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 10px;
+                line-height: 1.3;
+                {self.SHADOWS['small']}
+            }}
+        """
+    
     def get_coordinate_capture_label_style(self):
         """获取坐标捕获标签样式"""
         return f"""

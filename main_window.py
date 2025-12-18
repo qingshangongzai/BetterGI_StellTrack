@@ -33,6 +33,11 @@ from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_ty
 
 from about_window import AboutWindowQt
 
+# 导入更新对话框模块
+
+
+from update_dialog import UpdateDialog
+
 # 导入事件对话框模块
 
 
@@ -1618,6 +1623,22 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
 
 
+        # 检查更新
+
+        check_update_action = QAction('检查更新', self)
+
+        check_update_action.triggered.connect(self.on_check_update)
+
+        help_menu.addAction(check_update_action)
+
+        
+
+
+        help_menu.addSeparator()
+
+        
+
+
         # 关于
 
         about_action = QAction('关于', self)
@@ -3000,6 +3021,20 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         agreement_window = UserAgreementWindow(self)
         
         agreement_window.show()
+
+
+
+
+    def on_check_update(self):
+        """检查更新"""
+        try:
+            self.debug_logger.log_info("打开检查更新对话框")
+            update_dialog = UpdateDialog(self)
+            update_dialog.show()
+        except Exception as e:
+            error_msg = f"打开检查更新对话框失败: {str(e)}"
+            self.debug_logger.log_error(error_msg)
+            ChineseMessageBox.show_error(self, "错误", error_msg)
 
 
 
