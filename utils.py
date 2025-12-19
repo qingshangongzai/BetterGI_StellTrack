@@ -547,8 +547,13 @@ def find_resource_file(filename):
     for path in search_paths:
         full_path = os.path.join(path, filename)
         if os.path.exists(full_path):
+            # 调试日志：记录找到的资源文件路径
+            print(f"[DEBUG] 找到资源文件: {filename} -> {full_path}")
             return full_path
     
+    # 调试日志：记录未找到的资源文件
+    print(f"[DEBUG] 未找到资源文件: {filename}")
+    print(f"[DEBUG] 搜索路径列表: {search_paths}")
     return None
 
 def get_resource_path(relative_path):
