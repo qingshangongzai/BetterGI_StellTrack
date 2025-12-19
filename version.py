@@ -20,21 +20,21 @@ class VersionManager:
         """
         # 版本号组件 - 统一修改点
         self.major = 3
-        self.minor = 8
-        self.patch = 3
+        self.minor = 9
+        self.patch = 0
         self.build = 0
         
         # 核心版本信息
-        self.version = "3.8.3"  # 应用程序主版本号
+        self.version = "3.9.0"  # 应用程序主版本号
         
         # 详细版本信息结构
         self.version_info = {
             "major": 3,
-            "minor": 8,
-            "patch": 3,
+            "minor": 9,
+            "patch": 0,
             "build": 0,
-            "full": "3.8.3",
-            "short": "3.8.3"
+            "full": "3.9.0",
+            "short": "3.9.0"
         }
         
         # 应用程序元数据
