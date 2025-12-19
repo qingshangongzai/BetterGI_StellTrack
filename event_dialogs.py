@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin
+from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin, AnimatedDialog
 from styles import ChineseMessageBox, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING
 # 导入资源管理器（从utils模块）
@@ -889,7 +889,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
 # 粘贴选项对话框
 # =============================================================================
 
-class PasteOptionsDialog(QDialog):
+class PasteOptionsDialog(AnimatedDialog):
     """粘贴选项对话框
     
     用于设置事件粘贴时的选项，特别是时间修改策略。
@@ -968,7 +968,7 @@ class PasteOptionsDialog(QDialog):
 # 删除选项对话框
 # =============================================================================
 
-class DeleteOptionsDialog(QDialog):
+class DeleteOptionsDialog(AnimatedDialog):
     """删除选项对话框
     
     用于设置事件删除时的选项，特别是时间调整策略。

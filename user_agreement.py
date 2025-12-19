@@ -160,7 +160,25 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
         
-
+    def showEvent(self, event):
+        """用户协议对话框显示事件 - 首次显示时居中并触发淡入动画"""
+        if not hasattr(self, "_ua_first_show_done"):
+            self._ua_first_show_done = True
+            # 首次显示前进行居中
+            try:
+                screen = self.screen()
+                if screen is not None:
+                    geo = self.frameGeometry()
+                    geo.moveCenter(screen.geometry().center())
+                    self.move(geo.topLeft())
+            except Exception:
+                pass
+            # 确保动画从完全透明开始
+            try:
+                self.setWindowOpacity(0.0)
+            except Exception:
+                pass
+        super().showEvent(event)
     
     def setup_ui(self):
         """设置UI界面"""
@@ -325,7 +343,26 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 设置图标修复 - 在窗口显示后调用
         self.setup_icon_fixing()
         
-
+    def showEvent(self, event):
+        """用户协议窗口显示事件 - 首次显示时居中并触发淡入动画"""
+        if not hasattr(self, "_ua_window_first_show_done"):
+            self._ua_window_first_show_done = True
+            # 首次显示前进行居中
+            try:
+                screen = self.screen()
+                if screen is not None:
+                    geo = self.frameGeometry()
+                    geo.moveCenter(screen.geometry().center())
+                    self.move(geo.topLeft())
+            except Exception:
+                pass
+            # 确保动画从完全透明开始
+            try:
+                self.setWindowOpacity(0.0)
+            except Exception:
+                pass
+        super().showEvent(event)
+        
     
     def setup_ui(self):
         """设置UI界面"""

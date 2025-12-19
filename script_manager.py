@@ -2,14 +2,116 @@
 import os
 import json
 from datetime import datetime
-from PyQt6.QtWidgets import QFileDialog, QMessageBox
-from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
+from PyQt6.QtGui import QDesktopServices, QFont
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 # 导入共享模块
-from styles import ChineseMessageBox
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing
+from styles import ChineseMessageBox, UnifiedStyleHelper, FadeInWindowMixin, StyledDialog, get_global_font_manager, DialogFactory
+from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal
 from debug_tools import get_global_debug_logger
+
+# =============================================================================
+# 脚本生成进度对话框
+# =============================================================================
+
+class ScriptGenerationProgressDialog(FadeInWindowMixin, StyledDialog):
+    """脚本生成进度对话框,显示脚本生成过程的进度"""
+    
+    # 定义信号
+    cancel_requested = pyqtSignal()  # 取消请求信号
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.is_cancelled = False
+        self.setup_ui()
+        
+    def setup_ui(self):
+        """设置UI界面"""
+        self.setWindowTitle("生成脚本")
+        self.setFixedSize(500, 220)
+        
+        # 设置窗口标志,保留关闭按钮
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
+                           Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+        
+        # 设置窗口图标
+        self.setWindowIcon(load_icon_universal())
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(25, 20, 25, 20)
+        
+        # 标题区域
+        title_label = QLabel("正在生成脚本...")
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)
+        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 5px;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+        
+        # 状态标签
+        self.status_label = QLabel("准备开始...")
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.status_label, 10)
+        self.status_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']};")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.status_label)
+        
+        # 进度条
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_progress_bar_style())
+        self.progress_bar.setFixedHeight(20)
+        layout.addWidget(self.progress_bar)
+        
+        # 添加弹性空间
+        layout.addStretch()
+        
+        # 取消按钮
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        self.cancel_button = QPushButton("取消")
+        self.cancel_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.cancel_button, 9)
+        self.cancel_button.setFixedSize(80, 30)
+        self.cancel_button.clicked.connect(self.on_cancel_clicked)
+        button_layout.addWidget(self.cancel_button)
+        
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+    
+    def update_progress(self, value, status_text):
+        """更新进度条和状态文本
+        
+        Args:
+            value: 进度值 (0-100)
+            status_text: 状态文本
+        """
+        self.progress_bar.setValue(value)
+        self.status_label.setText(status_text)
+    
+    def on_cancel_clicked(self):
+        """取消按钮点击事件"""
+        if not self.is_cancelled:
+            self.is_cancelled = True
+            self.cancel_requested.emit()
+            self.status_label.setText("正在取消...")
+            self.cancel_button.setEnabled(False)
+    
+    def closeEvent(self, event):
+        """重写关闭事件,直接取消操作"""
+        # 如果已经取消或已经完成,直接关闭
+        if self.is_cancelled or self.progress_bar.value() == 100:
+            event.accept()
+            return
+        
+        # 直接取消,不弹出确认对话框
+        self.is_cancelled = True
+        self.cancel_requested.emit()
+        event.accept()
 
 # =============================================================================
 # 脚本管理类
@@ -23,12 +125,19 @@ class GenerateScriptThread(QThread):
     script_generation_failed = pyqtSignal(str)  # 脚本生成失败信号
     pairing_check_failed = pyqtSignal(list)  # 事件成对性检查失败信号
     pairing_check_passed = pyqtSignal()  # 事件成对性检查通过信号
+    progress_updated = pyqtSignal(int, str)  # 进度更新信号 (进度值, 状态文本)
     
     def __init__(self, main_window, events_table):
         super().__init__()
         self.main_window = main_window
         self.events_table = events_table
         self.debug_logger = get_global_debug_logger()
+        self.is_cancelled = False  # 取消标志
+    
+    def cancel(self):
+        """请求取消线程执行"""
+        self.is_cancelled = True
+        self.debug_logger.log_info("用户请求取消脚本生成")
     
     def run(self):
         """线程运行方法，执行脚本生成逻辑"""
@@ -37,7 +146,17 @@ class GenerateScriptThread(QThread):
             
             # 收集事件数据
             events = []
-            for row in range(self.events_table.rowCount()):
+            total_rows = self.events_table.rowCount()
+            
+            # 报告开始收集事件
+            self.progress_updated.emit(0, "正在收集事件数据...")
+            
+            for row in range(total_rows):
+                # 检查是否被取消
+                if self.is_cancelled:
+                    self.script_generation_failed.emit("脚本生成已取消")
+                    return
+                
                 event_data = get_event_data_from_table(self.events_table, row)
                 
                 if event_data[0]:  # 如果事件名称不为空
@@ -63,9 +182,19 @@ class GenerateScriptThread(QThread):
                         script_event["mouseButton"] = "Middle"
                     
                     events.append(script_event)
+                
+                # 更新进度（收集事件阶段占20%）
+                if total_rows > 0:
+                    progress = int((row + 1) / total_rows * 20)
+                    self.progress_updated.emit(progress, f"正在收集事件数据... ({row + 1}/{total_rows})")
             
             if not events:
                 self.script_generation_failed.emit("没有事件可生成脚本")
+                return
+            
+            # 检查是否被取消
+            if self.is_cancelled:
+                self.script_generation_failed.emit("脚本生成已取消")
                 return
             
             # 获取循环次数
@@ -83,11 +212,21 @@ class GenerateScriptThread(QThread):
             else:  # ms
                 interval_ms = int(interval)
             
+            # 报告开始生成循环事件
+            self.progress_updated.emit(20, "正在生成循环事件...")
+            
             # 生成完整的事件序列（考虑循环）
             full_events = []
             last_event_time = 0
+            total_events_count = len(events) * loop_count
+            processed_count = 0
             
             for loop in range(loop_count):
+                # 在每个循环开始时检查取消
+                if self.is_cancelled:
+                    self.script_generation_failed.emit("脚本生成已取消")
+                    return
+                
                 for i, event in enumerate(events):
                     # 复制事件
                     new_event = event.copy()
@@ -103,10 +242,30 @@ class GenerateScriptThread(QThread):
                         new_event["time"] = event_time + loop * (last_event_time + interval_ms)
                     
                     full_events.append(new_event)
+                    processed_count += 1
+                    
+                    # 每处理50个事件检查一次取消状态（提高响应速度）
+                    if processed_count % 50 == 0:
+                        if self.is_cancelled:
+                            self.script_generation_failed.emit("脚本生成已取消")
+                            return
+                    
+                    # 更新进度（生成循环事件阶段占60%，从20%到80%）
+                    if total_events_count > 0:
+                        progress = 20 + int((processed_count / total_events_count) * 60)
+                        self.progress_updated.emit(progress, f"正在生成循环事件... ({processed_count}/{total_events_count})")
                 
                 # 更新最后一个事件的时间
                 if events:
                     last_event_time = int(events[-1]["time"])
+            
+            # 报告生成脚本结构
+            self.progress_updated.emit(80, "正在生成脚本结构...")
+            
+            # 检查是否被取消
+            if self.is_cancelled:
+                self.script_generation_failed.emit("脚本生成已取消")
+                return
             
             # 获取缩放比例并转换为小数
             scale_str = self.main_window.settings_panel.scale_combo.currentText()
@@ -131,6 +290,14 @@ class GenerateScriptThread(QThread):
                     "recordDpi": record_dpi
                 }
             }
+            
+            # 报告完成
+            self.progress_updated.emit(100, "脚本生成完成！")
+            
+            # 发送成功信号前再次检查取消状态
+            if self.is_cancelled:
+                self.script_generation_failed.emit("脚本生成已取消")
+                return
             
             # 生成默认文件名
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
@@ -250,6 +417,9 @@ class ScriptManager:
         self.generate_script_thread = None
         self.check_pairing_thread = None
         self.import_script_thread = None
+        
+        # 进度对话框
+        self.progress_dialog = None
     
     def on_generate_script(self):
         """启动脚本生成流程
@@ -300,18 +470,72 @@ class ScriptManager:
         """启动脚本生成线程
         
         创建并启动脚本生成线程，连接相关信号处理程序。
+        如果事件数量较多，显示进度对话框。
         """
         event_manager = self.main_window.event_manager
         
+        # 检查事件数量，如果超过阈值则显示进度条
+        event_count = event_manager.events_table.rowCount()
+        loop_count = self.main_window.settings_panel.get_safe_loop_count()
+        total_events = event_count * loop_count
+        
+        # 设置阈值：总事件数超过1000时显示进度条
+        PROGRESS_THRESHOLD = 1000
+        
+        # 如果事件数量过多，先弹出确认对话框
+        if total_events > PROGRESS_THRESHOLD:
+            reply = ChineseMessageBox.show_question(
+                self.main_window,
+                "确认生成",
+                "生成的事件数量过多，\n可能会对程序的运行造成卡顿，\n\n请确认生成脚本"
+            )
+            
+            if not reply:
+                # 用户选择取消
+                self.debug_logger.log_info("用户取消生成大量事件脚本")
+                return
+            
+            # 用户确认，创建并显示进度对话框
+            self.progress_dialog = ScriptGenerationProgressDialog(self.main_window)
+            # 连接取消信号
+            self.progress_dialog.cancel_requested.connect(self.on_cancel_requested)
+            
         # 创建并启动脚本生成线程
         self.generate_script_thread = GenerateScriptThread(self.main_window, event_manager.events_table)
         self.generate_script_thread.script_generated.connect(self.on_script_generated)
         self.generate_script_thread.script_generation_failed.connect(self.on_script_generation_failed)
+        
+        # 连接进度更新信号
+        if self.progress_dialog:
+            self.generate_script_thread.progress_updated.connect(self.on_progress_updated)
+            self.progress_dialog.show()
+        
         self.generate_script_thread.start()
+    
+    def on_cancel_requested(self):
+        """处理取消请求"""
+        if self.generate_script_thread and self.generate_script_thread.isRunning():
+            self.debug_logger.log_info("用户请求取消脚本生成")
+            self.generate_script_thread.cancel()
+    
+    def on_progress_updated(self, value, status_text):
+        """进度更新回调
+        
+        Args:
+            value: 进度值 (0-100)
+            status_text: 状态文本
+        """
+        if self.progress_dialog:
+            self.progress_dialog.update_progress(value, status_text)
     
     def on_script_generated(self, script, default_filename):
         """脚本生成成功回调"""
         try:
+            # 关闭进度对话框
+            if self.progress_dialog:
+                self.progress_dialog.accept()
+                self.progress_dialog = None
+            
             # 存储生成的脚本
             self.script = script
             
@@ -334,6 +558,11 @@ class ScriptManager:
     
     def on_script_generation_failed(self, error_msg):
         """脚本生成失败回调"""
+        # 关闭进度对话框
+        if self.progress_dialog:
+            self.progress_dialog.reject()
+            self.progress_dialog = None
+        
         self.debug_logger.log_warning(error_msg)
         ChineseMessageBox.show_warning(self.main_window, "警告", error_msg)
     
@@ -391,6 +620,17 @@ class ScriptManager:
     def on_import_script(self):
         """导入脚本"""
         try:
+            # 显示警告弹窗
+            reply = ChineseMessageBox.show_question(
+                self.main_window,
+                "导入脚本警告",
+                "导入脚本会清空现有事件列表！\n请确保已保存当前事件列表后再导入。\n\n是否继续导入？"
+            )
+            
+            if not reply:
+                self.debug_logger.log_info("用户取消导入脚本")
+                return
+            
             # 打开文件对话框选择要导入的脚本文件
             filename, _ = QFileDialog.getOpenFileName(
                 self.main_window,
