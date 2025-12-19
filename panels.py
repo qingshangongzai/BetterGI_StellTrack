@@ -303,6 +303,15 @@ class OperationsPanel(QWidget):
                 ChineseMessageBox.show_warning(self, "警告", "请先生成脚本")
                 return
             
+            # 检查事件总数和循环次数
+            event_count = self.parent_window.event_manager.events_table.rowCount()
+            loop_count = self.parent_window.settings_panel.get_safe_loop_count()
+            
+            if event_count > 20000 and loop_count > 5:
+                self.debug_logger.log_warning(f"事件总数过多({event_count}个事件，{loop_count}次循环)，无法进行预览")
+                ChineseMessageBox.show_warning(self, "警告", "事件总数过多，无法进行预览")
+                return
+            
             # 创建预览对话框
             preview_dialog = AnimatedDialog(self)
             preview_dialog.setWindowTitle("脚本预览")

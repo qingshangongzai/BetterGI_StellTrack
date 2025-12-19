@@ -339,7 +339,8 @@ def update_app_state(main_window, event_manager=None):
 # Windows 任务栏图标修复相关函数
 # =============================================================================
 
-TASKBAR_ICON_FIXED = False
+# 任务栏图标修复标志 - 改为字典，为每个窗口单独跟踪
+_TASKBAR_ICON_FIXED_WINDOWS = {}
 
 def set_app_user_model_id():
     """设置AppUserModelID - 使用版本管理器"""
@@ -363,14 +364,17 @@ def set_app_user_model_id():
 def fix_windows_taskbar_icon_for_window(window):
     """为特定窗口修复Windows任务栏图标
     
-    仅在首次调用时实际修复任务栏图标，后续调用直接返回，避免重复触发窗口显示和位置抖动。
+    为每个窗口单独跟踪图标修复状态，避免一个窗口的修复影响其他窗口。
     """
     if os.name != 'nt':
         return False
     
-    global TASKBAR_ICON_FIXED
-    # 如果已经修复过任务栏图标，则不再重复执行
-    if TASKBAR_ICON_FIXED:
+    # 使用窗口对象的id作为键，为每个窗口单独跟踪修复状态
+    window_id = id(window)
+    global _TASKBAR_ICON_FIXED_WINDOWS
+    
+    # 检查此窗口是否已经修复过
+    if window_id in _TASKBAR_ICON_FIXED_WINDOWS and _TASKBAR_ICON_FIXED_WINDOWS[window_id]:
         return False
     
     try:
@@ -427,8 +431,8 @@ def fix_windows_taskbar_icon_for_window(window):
             debug_logger = get_global_debug_logger()
             debug_logger.log_debug(f"任务栏图标修复成功: {icon_path}")
             
-            # 标记已修复，后续不再重复执行
-            TASKBAR_ICON_FIXED = True
+            # 标记此窗口已修复，但不影响其他窗口
+            _TASKBAR_ICON_FIXED_WINDOWS[window_id] = True
             return True
         
         from debug_tools import get_global_debug_logger
@@ -543,8 +547,13 @@ def find_resource_file(filename):
     for path in search_paths:
         full_path = os.path.join(path, filename)
         if os.path.exists(full_path):
+            # 调试日志：记录找到的资源文件路径
+            print(f"[DEBUG] 找到资源文件: {filename} -> {full_path}")
             return full_path
     
+    # 调试日志：记录未找到的资源文件
+    print(f"[DEBUG] 未找到资源文件: {filename}")
+    print(f"[DEBUG] 搜索路径列表: {search_paths}")
     return None
 
 def get_resource_path(relative_path):
