@@ -24,17 +24,17 @@ class VersionManager:
         self.patch = 0
         self.build = 0
         
-        # 核心版本信息
-        self.version = "3.9.0"  # 应用程序主版本号
+        # 核心版本信息 - 动态生成
+        self.version = f"{self.major}.{self.minor}.{self.patch}"  # 应用程序主版本号
         
-        # 详细版本信息结构
+        # 详细版本信息结构 - 动态引用
         self.version_info = {
-            "major": 3,
-            "minor": 9,
-            "patch": 0,
-            "build": 0,
-            "full": "3.9.0",
-            "short": "3.9.0"
+            "major": self.major,
+            "minor": self.minor,
+            "patch": self.patch,
+            "build": self.build,
+            "full": f"{self.major}.{self.minor}.{self.patch}",
+            "short": f"{self.major}.{self.minor}.{self.patch}"
         }
         
         # 应用程序元数据
