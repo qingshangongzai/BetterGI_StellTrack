@@ -1228,7 +1228,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         open_action.setShortcut('Ctrl+O')
 
-        open_action.triggered.connect(self.on_open_file)
+        open_action.triggered.connect(self.script_manager.on_import_script)
 
         file_menu.addAction(open_action)
 
@@ -1241,7 +1241,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         save_action.setShortcut('Ctrl+S')
 
-        save_action.triggered.connect(self.on_save_file)
+        save_action.triggered.connect(self.script_manager.on_save_script)
 
         file_menu.addAction(save_action)
 
@@ -2685,120 +2685,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
         self.status_bar.showMessage("✅ 已新建文件")
         self.debug_logger.log_info("已新建文件")
-
-
-
-
-    def on_open_file(self):
-        """打开文件"""
-        # 询问用户是否确认打开
-        reply = ChineseMessageBox.show_question(self, "打开文件", "确定要打开文件吗？当前未保存的更改将丢失。")
-        if not reply:
-            return
-            
-        # 打开文件对话框
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, 
-            "打开文件", 
-            "", 
-            "BetterGI StellTrack 文件 (*.json);;所有文件 (*.*)"
-        )
-        
-        if not file_path:
-            return
-            
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                state = json.load(f)
-            
-            # 清空当前事件
-            self.event_manager.events_table.setRowCount(0)
-            
-            # 保存当前状态到撤销栈
-            self.save_state_to_undo_stack()
-            
-            # 开始批量操作
-            self._batch_operation = True
-            
-            try:
-                # 恢复事件
-                for i, event_data in enumerate(state['events']):
-                    # 创建行数据，包括行号
-                    row_data = [str(i + 1)] + event_data
-                    self.event_manager.add_table_row(row_data)
-                
-                # 更新统计信息
-                self.event_manager.update_stats()
-                
-                # 立即更新预计总时间
-                self.on_calculate_total_time()
-                
-                self.status_bar.showMessage(f"✅ 已打开文件: {os.path.basename(file_path)}")
-                self.debug_logger.log_info(f"已打开文件: {file_path}")
-            finally:
-                # 结束批量操作
-                self._batch_operation = False
-                # 保存状态到文件
-                self.save_saved_state()
-        except json.JSONDecodeError:
-            error_msg = f"无法解析文件: {file_path}"
-            self.debug_logger.log_error(error_msg)
-            ChineseMessageBox.show_error(self, "错误", f"无法解析文件: {file_path}")
-        except Exception as e:
-            error_msg = f"打开文件失败: {str(e)}"
-            self.debug_logger.log_error(error_msg)
-            ChineseMessageBox.show_error(self, "错误", error_msg)
-
-
-
-
-    def on_save_file(self):
-        """保存文件"""
-        # 打开文件对话框
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, 
-            "保存文件", 
-            "", 
-            "BetterGI StellTrack 文件 (*.json);;所有文件 (*.*)"
-        )
-        
-        if not file_path:
-            return
-            
-        try:
-            # 构建状态数据
-            state = {
-                'events': [],
-                'settings': {
-                    'loop_count': self.settings_panel.loop_count_input.value(),
-                    'interval': self.settings_panel.interval_input.value(),
-                    'time_unit': self.settings_panel.time_unit_combo.currentText(),
-                    'width': self.settings_panel.width_input.text(),
-                    'height': self.settings_panel.height_input.text(),
-                    'scale': self.settings_panel.scale_combo.currentText()
-                }
-            }
-            
-            # 收集事件数据
-            for row in range(self.event_manager.events_table.rowCount()):
-                event_data = []
-                for col in range(1, 8):  # 跳过行号列
-                    item = self.event_manager.events_table.item(row, col)
-                    event_data.append(item.text() if item else "")
-                state['events'].append(event_data)
-            
-            # 保存到文件
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
-            
-            self.status_bar.showMessage(f"✅ 已保存文件: {os.path.basename(file_path)}")
-            self.debug_logger.log_info(f"已保存文件: {file_path}")
-            # 保存状态到文件
-            self.save_saved_state()
-        except Exception as e:
-            error_msg = f"保存文件失败: {str(e)}"
-            self.debug_logger.log_error(error_msg)
-            ChineseMessageBox.show_error(self, "错误", error_msg)
 
 
 
