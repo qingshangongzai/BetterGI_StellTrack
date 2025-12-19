@@ -1600,7 +1600,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         project_action = QAction('项目地址', self)
 
-        project_action.triggered.connect(lambda: self.open_url("https://github.com/qingshangongzai/BetterGI_StellTrack"))
+        project_action.triggered.connect(lambda: self.open_url("https://gitee.com/qingshangongzai/BetterGI_StellTrack"))
 
         help_menu.addAction(project_action)
 

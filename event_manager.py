@@ -514,13 +514,18 @@ class EventManager:
     def on_show_header_context_menu(self, position):
         """显示表头区域的右键菜单
         
-        当用户点击表头区域时，显示一个菜单，允许用户将事件粘贴到列表的第一个位置。
+        当用户点击表头区域时，显示一个菜单，允许用户添加事件或粘贴事件到列表的第一个位置。
         
         Args:
             position: 鼠标点击位置
         """
         # 使用 ModernMenu 代替 QMenu
         context_menu = ModernMenu(self.main_window)
+        
+        # 添加"添加到第一个位置"菜单项
+        add_to_first_action = QAction("➕ 添加到第一个位置", self.main_window)
+        add_to_first_action.triggered.connect(self.on_add_to_first_position)
+        context_menu.addAction(add_to_first_action)
         
         # 添加粘贴到第一个位置菜单项
         paste_to_first_action = QAction("📎 粘贴到第一个位置", self.main_window)
@@ -1595,6 +1600,90 @@ class EventManager:
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
+    
+    def on_add_to_first_position(self):
+        """添加事件到第一个位置
+        
+        在事件列表的第一个位置（位置0）添加新事件。
+        此功能通常由表头右键菜单触发。
+        """
+        try:
+            # 插入位置固定为0（第一个位置）
+            insert_position = 0
+            insert_after_item = None  # 在最前面插入
+            
+            # 保存当前状态到撤销栈
+            self.main_window.save_state_to_undo_stack()
+            
+            # 开始批量操作
+            self.main_window._batch_operation = True
+            
+            try:
+                # 第一个位置的前一个事件的绝对时间为0
+                prev_absolute_time = 0
+                
+                # 创建事件编辑对话框，传入插入位置信息
+                dialog = EventEditDialog(
+                    self.main_window, 
+                    is_edit_mode=False, 
+                    insert_position=insert_position,
+                    insert_after_item=insert_after_item,
+                    prev_absolute_time=prev_absolute_time
+                )
+                
+                # 更新插入位置信息
+                dialog.update_insert_position_info(insert_position, insert_after_item)
+                
+                if dialog.exec() == QDialog.DialogCode.Accepted:
+                    event_data = dialog.get_event_data()
+                    time_option = dialog.get_time_option()
+                    
+                    # 获取新事件的相对时间
+                    relative_time = int(event_data[5]) if event_data[5] else 100
+                    
+                    # 计算新事件的绝对时间（第一个位置，前一个绝对时间为0）
+                    new_absolute_time = prev_absolute_time + relative_time
+                    
+                    # 插入新行到第一个位置
+                    self.events_table.insertRow(insert_position)
+                    new_row_data = [
+                        str(insert_position + 1),  # 行号
+                        event_data[0],  # 事件名称
+                        event_data[1],  # 事件类型
+                        event_data[2],  # 键码
+                        event_data[3],  # X坐标
+                        event_data[4],  # Y坐标
+                        str(relative_time),  # 相对偏移
+                        str(new_absolute_time)  # 绝对偏移
+                    ]
+                    
+                    for col, data in enumerate(new_row_data):
+                        item = QTableWidgetItem(str(data))
+                        item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                        self.events_table.setItem(insert_position, col, item)
+                    
+                    # 更新行号
+                    self.update_row_numbers()
+                    
+                    # 根据时间修改选项调整后续事件
+                    if time_option == "仅修改当前事件时间":
+                        self.adjust_next_event_relative_time(insert_position, new_absolute_time)
+                    else:  # 修改后重新计算后续事件时间
+                        self.recalculate_time_from_row(insert_position + 1)
+                    
+                    # 更新应用状态
+                    self.update_app_state()
+                    
+                    self.main_window.status_bar.showMessage("✅ 已添加新事件到第一个位置")
+                    self.debug_logger.log_info(f"已添加新事件到第一个位置: {event_data[0]}")
+            finally:
+                # 结束批量操作
+                self.main_window._batch_operation = False
+        except Exception as e:
+            self.main_window._batch_operation = False
+            error_msg = f"添加事件到第一个位置错误: {e}"
+            self.debug_logger.log_error(error_msg, exc_info=True)
+            ChineseMessageBox.show_error(self.main_window, "错误", f"添加事件到第一个位置失败: {str(e)}")
     
     def on_select_all_events(self):
         """全选事件"""

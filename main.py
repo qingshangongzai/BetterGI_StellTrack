@@ -83,10 +83,7 @@ if sys.platform == 'win32':
                 'OriginalFilename': app_info["original_filename"],
                 'ProductName': app_info["name"],
                 'ProductVersion': version_info["full"],
-                'Comments': '基于Python语言开发的专用软件，主要为BetterGI提供键鼠脚本生成功能',
-                'LegalTrademarks': 'BetterGI 是 HXiaoStudio 的商标',
-                'PrivateBuild': '正式版本',
-                'SpecialBuild': '包含调试功能的版本'
+                'Comments': '基于Python语言开发的专用软件，主要为BetterGI提供键鼠脚本生成功能'
             }
             
             # 语言代码设置
