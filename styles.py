@@ -287,8 +287,9 @@ class WindowIconMixin:
     # 信号：图标修复完成
     icon_fixed = pyqtSignal(bool)
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """初始化混入类"""
+        super().__init__(*args, **kwargs)
         self._icon_fixed = False  # 防止重复修复的标志
         self._fix_timer = None  # 定时器引用
     
@@ -299,6 +300,12 @@ class WindowIconMixin:
         Args:
             delay_ms: 延迟时间（毫秒），默认100ms
         """
+        # 确保属性已初始化
+        if not hasattr(self, '_icon_fixed'):
+            self._icon_fixed = False
+        if not hasattr(self, '_fix_timer'):
+            self._fix_timer = None
+            
         if self._icon_fixed:
             return
             
@@ -340,6 +347,11 @@ class WindowIconMixin:
         
         为了保持向后兼容性，提供此方法
         """
+        # 确保属性已初始化
+        if not hasattr(self, '_icon_fixed'):
+            self._icon_fixed = False
+        if not hasattr(self, '_fix_timer'):
+            self._fix_timer = None
         return self._fix_icon_safe()
     
     def _fix_taskbar_icon_safe(self):
@@ -352,7 +364,7 @@ class WindowIconMixin:
     
     def cleanup_icon_fixing(self):
         """清理图标修复相关的资源"""
-        if self._fix_timer and self._fix_timer.isActive():
+        if hasattr(self, '_fix_timer') and self._fix_timer and self._fix_timer.isActive():
             self._fix_timer.stop()
             self._fix_timer = None
 
