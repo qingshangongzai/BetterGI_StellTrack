@@ -169,8 +169,8 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         button_layout.setSpacing(8)
         button_layout.addStretch()  # 左侧弹簧使按钮居中
         
-        # 访问发行页面按钮
-        self.visit_button = QPushButton("访问发行页面")
+        # 访问页面按钮
+        self.visit_button = QPushButton("发行页面")
         self.visit_button.setFont(font_manager.get_source_han_font(9))
         self.visit_button.setFixedWidth(100)
         self.visit_button.setFixedHeight(28)
