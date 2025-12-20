@@ -16,7 +16,7 @@ from debug_tools import PasswordDialog, DebugWindow
 from utils import get_resource_path, find_resource_file, load_icon_universal, load_logo, get_current_version, get_current_app_info
 from styles import WindowIconMixin
 # 导入版本管理器
-from main import version_manager
+from version import version_manager
 
 # =============================================================================
 # 用户协议窗口
@@ -384,9 +384,11 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
   - MIT License：beautifulsoup4, PyYAML, colorlog, pytest, pytest-qt, pytest-cov, flake8, black, isort, mypy, setuptools, build, wheel, logging_tree
   - 其他许可证：numpy, json5, cryptography, pycryptodome, pywin32
 
-· 本程序使用auto-py-to-exe工具打包发行。
+· 本程序使用auto-py-to-exe工具打包为独立的可执行文件。
   项目地址：https://github.com/brentvollebregt/auto-py-to-exe
 
+· 本程序使用Inno Setup工具将独立的可执行文件打包为安装程序。
+  官网：https://jrsoftware.org/isinfo.php
 
 【特别鸣谢】
 · 感谢BetterGI团队开发的原神辅助工具为玩家提供了便利。感谢BetterGI团队开发了这款优秀的原神辅助工具，为玩家提供了便利
