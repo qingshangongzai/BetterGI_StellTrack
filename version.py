@@ -18,10 +18,10 @@ class VersionManager:
         
         设置应用程序的版本号组件和元数据信息
         """
-        # 版本号组件 - 统一修改点
+        # 版本号统一修改点
         self.major = 3
-        self.minor = 9
-        self.patch = 1
+        self.minor = 10
+        self.patch = 0
         self.build = 0
         
         # 核心版本信息 - 动态生成
