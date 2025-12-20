@@ -15,7 +15,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
                         QKeyEvent, QStandardItemModel, QStandardItem, QDesktopServices, QFontDatabase)
 
 # 导入版本管理器
-from main import version_manager
+from version import version_manager
 
 # 导入共享模块
 from styles import DialogFactory, UnifiedStyleHelper, FadeInWindowMixin

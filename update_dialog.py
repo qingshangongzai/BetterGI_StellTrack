@@ -169,19 +169,21 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         button_layout.setSpacing(8)
         button_layout.addStretch()  # 左侧弹簧使按钮居中
         
-        # 访问发行页面按钮
-        self.visit_button = QPushButton("访问发行页面")
+        # 访问页面按钮
+        self.visit_button = QPushButton("发行页面")
         self.visit_button.setFont(font_manager.get_source_han_font(9))
-        self.visit_button.setFixedSize(100, 28)
+        self.visit_button.setFixedWidth(100)
+        self.visit_button.setFixedHeight(28)
         self.visit_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         self.visit_button.clicked.connect(self.open_release_page)
-        self.visit_button.setEnabled(True)  # 默认启用，允许用户随时访问
+        self.visit_button.setEnabled(True)  # 默认启用,允许用户随时访问
         button_layout.addWidget(self.visit_button)
         
         # 重新检查按钮
         self.recheck_button = QPushButton("重新检查")
         self.recheck_button.setFont(font_manager.get_source_han_font(9))
-        self.recheck_button.setFixedSize(80, 28)
+        self.recheck_button.setFixedWidth(100)
+        self.recheck_button.setFixedHeight(28)
         self.recheck_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         self.recheck_button.clicked.connect(self.start_check)
         self.recheck_button.setEnabled(False)
