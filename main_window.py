@@ -566,11 +566,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
         self.cancel_btn.setMinimumHeight(30)
 
-        self.cancel_btn.setFixedWidth(70)
-
         self.ok_btn.setMinimumHeight(30)
-
-        self.ok_btn.setFixedWidth(80)
 
         
 
@@ -701,11 +697,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
             no_btn.setFixedHeight(30)
 
-            no_btn.setFixedWidth(70)
-
             yes_btn.setFixedHeight(30)
-
-            yes_btn.setFixedWidth(80)
 
             
 
