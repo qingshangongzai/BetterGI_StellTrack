@@ -1732,6 +1732,7 @@ class DialogFactory:
         
         button_layout.addWidget(ok_btn)
         button_layout.addWidget(cancel_btn)
+        button_layout.addStretch()
         
         return button_layout
     
@@ -1754,6 +1755,7 @@ class DialogFactory:
         close_btn.clicked.connect(on_close)
         
         button_layout.addWidget(close_btn)
+        button_layout.addStretch()
         
         return button_layout
 
