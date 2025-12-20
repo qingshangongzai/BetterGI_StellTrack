@@ -427,9 +427,11 @@ class UnifiedStyleHelper:
                     background-color: #f5f5f5;
                     color: #999999;
                     border: 1px solid {self.COLORS['border']};
-                    border-radius: 6px;
-                    padding: 8px 12px;
+                    border-radius: 8px;
+                    padding: 6px 12px;
                     font-size: 11px;
+                    min-height: 20px;
+                    max-height: 20px;
                     {self.SHADOWS['small']}
 
                 }}
@@ -441,10 +443,12 @@ class UnifiedStyleHelper:
                     background-color: {self.COLORS['primary']};
                     color: white;
                     border: none;
-                    border-radius: 6px;
-                    padding: 8px 12px;
+                    border-radius: 8px;
+                    padding: 6px 12px;
                     font-weight: bold;
                     font-size: 11px;
+                    min-height: 20px;
+                    max-height: 20px;
                     {self.SHADOWS['small']}
                 }}
                 QPushButton:hover {{
@@ -460,9 +464,11 @@ class UnifiedStyleHelper:
                     background-color: {self.COLORS['secondary']};
                     color: {self.COLORS['text']};
                     border: 1px solid {self.COLORS['border']};
-                    border-radius: 6px;
-                    padding: 8px 12px;
+                    border-radius: 8px;
+                    padding: 6px 12px;
                     font-size: 11px;
+                    min-height: 20px;
+                    max-height: 20px;
                     {self.SHADOWS['small']}
                 }}
                 QPushButton:hover {{
@@ -479,7 +485,7 @@ class UnifiedStyleHelper:
         return f"""
             QLineEdit {{ 
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: white;
                 font-size: 11px;
@@ -503,7 +509,7 @@ class UnifiedStyleHelper:
         return f"""
             QComboBox {{ 
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: white;
                 font-size: 11px;
@@ -523,7 +529,7 @@ class UnifiedStyleHelper:
             }}
             QComboBox QAbstractItemView {{ 
                 border: 1px solid {self.COLORS['border']}; 
-                border-radius: 6px; 
+                border-radius: 8px; 
                 background-color: white; 
                 selection-background-color: {self.COLORS['primary']}; 
                 selection-color: white; 
@@ -545,7 +551,7 @@ class UnifiedStyleHelper:
         return f"""
             QTableWidget {{ 
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 background-color: white;
                 gridline-color: #f0f0f0;
                 font-size: 11px;
@@ -674,7 +680,7 @@ class UnifiedStyleHelper:
                 font-size: 12px;
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px;
             }}
         """
@@ -688,7 +694,7 @@ class UnifiedStyleHelper:
                 background-color: #1e1e1e;
                 color: #d4d4d4;
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px;
             }}
         """
@@ -699,7 +705,7 @@ class UnifiedStyleHelper:
             QTextBrowser {{ 
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
-                border-radius: 4px;
+                border-radius: 8px;
                 padding: 6px;
                 font-family: SourceHanSerifCN;
                 font-size: 10px;
@@ -721,7 +727,7 @@ class UnifiedStyleHelper:
             QPlainTextEdit {{ 
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
-                border-radius: 4px;
+                border-radius: 8px;
                 padding: 10px;
                 font-family: SourceHanSerifCN;
                 font-size: 12px;
@@ -748,7 +754,7 @@ class UnifiedStyleHelper:
             QTextBrowser {{
                 background-color: #f8f9fa;
                 border: 1px solid {self.COLORS['border_light']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 10px;
                 font-size: 10px;
                 line-height: 1.3;
@@ -770,7 +776,7 @@ class UnifiedStyleHelper:
         return f"""
             QSpinBox, QDoubleSpinBox {{
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 4px 6px 4px;
                 background-color: white;
                 font-size: 11px;
@@ -795,7 +801,7 @@ class UnifiedStyleHelper:
                 width: 24px;
                 height: 15px;
                 border: none;
-                border-top-right-radius: 5px;
+                border-top-right-radius: 7px;
                 background-color: transparent;
                 margin: 1px 1px 0px 0px;
                 font-size: 14px;
@@ -815,7 +821,7 @@ class UnifiedStyleHelper:
                 width: 24px;
                 height: 15px;
                 border: none;
-                border-bottom-right-radius: 5px;
+                border-bottom-right-radius: 7px;
                 background-color: transparent;
                 margin: 0px 1px 1px 0px;
                 font-size: 14px;
@@ -853,7 +859,7 @@ class UnifiedStyleHelper:
             QTextEdit {{
                 background-color: #ffffff;
                 border: 1px solid {self.COLORS['border_light']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 8px;
                 font-size: 10px;
                 line-height: 1.3;
@@ -877,7 +883,7 @@ class UnifiedStyleHelper:
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 font-size: 11px;
                 text-align: center;
@@ -921,7 +927,7 @@ class UnifiedStyleHelper:
         return """
             QLineEdit {{ 
                 border: 1px solid %s;
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: white;
                 font-size: 11px;
@@ -944,7 +950,7 @@ class UnifiedStyleHelper:
         return """
             QComboBox {{ 
                 border: 1px solid %s;
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: white;
                 font-size: 11px;
@@ -964,7 +970,7 @@ class UnifiedStyleHelper:
             }}
             QComboBox QAbstractItemView {{ 
                 border: 1px solid %s; 
-                border-radius: 6px; 
+                border-radius: 8px; 
                 background-color: white; 
                 selection-background-color: %s; 
                 selection-color: white; 
@@ -1115,7 +1121,7 @@ class UnifiedStyleHelper:
         return f"""
             QLineEdit {{ 
                 border: 1px solid {self.COLORS['border']}; 
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: {self.COLORS['bg']}; /* 使用纯白色背景 */
                 font-size: 11px;
@@ -1144,7 +1150,7 @@ class UnifiedStyleHelper:
         return f"""
             QSpinBox {{
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px 8px;
                 background-color: white;
                 font-family: "SourceHanSerifCN";
@@ -1170,7 +1176,7 @@ class UnifiedStyleHelper:
                 width: 24px;
                 height: 15px;
                 border: none;
-                border-top-right-radius: 5px;
+                border-top-right-radius: 7px;
                 background-color: transparent;
                 margin: 1px 1px 0px 0px;
                 font-size: 14px;
@@ -1190,7 +1196,7 @@ class UnifiedStyleHelper:
                 width: 24px;
                 height: 15px;
                 border: none;
-                border-bottom-right-radius: 5px;
+                border-bottom-right-radius: 7px;
                 background-color: transparent;
                 margin: 0px 1px 1px 0px;
                 font-size: 14px;
@@ -1300,12 +1306,12 @@ class UnifiedStyleHelper:
             QMenuBar {{
                 background-color: {self.COLORS['bg']};
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 4px;
             }}
             QMenuBar::item {{
                 padding: 4px 8px;
-                border-radius: 6px;
+                border-radius: 8px;
             }}
             QMenuBar::item:selected {{
                 background-color: {self.COLORS['primary_hover']};
@@ -1314,13 +1320,13 @@ class UnifiedStyleHelper:
             QMenu {{ 
                 background-color: {self.COLORS['bg']};
                 border: 1px solid {self.COLORS['border']};
-                border-radius: 6px;
+                border-radius: 8px;
                 padding: 6px;
                 {self.SHADOWS['small']}
             }}
             QMenu::item {{
                 padding: 6px 16px;
-                border-radius: 4px;
+                border-radius: 8px;
                 margin: 2px 2px;
             }}
             QMenu::item:selected {{
@@ -1388,7 +1394,7 @@ class ModernMenu(QMenu):
             }}
             QMenu::item {{
                 padding: 6px 16px;
-                border-radius: 4px;
+                border-radius: 8px;
                 margin: 2px 2px;
             }}
             QMenu::item:selected {{
@@ -1478,7 +1484,7 @@ class ModernMenu(QMenu):
         
         # 绘制圆角矩形
         rect = QRectF(0, 0, self.width(), self.height())
-        painter.drawRoundedRect(rect, 6.0, 6.0)
+        painter.drawRoundedRect(rect, 8.0, 8.0)
         painter.end()
         
         # 设置遮罩
@@ -1985,7 +1991,7 @@ class AnimatedButton(QPushButton):
                         background-color: {COLORS['primary_pressed']};
                         color: white;
                         border: none;
-                        border-radius: 6px;
+                        border-radius: 8px;
                         padding: 8px 12px;
                         font-weight: bold;
                         font-size: 11px;
@@ -2002,7 +2008,7 @@ class AnimatedButton(QPushButton):
                         background-color: {COLORS['secondary_pressed']};
                         color: {COLORS['text']};
                         border: 1px solid {COLORS['border']};
-                        border-radius: 6px;
+                        border-radius: 8px;
                         padding: 8px 12px;
                         font-size: 11px;
                         {SHADOWS['small']}
