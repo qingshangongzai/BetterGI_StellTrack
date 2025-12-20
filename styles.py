@@ -1618,10 +1618,12 @@ class ModernSpinBox(QSpinBox):
 
 class ModernDoubleSpinBox(QDoubleSpinBox):
     """现代化的浮点数输入框，带上下按钮，内容居中显示"""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, width=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.PlusMinus)
+        if width:
+            self.setFixedWidth(width)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
 
 
