@@ -1733,10 +1733,6 @@ class DialogFactory:
         ok_btn = button_class(ok_text, parent=parent, accent=True)
         cancel_btn = button_class(cancel_text, parent=parent)
         
-        # 设置按钮统一宽度为100px
-        ok_btn.setFixedWidth(100)
-        cancel_btn.setFixedWidth(100)
-        
         ok_btn.clicked.connect(on_ok)
         cancel_btn.clicked.connect(on_cancel)
         
@@ -1762,7 +1758,6 @@ class DialogFactory:
         button_layout.addStretch()
         
         close_btn = ModernButton(text, parent=parent)
-        close_btn.setFixedWidth(100)
         close_btn.clicked.connect(on_close)
         
         button_layout.addWidget(close_btn)
@@ -1814,7 +1809,6 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
-        ok_button.setFixedWidth(100)
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1858,7 +1852,6 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
-        ok_button.setFixedWidth(100)
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1901,7 +1894,6 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
-        ok_button.setFixedWidth(100)
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1945,12 +1937,10 @@ class ChineseMessageBox:
         
         # 创建按钮
         yes_button = QPushButton("是")
-        yes_button.setFixedWidth(100)
         yes_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         yes_button.clicked.connect(dialog.accept)
         
         no_button = QPushButton("否")
-        no_button.setFixedWidth(100)
         no_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         no_button.clicked.connect(dialog.reject)
         
@@ -1995,33 +1985,37 @@ class AnimatedButton(QPushButton):
         if not self.disabled:
             # 根据按钮类型应用不同的按下效果
             if self.accent:
-                # 主要按钮使用更深的颜色
+                # 主要按钮使用更深的颜色，并减少padding实现缩小效果
                 pressed_style = f"""
                     QPushButton {{
                         background-color: {COLORS['primary_pressed']};
                         color: white;
                         border: none;
                         border-radius: 8px;
-                        padding: 8px 12px;
+                        padding: 5px 10px;
                         font-weight: bold;
                         font-size: 11px;
                         {SHADOWS['small']}
+                        min-height: 18px;
+                        max-height: 18px;
                     }}
                     QPushButton:hover {{
                         background-color: {COLORS['primary_pressed']};
                     }}
                 """
             else:
-                # 普通按钮使用 slightly darker 颜色
+                # 普通按钮使用 slightly darker 颜色，并减少padding实现缩小效果
                 pressed_style = f"""
                     QPushButton {{
                         background-color: {COLORS['secondary_pressed']};
                         color: {COLORS['text']};
                         border: 1px solid {COLORS['border']};
                         border-radius: 8px;
-                        padding: 8px 12px;
+                        padding: 5px 10px;
                         font-size: 11px;
                         {SHADOWS['small']}
+                        min-height: 18px;
+                        max-height: 18px;
                     }}
                     QPushButton:hover {{
                         background-color: {COLORS['secondary_pressed']};
