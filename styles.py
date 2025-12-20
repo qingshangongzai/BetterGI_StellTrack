@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSp
 from utils import get_base_path, find_resource_file, get_resource_path, load_icon_universal, create_fallback_icon, fix_windows_taskbar_icon_for_window
 
 # =============================================================================
-# 字体管理器 - 修改为全局字体管理器
+# 全局字体管理器
 # =============================================================================
 
 class GlobalFontManager:
@@ -562,7 +562,7 @@ class UnifiedStyleHelper:
                 color: white;
             }}
             QTableWidget::item:hover {{ 
-                background-color: #f0f8ff;
+                background-color: #CAE9FF;
             }}
             QHeaderView::section {{ 
                 background-color: #ffffff;
