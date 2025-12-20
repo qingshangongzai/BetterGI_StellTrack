@@ -103,7 +103,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(492, 400)  # 调整窗口大小，宽度再缩小3px，高度保持不变
+        self.setFixedSize(492, 400)
 
         
 
@@ -1076,7 +1076,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             self.setWindowTitle(f"{app_info['name']} v{version}")
 
-            # 缩小主窗口大小
+            # 设置主窗口大小
 
             self.setMinimumSize(1100, 750)
 
