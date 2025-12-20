@@ -1733,6 +1733,10 @@ class DialogFactory:
         ok_btn = button_class(ok_text, parent=parent, accent=True)
         cancel_btn = button_class(cancel_text, parent=parent)
         
+        # 设置按钮统一宽度为100px
+        ok_btn.setFixedWidth(100)
+        cancel_btn.setFixedWidth(100)
+        
         ok_btn.clicked.connect(on_ok)
         cancel_btn.clicked.connect(on_cancel)
         
@@ -1758,6 +1762,10 @@ class DialogFactory:
         button_layout.addStretch()
         
         close_btn = ModernButton(text, parent=parent)
+        
+        # 设置按钮统一宽度为100px
+        close_btn.setFixedWidth(100)
+        
         close_btn.clicked.connect(on_close)
         
         button_layout.addWidget(close_btn)
@@ -1809,6 +1817,7 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
+        ok_button.setFixedWidth(100)  # 设置按钮统一宽度为100px
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1852,6 +1861,7 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
+        ok_button.setFixedWidth(100)  # 设置按钮统一宽度为100px
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1894,6 +1904,7 @@ class ChineseMessageBox:
         
         # 创建按钮
         ok_button = QPushButton("确定")
+        ok_button.setFixedWidth(100)  # 设置按钮统一宽度为100px
         ok_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         ok_button.clicked.connect(dialog.accept)
         
@@ -1937,10 +1948,12 @@ class ChineseMessageBox:
         
         # 创建按钮
         yes_button = QPushButton("是")
+        yes_button.setFixedWidth(100)  # 设置按钮统一宽度为100px
         yes_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         yes_button.clicked.connect(dialog.accept)
         
         no_button = QPushButton("否")
+        no_button.setFixedWidth(100)  # 设置按钮统一宽度为100px
         no_button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         no_button.clicked.connect(dialog.reject)
         
