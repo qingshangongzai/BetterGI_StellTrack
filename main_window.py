@@ -103,7 +103,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(485, 400)  # 调整窗口大小，宽度再缩小50px，高度保持不变
+        self.setFixedSize(492, 400)
 
         
 
@@ -151,13 +151,12 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 1. 增减偏移时间
         offset_label = QLabel("增减绝对时间:")
         offset_label.setFixedWidth(120)
-        self.offset_input = ModernDoubleSpinBox()
+        self.offset_input = ModernDoubleSpinBox(width=input_width)
         self.offset_input.setMinimum(-999999)
         self.offset_input.setMaximum(999999)
         self.offset_input.setValue(0)
         self.offset_input.setDecimals(0)
-        self.offset_input.setSingleStep(100) 
-        self.offset_input.setFixedWidth(input_width)
+        self.offset_input.setSingleStep(100)
 
         offset_label_unit = QLabel("ms")
         offset_label_unit.setFixedWidth(20)
@@ -170,13 +169,12 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 2. 统一相对时间
         rel_time_label = QLabel("统一相对时间:")
         rel_time_label.setFixedWidth(120)
-        self.rel_time_input = ModernDoubleSpinBox()
+        self.rel_time_input = ModernDoubleSpinBox(width=input_width)
         self.rel_time_input.setMinimum(0)
         self.rel_time_input.setMaximum(999999)
         self.rel_time_input.setValue(0)
         self.rel_time_input.setDecimals(0)
-        self.rel_time_input.setSingleStep(100) 
-        self.rel_time_input.setFixedWidth(input_width)
+        self.rel_time_input.setSingleStep(100)
 
         rel_time_label_unit = QLabel("ms")
         rel_time_label_unit.setFixedWidth(20)
@@ -208,29 +206,43 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 基本事件类型（移除了"按键按下"和"按键释放"）
         base_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
+        # 创建事件类型替换标签
+        type_replace_label = QLabel("事件类型替换:")
+        type_replace_label.setFixedWidth(120)
+        
+        # 创建事件类型替换的水平布局,不使用GridLayout的列,而是独立的水平布局
+        type_replace_layout = QHBoxLayout()
+        type_replace_layout.setSpacing(5)
+        type_replace_layout.setContentsMargins(0, 0, 0, 0)
+                
         # 确保old_type_combo宽度一致
         self.old_type_combo = ModernComboBox(width=input_width)
         self.old_type_combo.addItem("不替换类型")
         self.old_type_combo.addItems(base_event_types)
-        # 添加具体按键事件到old_type_combo，只显示事件名称
+        # 添加具体按键事件到old_type_combo,只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.old_type_combo.addItem(event_name)
-
+        
         type_arrow_label = QLabel("→")
-        type_arrow_label.setFixedWidth(20)
+        type_arrow_label.setFixedWidth(30)
         type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
+        
         # 确保new_type_combo宽度一致
         self.new_type_combo = ModernComboBox(width=input_width)
         self.new_type_combo.addItems(base_event_types)
-        # 添加具体按键事件到new_type_combo，只显示事件名称
+        # 添加具体按键事件到new_type_combo,只显示事件名称
         for event_name in sorted(self.key_events.keys()):
             self.new_type_combo.addItem(event_name)
-
-        operation_layout.addWidget(QLabel("事件类型替换:"), 2, 0)
-        operation_layout.addWidget(self.old_type_combo, 2, 1)
-        operation_layout.addWidget(type_arrow_label, 2, 2)
-        operation_layout.addWidget(self.new_type_combo, 2, 3)
+        
+        # 将控件添加到水平布局
+        type_replace_layout.addWidget(self.old_type_combo)
+        type_replace_layout.addWidget(type_arrow_label)
+        type_replace_layout.addWidget(self.new_type_combo)
+        type_replace_layout.addStretch()
+        
+        # 将标签和布局添加到GridLayout
+        operation_layout.addWidget(type_replace_label, 2, 0)
+        operation_layout.addLayout(type_replace_layout, 2, 1, 1, 3)
         
         # 4. 统一坐标（带开关）
         # 清除之前的所有组件，重新设计布局
@@ -250,7 +262,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         unified_coords_layout.addWidget(unified_label)
         
         # 3. 空白间距
-        unified_coords_layout.addSpacing(20)
+        unified_coords_layout.addSpacing(17)
         
         # 4. x坐标标签
         x_label = QLabel("X坐标:")
@@ -566,11 +578,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
         self.cancel_btn.setMinimumHeight(30)
 
-        self.cancel_btn.setFixedWidth(70)
-
         self.ok_btn.setMinimumHeight(30)
-
-        self.ok_btn.setFixedWidth(80)
 
         
 
@@ -701,11 +709,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
             no_btn.setFixedHeight(30)
 
-            no_btn.setFixedWidth(70)
-
             yes_btn.setFixedHeight(30)
-
-            yes_btn.setFixedWidth(80)
 
             
 
@@ -1072,7 +1076,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             self.setWindowTitle(f"{app_info['name']} v{version}")
 
-            # 缩小主窗口大小
+            # 设置主窗口大小
 
             self.setMinimumSize(1100, 750)
 

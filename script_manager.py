@@ -487,7 +487,7 @@ class ScriptManager:
             reply = ChineseMessageBox.show_question(
                 self.main_window,
                 "确认生成",
-                "生成的事件数量过多，\n可能会对程序的运行造成卡顿，\n\n请确认生成脚本"
+                "生成的事件数量过多，\n可能会对程序的运行造成卡顿\n\n请确认生成脚本"
             )
             
             if not reply:
