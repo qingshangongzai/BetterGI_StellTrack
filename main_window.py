@@ -799,8 +799,6 @@ class ModernTableWidget(QTableWidget):
 
         self.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
 
-        self.horizontalHeader().setStretchLastSection(True)
-
         # 调整表头行高
         self.horizontalHeader().setDefaultSectionSize(24)
 
@@ -815,6 +813,7 @@ class ModernTableWidget(QTableWidget):
         self.verticalHeader().setVisible(False)
 
         
+
 
 
         # 设置右键菜单策略

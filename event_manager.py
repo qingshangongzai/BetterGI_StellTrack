@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QComboBox, QPushButton, QTableWidgetItem,
                             QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
                             QListView, QFileDialog, QTextBrowser, QSpinBox, QMenu,
-                            QDialog)
+                            QDialog, QHeaderView)
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QThread
 from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
@@ -369,7 +369,18 @@ class EventManager:
         headers = ["序号", "事件名称", "事件类型", "键码", "X坐标", "Y坐标", "相对偏移时间", "绝对偏移时间"]
         self.events_table.setHorizontalHeaderLabels(headers)
         
-        # 优化列宽分配
+        # 设置列宽和拉伸因子，保持原有比例关系
+        # 序号: 50px → 拉伸因子 5
+        # 事件名称: 100px → 拉伸因子 10
+        # 事件类型: 100px → 拉伸因子 10
+        # 键码: 70px → 拉伸因子 7
+        # X坐标: 70px → 拉伸因子 7
+        # Y坐标: 70px → 拉伸因子 7
+        # 相对偏移时间: 90px → 拉伸因子 9
+        # 绝对偏移时间: 90px → 拉伸因子 9
+        header = self.events_table.horizontalHeader()
+        
+        # 设置初始列宽
         self.events_table.setColumnWidth(0, 50)   # 序号
         self.events_table.setColumnWidth(1, 100)  # 事件名称
         self.events_table.setColumnWidth(2, 100)  # 事件类型
@@ -378,6 +389,16 @@ class EventManager:
         self.events_table.setColumnWidth(5, 70)   # Y坐标
         self.events_table.setColumnWidth(6, 90)   # 相对偏移
         self.events_table.setColumnWidth(7, 90)   # 绝对偏移
+        
+        # 设置拉伸因子，确保各列按比例自适应窗口大小
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # 序号列根据内容调整
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 事件名称列自动拉伸
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 事件类型列自动拉伸
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # 键码列根据内容调整
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # X坐标列根据内容调整
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Y坐标列根据内容调整
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)  # 相对偏移列自动拉伸
+        header.setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)  # 绝对偏移列自动拉伸
         
         # 连接右键菜单信号
         self.events_table.customContextMenuRequested.connect(self.on_show_event_context_menu)
