@@ -17,7 +17,7 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin
+from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin, ModernGroupBox
 from styles import ChineseMessageBox
 # 导入资源管理器（已从resource_manager合并到styles）
 from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info, get_user_data_dir
@@ -659,7 +659,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建应用信息分组框
-            info_group = QGroupBox("应用信息")
+            info_group = ModernGroupBox("📋 应用信息")
             # 使用网格布局排列信息项
             info_layout = QGridLayout(info_group)
             info_layout.setSpacing(8)
@@ -722,7 +722,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建日志文件信息分组框
-            info_group = QGroupBox("日志文件信息")
+            info_group = ModernGroupBox("📁 日志文件信息")
             # 使用网格布局排列信息项
             info_layout = QGridLayout(info_group)
             info_layout.setSpacing(8)
@@ -783,7 +783,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建日志显示分组框
-            log_group = QGroupBox("日志内容")
+            log_group = ModernGroupBox("📝 日志内容")
             # 使用垂直布局排列日志显示区域
             log_layout = QVBoxLayout(log_group)
             log_layout.setSpacing(8)
@@ -823,7 +823,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建操作按钮分组框
-            button_group = QGroupBox("操作")
+            button_group = ModernGroupBox("⚙️ 操作")
             # 使用垂直布局作为外层容器
             button_layout = QVBoxLayout(button_group)
             button_layout.setContentsMargins(12, 15, 12, 12)
@@ -878,7 +878,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
     
     def create_test_functions(self, parent_layout):
         """创建测试功能区域"""
-        test_group = QGroupBox("测试功能")
+        test_group = ModernGroupBox("🧪 测试功能")
         test_layout = QVBoxLayout(test_group)
         test_layout.setSpacing(8)
         test_layout.setContentsMargins(12, 15, 12, 12)

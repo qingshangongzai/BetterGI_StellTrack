@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin, AnimatedDialog
+from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin, AnimatedDialog, ModernGroupBox
 from styles import ChineseMessageBox, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING
 # 导入资源管理器（从utils模块）
@@ -218,7 +218,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         layout.setContentsMargins(5, 5, 5, 5)
         
         # 事件基本信息组
-        basic_info_group = QGroupBox("事件基本信息")
+        basic_info_group = ModernGroupBox("📋 事件基本信息")
         basic_layout = QGridLayout(basic_info_group)
         basic_layout.setVerticalSpacing(8)
         basic_layout.setHorizontalSpacing(15)
@@ -238,7 +238,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         layout.addWidget(basic_info_group)
         
         # 键码设置组
-        keycode_group = QGroupBox("键码设置")
+        keycode_group = ModernGroupBox("⌨️ 键码设置")
         keycode_layout = QVBoxLayout(keycode_group)
         keycode_layout.setSpacing(8)
         
@@ -314,7 +314,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         layout.addWidget(keycode_group)
         
         # 坐标设置组
-        coord_group = QGroupBox("坐标设置")
+        coord_group = ModernGroupBox("📍 坐标设置")
         coord_layout = QVBoxLayout(coord_group)
         coord_layout.setSpacing(8)
         
@@ -353,7 +353,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         layout.addWidget(coord_group)
         
         # 时间设置组
-        time_group = QGroupBox("时间设置")
+        time_group = ModernGroupBox("⏱️ 时间设置")
         time_layout = QGridLayout(time_group)
         time_layout.setVerticalSpacing(8)
         time_layout.setHorizontalSpacing(15)
@@ -445,7 +445,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         # 插入位置信息 - 新增
         if not self.is_edit_mode:
-            insert_info_group = QGroupBox("插入位置信息")
+            insert_info_group = ModernGroupBox("📌 插入位置信息")
             insert_info_layout = QVBoxLayout(insert_info_group)
             insert_info_layout.setSpacing(8)
             
