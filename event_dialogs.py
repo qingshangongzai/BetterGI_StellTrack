@@ -3,7 +3,7 @@ import os
 from PyQt6.QtWidgets import (QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
                             QLabel, QLineEdit, QComboBox, QPushButton, QTableWidgetItem,
                             QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
-                            QListView, QFileDialog, QTextBrowser, QSpinBox)
+                            QListView, QFileDialog, QTextBrowser, QSpinBox, QSizePolicy)
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
 
@@ -182,8 +182,9 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.key_capture_active = False
         
         try:
-            # 设置最小尺寸
-            self.setMinimumSize(500, 800)
+            # 设置最小尺寸和大小策略
+            self.setMinimumSize(450, 700)
+            self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             
             # 应用对话框背景样式
             self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
@@ -227,12 +228,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         basic_layout.addWidget(QLabel("事件名称:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
         self.name_edit = CenteredLineEdit()
         self.name_edit.setFixedHeight(20)
+        self.name_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         basic_layout.addWidget(self.name_edit, 0, 1)
         
         # 事件类型
         basic_layout.addWidget(QLabel("事件类型:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
         self.type_combo = CenteredComboBox()
         self.type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
+        self.type_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         basic_layout.addWidget(self.type_combo, 1, 1)
         
         layout.addWidget(basic_info_group)
@@ -247,6 +250,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         keycode_row.addWidget(QLabel("键码:"))
         self.keycode_edit = CenteredLineEdit()
         self.keycode_edit.setMaximumWidth(100)
+        self.keycode_edit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         keycode_row.addWidget(self.keycode_edit)
         
         # 按键捕获按钮 - 合并为一个按钮
@@ -328,11 +332,12 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         coord_row.addWidget(x_label)
         self.x_edit = CenteredLineEdit()
         self.x_edit.setText("0")
-        self.x_edit.setMinimumWidth(150)
+        self.x_edit.setMinimumWidth(120)
+        self.x_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         coord_row.addWidget(self.x_edit)
         
         # 添加间距
-        coord_row.addSpacing(30)
+        coord_row.addSpacing(20)
         
         # Y坐标
         y_label = QLabel("Y坐标:")
@@ -340,7 +345,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         coord_row.addWidget(y_label)
         self.y_edit = CenteredLineEdit()
         self.y_edit.setText("0")
-        self.y_edit.setMinimumWidth(150)
+        self.y_edit.setMinimumWidth(120)
+        self.y_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         coord_row.addWidget(self.y_edit)
         
         coord_row.addStretch()
@@ -361,24 +367,30 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 相对时间偏移
         time_layout.addWidget(QLabel("相对时间偏移:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
         time_input_layout = QHBoxLayout()
+        time_input_layout.setSpacing(5)
         
         # 使用TimeOffsetSpinBox控件，支持上下调节按钮，步长为100ms
         self.time_edit = TimeOffsetSpinBox()
         self.time_edit.setMaximumWidth(100)
+        self.time_edit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         time_input_layout.addWidget(self.time_edit)
         
         self.time_unit_combo = CenteredComboBox()
         self.time_unit_combo.addItems(["ms", "s", "min"])
         self.time_unit_combo.setMinimumWidth(80)
+        self.time_unit_combo.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         time_input_layout.addWidget(self.time_unit_combo)
         
         # 添加伸缩空间，将绝对偏移时间组件推到右侧
         time_input_layout.addStretch()
         
         # 绝对偏移时间显示
-        time_input_layout.addWidget(QLabel("绝对偏移时间:"))
+        abs_time_label = QLabel("绝对偏移时间:")
+        abs_time_label.setMinimumWidth(100)
+        time_input_layout.addWidget(abs_time_label)
         self.absolute_time_edit = CenteredLineEdit()
         self.absolute_time_edit.setMaximumWidth(120)
+        self.absolute_time_edit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.absolute_time_edit.setReadOnly(True)
         self.absolute_time_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_absolute_time_edit_style())
         time_input_layout.addWidget(self.absolute_time_edit)
@@ -434,6 +446,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         time_layout.addWidget(QLabel("时间修改选项:"), 2, 0, Qt.AlignmentFlag.AlignLeft)
         self.time_option_combo = CenteredComboBox()
         self.time_option_combo.addItems(["仅修改当前事件时间", "修改后重新计算后续事件时间"])
+        self.time_option_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         time_layout.addWidget(self.time_option_combo, 2, 1)
         
         # 绝对偏移时间信息

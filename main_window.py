@@ -2200,13 +2200,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
 
 
-        # 设置分割比例
-
-        splitter.setSizes([250, 1050])
-
-        
-
-
+        # 设置分割比例，使用相对比例而非固定数值
+        # 总宽度会根据窗口大小自动调整
         parent_layout.addWidget(splitter, 1)
 
 
@@ -2218,7 +2213,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         container = QWidget()
 
-        container.setMaximumWidth(400)
+        container.setMinimumWidth(200)
+        container.setMaximumWidth(450)
+        container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
