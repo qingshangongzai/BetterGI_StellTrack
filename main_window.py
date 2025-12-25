@@ -2208,50 +2208,38 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
     def create_left_panel(self):
-
         """创建左侧设置面板"""
+        from PyQt6.QtWidgets import QScrollArea
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
 
         container = QWidget()
-
-        container.setMinimumWidth(200)
+        container.setMinimumWidth(250)  # 增加最小宽度，确保控件正常显示
         container.setMaximumWidth(450)
         container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
         layout = QVBoxLayout(container)
-
         layout.setSpacing(12)
-
         layout.setContentsMargins(8, 8, 8, 8)
 
-        
-
-
         # 创建设置面板实例，传递主窗口引用
-
         self.settings_panel = SettingsPanel(self)
-
         layout.addWidget(self.settings_panel)
 
-        
-
-
         # 创建操作面板实例，传递主窗口引用
-
         self.operations_panel = OperationsPanel(self)
-
         layout.addWidget(self.operations_panel)
-
-        
-
 
         layout.addStretch()
 
-        
-
-
-        return container
+        scroll_area.setWidget(container)
+        return scroll_area
 
 
 
