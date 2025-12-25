@@ -442,7 +442,7 @@ class SafeLogMonitorThread(QThread):
 # 密码验证对话框
 # =============================================================================
 
-class PasswordDialog(QDialog):
+class PasswordDialog(FadeInWindowMixin, StyledDialog):
     """安全调试工具的密码验证对话框
     
     该对话框用于保护调试工具的访问权限，只有输入正确密码的用户才能使用调试功能。
@@ -458,23 +458,24 @@ class PasswordDialog(QDialog):
         参数:
             parent: 父窗口组件
         """
-        super().__init__(parent)
+        # 使用基类初始化方法设置窗口属性
+        super().__init__(parent,
+                       title="调试工具 - 密码验证",
+                       size=(350, 150),
+                       window_flags=Qt.WindowType.Dialog)
+        
+        # 应用对话框背景样式
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
+        
         self.setup_ui()
     
     def setup_ui(self):
         """设置密码验证对话框的UI界面
         
-        配置对话框的标题、大小、窗口标志、布局和样式，确保密码输入体验良好。
+        配置对话框的布局和样式，确保密码输入体验良好。
         设置OK按钮为默认按钮，并将回车键连接到密码验证功能。
         """
         try:
-            self.setWindowTitle("调试工具 - 密码验证")
-            self.setFixedSize(350, 150)
-            
-            # 设置窗口标志，确保对话框样式一致
-            self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                               Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-            
             # 创建主布局
             layout = QVBoxLayout(self)
             layout.setSpacing(15)
@@ -571,11 +572,13 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 使用基类初始化方法设置窗口属性
             super().__init__(parent,
                            title=f"安全调试工具 - {app_info['name']} v{version}",
-                           window_flags=Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                                      Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+                           window_flags=Qt.WindowType.Dialog)
             
             # 设置最小尺寸
             self.setMinimumSize(900, 700)
+            
+            # 应用对话框背景样式
+            self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             # 初始化调试日志记录器
             self.debug_logger = SafeDebugLogger()

@@ -172,7 +172,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
-                       window_flags=Qt.WindowType.Dialog | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+                       window_flags=Qt.WindowType.Dialog)
         
         self.event_data = event_data
         self.is_edit_mode = is_edit_mode
@@ -185,7 +185,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             # 设置最小尺寸
             self.setMinimumSize(500, 800)
             
-            # 设置背景样式
+            # 应用对话框背景样式
             self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             self.setup_ui()
