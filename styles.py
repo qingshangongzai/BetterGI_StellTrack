@@ -706,8 +706,8 @@ class UnifiedStyleHelper:
             QTextEdit {{ 
                 font-family: "Consolas, SourceHanSerifCN";
                 font-size: 10px;
-                background-color: #1e1e1e;
-                color: #d4d4d4;
+                background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px;

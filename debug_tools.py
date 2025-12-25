@@ -625,6 +625,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 使用UnifiedStyleHelper统一设置字体
             UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 18, QFont.Weight.Bold)
             title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin: 5px;")
+            title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(title_label)
             
             # 创建各个功能区域
