@@ -1021,6 +1021,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.max_undo_steps = 50  # 最大撤销步骤数
         self._table_changing = False  # 防止表格变化时的递归调用
         self._batch_operation = False  # 批量操作标志
+        self.app_icon = None  # 预加载的应用图标
 
         
 
@@ -1161,8 +1162,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             
 
 
-            # 窗口显示后设置任务栏图标
-            QTimer.singleShot(100, self.fix_taskbar_icon)
+            # 立即设置任务栏图标，不使用延迟
+            self.fix_taskbar_icon()
             
             # 初始化统计信息和预计总时间
             self.stats_panel.update_stats()
@@ -2055,24 +2056,32 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
+    def set_app_icon(self, icon):
+        """设置应用图标
+        
+        Args:
+            icon: 预加载的应用图标
+        """
+        self.app_icon = icon
+        # 立即设置窗口图标，避免延迟
+        self.setWindowIcon(icon)
+        self.debug_logger.log_info("使用预加载图标设置窗口图标成功")
+    
     def set_window_icon(self):
-
         """设置窗口图标"""
-
         try:
-
-            icon = load_icon_universal()
-
+            # 优先使用预加载的图标，否则重新加载
+            if self.app_icon:
+                icon = self.app_icon
+                self.debug_logger.log_info("使用预加载图标设置窗口图标")
+            else:
+                icon = load_icon_universal()
+                self.debug_logger.log_info("重新加载图标设置窗口图标")
+            
             self.setWindowIcon(icon)
-
-            self.debug_logger.log_info("窗口图标设置成功")
-
         except Exception as e:
-
             error_msg = f"设置窗口图标失败: {e}"
-
             self.debug_logger.log_error(error_msg)
-
             print(error_msg)
 
 

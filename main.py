@@ -350,6 +350,7 @@ class BetterGIApplication:
         self.main_window = None     # 主窗口实例
         self.debug_logger = None    # 调试日志记录器
         self.monitor = None         # 应用程序监控器
+        self.app_icon = None        # 预加载的应用图标
         
         # 启动计时
         self.startup_time = time.time()
@@ -375,6 +376,14 @@ class BetterGIApplication:
             # 配置Qt应用程序基础设置
             if not self._initialize_qt_application():
                 return False
+            
+            # 提前预加载应用图标，优化窗口和任务栏图标显示速度
+            print("[DEBUG] 开始预加载应用图标")
+            from utils import load_icon_universal
+            self.app_icon = load_icon_universal()
+            # 同时将图标设置到应用程序实例上
+            self.app.setWindowIcon(self.app_icon)
+            print("[DEBUG] 应用图标预加载完成")
             
             # 设置应用程序样式
             self._setup_global_style()
@@ -642,6 +651,10 @@ class BetterGIApplication:
             from main_window import MainWindow
             self.main_window = MainWindow()
             
+            # 传递预加载的图标给主窗口，优化图标显示速度
+            if hasattr(self.main_window, 'set_app_icon'):
+                self.main_window.set_app_icon(self.app_icon)
+            
             # 连接主窗口信号到监控器
             if hasattr(self.main_window, 'status_bar'):
                 # 可以在这里添加状态栏更新等连接
@@ -676,9 +689,6 @@ class BetterGIApplication:
             print("[DEBUG] 显示主窗口")
             if self.main_window:
                 self.main_window.show()
-                
-                # 修复任务栏图标问题
-                QTimer.singleShot(100, self.main_window.fix_taskbar_icon)
                 
                 # 计算并显示启动耗时
                 startup_time = time.time() - self.startup_time
