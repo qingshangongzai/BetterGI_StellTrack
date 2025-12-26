@@ -1078,7 +1078,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 设置主窗口大小
 
-            self.setMinimumSize(1100, 750)
+            self.setMinimumSize(1100, 500)
 
             self.resize(1200,820)
 
