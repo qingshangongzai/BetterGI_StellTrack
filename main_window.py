@@ -134,7 +134,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
         # 操作选项组
 
-        operation_group = ModernGroupBox("操作选项")
+        operation_group = ModernGroupBox("⚙️ 操作选项")
 
         operation_layout = QGridLayout(operation_group)  # 使用GridLayout确保精确对齐
 
