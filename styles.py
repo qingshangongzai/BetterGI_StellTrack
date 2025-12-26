@@ -645,6 +645,21 @@ class UnifiedStyleHelper:
             QDialog {{
                 background-color: {self.COLORS['bg']};
             }}
+            QGroupBox {{ 
+                font-size: 12px;
+                font-weight: bold;
+                color: {self.COLORS['primary']};
+                border: 1px solid {self.COLORS['border_light']};
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+            }}
+            QGroupBox::title {{ 
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 8px 0 8px;
+                background-color: {self.COLORS['bg']};
+            }}
         """
     
     def get_logo_label_style(self):
@@ -691,8 +706,8 @@ class UnifiedStyleHelper:
             QTextEdit {{ 
                 font-family: "Consolas, SourceHanSerifCN";
                 font-size: 10px;
-                background-color: #1e1e1e;
-                color: #d4d4d4;
+                background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px;
