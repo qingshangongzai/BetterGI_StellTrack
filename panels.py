@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                             QLineEdit, QComboBox, QPushButton, QGroupBox, 
-                            QTextEdit, QGridLayout, QDialog)
+                            QTextEdit, QGridLayout, QDialog, QSizePolicy)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 
@@ -40,22 +40,27 @@ class SettingsPanel(QWidget):
     
     def setup_ui(self):
         """设置面板的UI布局和组件
-        
+
         创建并布局面板的主要组件，包括：
         - 循环设置区域
         - 屏幕设置区域
-        
+
         使用垂直布局组织所有设置组。
         """
+        from PyQt6.QtWidgets import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # 循环设置
         self.create_loop_settings(layout)
-        
+
         # 窗口设置
         self.create_screen_settings(layout)
+
+        # 设置尺寸策略
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
     
     def create_loop_settings(self, parent_layout):
         """创建循环设置组"""
@@ -70,20 +75,23 @@ class SettingsPanel(QWidget):
         # 循环次数 - 使用SpinBox
         loop_count_label = QLabel("循环次数")
         loop_count_label.setFixedWidth(70)
-        layout.addWidget(loop_count_label, 0, 0, Qt.AlignmentFlag.AlignLeft)
+        loop_count_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(loop_count_label, 0, 0)
         
         self.loop_count_input = ModernSpinBox()
         self.loop_count_input.setMinimum(1)  # 最小值为1
         self.loop_count_input.setMaximum(999999)  # 最大值
         self.loop_count_input.setValue(1)  # 默认值为1
         self.loop_count_input.setSingleStep(1)  # 步长为1
+        self.loop_count_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         layout.addWidget(self.loop_count_input, 0, 1)
         
         # 间隔时间 - 使用DoubleSpinBox
         interval_label = QLabel("间隔时间")
         interval_label.setFixedWidth(70)
-        layout.addWidget(interval_label, 1, 0, Qt.AlignmentFlag.AlignLeft)
+        interval_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(interval_label, 1, 0)
         
         time_layout = QHBoxLayout()
         time_layout.setContentsMargins(0, 0, 0, 0)
@@ -95,6 +103,7 @@ class SettingsPanel(QWidget):
         self.interval_input.setValue(3)  # 默认值为3
         self.interval_input.setDecimals(2)  # 支持2位小数
         self.interval_input.setSingleStep(1)  # 步长为1
+        self.interval_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         self.time_unit_combo = ModernComboBox()
         self.time_unit_combo.addItems(["ms", "s", "min"])
@@ -110,11 +119,13 @@ class SettingsPanel(QWidget):
         # 预计总时间
         total_time_label = QLabel("预计总时间")
         total_time_label.setFixedWidth(70)
-        layout.addWidget(total_time_label, 2, 0, Qt.AlignmentFlag.AlignLeft)
+        total_time_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(total_time_label, 2, 0)
         
         self.total_time_display = QLabel("0.0 s")
         self.total_time_display.setStyleSheet(UnifiedStyleHelper.get_instance().get_total_time_label_style())
-        layout.addWidget(self.total_time_display, 2, 1, Qt.AlignmentFlag.AlignLeft)
+        self.total_time_display.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(self.total_time_display, 2, 1)
         
         parent_layout.addWidget(group)
     
@@ -136,35 +147,42 @@ class SettingsPanel(QWidget):
         # 窗口宽度
         width_label = QLabel("窗口宽度")
         width_label.setFixedWidth(70)
-        layout.addWidget(width_label, 0, 0, Qt.AlignmentFlag.AlignLeft)
+        width_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(width_label, 0, 0)
         
         self.width_input = ModernLineEdit("1920")
+        self.width_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self.width_input, 0, 1)
         
         # 窗口高度
         height_label = QLabel("窗口高度")
         height_label.setFixedWidth(70)
-        layout.addWidget(height_label, 1, 0, Qt.AlignmentFlag.AlignLeft)
+        height_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(height_label, 1, 0)
         
         self.height_input = ModernLineEdit("1080")
+        self.height_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self.height_input, 1, 1)
         
         # 缩放比例
         scale_label = QLabel("缩放比例")
         scale_label.setFixedWidth(70)
-        layout.addWidget(scale_label, 2, 0, Qt.AlignmentFlag.AlignLeft)
+        scale_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(scale_label, 2, 0)
         
         self.scale_combo = ModernComboBox()
         self.scale_combo.addItems(["100%", "125%", "150%", "175%", "200%", "225%", "250%"])
         self.scale_combo.setCurrentText("100%")
         # 使用统一的居中组合框样式
         self.scale_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        self.scale_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self.scale_combo, 2, 1)
         
         # 获取分辨率和缩放比例按钮
         self.detect_screen_btn = QPushButton("📏 获取屏幕分辨率和缩放")
         self.detect_screen_btn.setFixedHeight(32)
         self.detect_screen_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
+        self.detect_screen_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(self.detect_screen_btn, 3, 0, 1, 2)
         
         parent_layout.addWidget(group)
@@ -248,52 +266,68 @@ class OperationsPanel(QWidget):
     
     def setup_ui(self):
         """设置操作面板的UI布局和组件
-        
+
         创建并布局操作面板的主要组件，包括：
         - 生成脚本按钮
         - 保存脚本按钮
         - 预览脚本按钮
         - 导入脚本按钮
-        
+
         使用垂直布局组织所有操作按钮，强调主要操作。
         """
+        from PyQt6.QtWidgets import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         group = ModernGroupBox("⚡ 操作")
         group_layout = QVBoxLayout(group)
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 15, 10, 10)
-        
+
         # 按钮布局
         buttons_layout = QVBoxLayout()
         buttons_layout.setSpacing(8)
-        
+
+        # 生成脚本按钮
         self.generate_btn = QPushButton("🚀 生成脚本")
         self.generate_btn.setFixedHeight(40)
         self.generate_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
-        
+        self.generate_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.generate_btn.setMinimumWidth(150)  # 确保按钮文本完整显示
+
+        # 保存脚本按钮
         self.save_btn = QPushButton("💾 保存脚本")
         self.save_btn.setFixedHeight(35)
         self.save_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
-        
+        self.save_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.save_btn.setMinimumWidth(150)
+
+        # 预览脚本按钮
         self.preview_btn = QPushButton("👁️ 预览脚本")
         self.preview_btn.setFixedHeight(35)
         self.preview_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
-        
+        self.preview_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.preview_btn.setMinimumWidth(150)
+
         # 导入脚本按钮 - 移动到操作模块
         self.import_script_btn = QPushButton("📥 导入脚本")
         self.import_script_btn.setFixedHeight(35)
         self.import_script_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
-        
+        self.import_script_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.import_script_btn.setMinimumWidth(150)
+
         buttons_layout.addWidget(self.generate_btn)
         buttons_layout.addWidget(self.save_btn)
         buttons_layout.addWidget(self.preview_btn)
         buttons_layout.addWidget(self.import_script_btn)
-        
+
         group_layout.addLayout(buttons_layout)
         layout.addWidget(group)
+
+        # 设置尺寸策略
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
     
     def on_preview_script(self):
         """预览脚本 - 从主窗口转移过来的功能"""
@@ -386,21 +420,23 @@ class StatsPanel(QWidget):
     
     def setup_ui(self):
         """设置统计信息面板的UI布局和组件
-        
+
         创建并布局统计信息面板的主要组件，包括：
         - 统计信息显示区域
         - 预设的统计信息文本格式
-        
+
         使用文本编辑控件展示格式化的统计数据。
         """
+        from PyQt6.QtWidgets import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         group = ModernGroupBox("📊 统计信息")
         group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(10, 15, 10, 10)
-        
+
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
         self.stats_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
@@ -416,9 +452,12 @@ class StatsPanel(QWidget):
 窗口设置:
 • 分辨率: 1920x1080
 • 缩放比例: 100%""")
-        
+
         group_layout.addWidget(self.stats_text)
         layout.addWidget(group)
+
+        # 设置尺寸策略
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
     
     def update_stats(self):
         """更新统计信息"""

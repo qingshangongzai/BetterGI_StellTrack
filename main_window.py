@@ -134,7 +134,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
         # 操作选项组
 
-        operation_group = ModernGroupBox("操作选项")
+        operation_group = ModernGroupBox("⚙️ 操作选项")
 
         operation_layout = QGridLayout(operation_group)  # 使用GridLayout确保精确对齐
 
@@ -799,8 +799,6 @@ class ModernTableWidget(QTableWidget):
 
         self.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
 
-        self.horizontalHeader().setStretchLastSection(True)
-
         # 调整表头行高
         self.horizontalHeader().setDefaultSectionSize(24)
 
@@ -815,6 +813,7 @@ class ModernTableWidget(QTableWidget):
         self.verticalHeader().setVisible(False)
 
         
+
 
 
         # 设置右键菜单策略
@@ -1022,6 +1021,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.max_undo_steps = 50  # 最大撤销步骤数
         self._table_changing = False  # 防止表格变化时的递归调用
         self._batch_operation = False  # 批量操作标志
+        self.app_icon = None  # 预加载的应用图标
 
         
 
@@ -1078,7 +1078,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 设置主窗口大小
 
-            self.setMinimumSize(1100, 750)
+            self.setMinimumSize(1100, 500)
 
             self.resize(1200,820)
 
@@ -1162,8 +1162,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             
 
 
-            # 窗口显示后设置任务栏图标
-            QTimer.singleShot(100, self.fix_taskbar_icon)
+            # 立即设置任务栏图标，不使用延迟
+            self.fix_taskbar_icon()
             
             # 初始化统计信息和预计总时间
             self.stats_panel.update_stats()
@@ -2056,24 +2056,32 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
+    def set_app_icon(self, icon):
+        """设置应用图标
+        
+        Args:
+            icon: 预加载的应用图标
+        """
+        self.app_icon = icon
+        # 立即设置窗口图标，避免延迟
+        self.setWindowIcon(icon)
+        self.debug_logger.log_info("使用预加载图标设置窗口图标成功")
+    
     def set_window_icon(self):
-
         """设置窗口图标"""
-
         try:
-
-            icon = load_icon_universal()
-
+            # 优先使用预加载的图标，否则重新加载
+            if self.app_icon:
+                icon = self.app_icon
+                self.debug_logger.log_info("使用预加载图标设置窗口图标")
+            else:
+                icon = load_icon_universal()
+                self.debug_logger.log_info("重新加载图标设置窗口图标")
+            
             self.setWindowIcon(icon)
-
-            self.debug_logger.log_info("窗口图标设置成功")
-
         except Exception as e:
-
             error_msg = f"设置窗口图标失败: {e}"
-
             self.debug_logger.log_error(error_msg)
-
             print(error_msg)
 
 
@@ -2192,61 +2200,46 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
 
 
-        # 设置分割比例
-
-        splitter.setSizes([250, 1050])
-
-        
-
-
+        # 设置分割比例，使用相对比例而非固定数值
+        # 总宽度会根据窗口大小自动调整
         parent_layout.addWidget(splitter, 1)
 
 
 
 
     def create_left_panel(self):
-
         """创建左侧设置面板"""
+        from PyQt6.QtWidgets import QScrollArea
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
 
         container = QWidget()
-
-        container.setMaximumWidth(400)
-
+        container.setMinimumWidth(250)  # 增加最小宽度，确保控件正常显示
+        container.setMaximumWidth(450)
+        container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
         layout = QVBoxLayout(container)
-
         layout.setSpacing(12)
-
         layout.setContentsMargins(8, 8, 8, 8)
 
-        
-
-
         # 创建设置面板实例，传递主窗口引用
-
         self.settings_panel = SettingsPanel(self)
-
         layout.addWidget(self.settings_panel)
 
-        
-
-
         # 创建操作面板实例，传递主窗口引用
-
         self.operations_panel = OperationsPanel(self)
-
         layout.addWidget(self.operations_panel)
-
-        
-
 
         layout.addStretch()
 
-        
-
-
-        return container
+        scroll_area.setWidget(container)
+        return scroll_area
 
 
 

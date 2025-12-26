@@ -17,7 +17,7 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin
+from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin, ModernGroupBox
 from styles import ChineseMessageBox
 # 导入资源管理器（已从resource_manager合并到styles）
 from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info, get_user_data_dir
@@ -442,7 +442,7 @@ class SafeLogMonitorThread(QThread):
 # 密码验证对话框
 # =============================================================================
 
-class PasswordDialog(QDialog):
+class PasswordDialog(FadeInWindowMixin, StyledDialog):
     """安全调试工具的密码验证对话框
     
     该对话框用于保护调试工具的访问权限，只有输入正确密码的用户才能使用调试功能。
@@ -458,23 +458,24 @@ class PasswordDialog(QDialog):
         参数:
             parent: 父窗口组件
         """
-        super().__init__(parent)
+        # 使用基类初始化方法设置窗口属性
+        super().__init__(parent,
+                       title="调试工具 - 密码验证",
+                       size=(350, 150),
+                       window_flags=Qt.WindowType.Dialog)
+        
+        # 应用对话框背景样式
+        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
+        
         self.setup_ui()
     
     def setup_ui(self):
         """设置密码验证对话框的UI界面
         
-        配置对话框的标题、大小、窗口标志、布局和样式，确保密码输入体验良好。
+        配置对话框的布局和样式，确保密码输入体验良好。
         设置OK按钮为默认按钮，并将回车键连接到密码验证功能。
         """
         try:
-            self.setWindowTitle("调试工具 - 密码验证")
-            self.setFixedSize(350, 150)
-            
-            # 设置窗口标志，确保对话框样式一致
-            self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                               Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-            
             # 创建主布局
             layout = QVBoxLayout(self)
             layout.setSpacing(15)
@@ -571,11 +572,13 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 使用基类初始化方法设置窗口属性
             super().__init__(parent,
                            title=f"安全调试工具 - {app_info['name']} v{version}",
-                           window_flags=Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                                      Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+                           window_flags=Qt.WindowType.Dialog)
             
             # 设置最小尺寸
             self.setMinimumSize(900, 700)
+            
+            # 应用对话框背景样式
+            self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             # 初始化调试日志记录器
             self.debug_logger = SafeDebugLogger()
@@ -622,6 +625,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 使用UnifiedStyleHelper统一设置字体
             UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 18, QFont.Weight.Bold)
             title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin: 5px;")
+            title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(title_label)
             
             # 创建各个功能区域
@@ -655,7 +659,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建应用信息分组框
-            info_group = QGroupBox("应用信息")
+            info_group = ModernGroupBox("📋 应用信息")
             # 使用网格布局排列信息项
             info_layout = QGridLayout(info_group)
             info_layout.setSpacing(8)
@@ -718,7 +722,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建日志文件信息分组框
-            info_group = QGroupBox("日志文件信息")
+            info_group = ModernGroupBox("📁 日志文件信息")
             # 使用网格布局排列信息项
             info_layout = QGridLayout(info_group)
             info_layout.setSpacing(8)
@@ -779,7 +783,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建日志显示分组框
-            log_group = QGroupBox("日志内容")
+            log_group = ModernGroupBox("📝 日志内容")
             # 使用垂直布局排列日志显示区域
             log_layout = QVBoxLayout(log_group)
             log_layout.setSpacing(8)
@@ -819,7 +823,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """
         try:
             # 创建操作按钮分组框
-            button_group = QGroupBox("操作")
+            button_group = ModernGroupBox("⚙️ 操作")
             # 使用垂直布局作为外层容器
             button_layout = QVBoxLayout(button_group)
             button_layout.setContentsMargins(12, 15, 12, 12)
@@ -874,7 +878,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
     
     def create_test_functions(self, parent_layout):
         """创建测试功能区域"""
-        test_group = QGroupBox("测试功能")
+        test_group = ModernGroupBox("🧪 测试功能")
         test_layout = QVBoxLayout(test_group)
         test_layout.setSpacing(8)
         test_layout.setContentsMargins(12, 15, 12, 12)

@@ -31,14 +31,14 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         main_layout.setContentsMargins(25, 20, 25, 20)
         
         # 标题区域
-        title_label = QLabel("📊 事件时间分析")
+        title_label = QLabel("事件时间分析")
         UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
         title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 8px;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
         
         # 事件选择区域
-        event_selection_group = ModernGroupBox("事件选择")
+        event_selection_group = ModernGroupBox("📋 事件选择")
         event_selection_layout = QVBoxLayout(event_selection_group)
         event_selection_layout.setSpacing(10)
         event_selection_layout.setContentsMargins(15, 20, 15, 15)
@@ -99,7 +99,7 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         main_layout.addLayout(btn_layout)
         
         # 结果显示区域
-        self.result_group = ModernGroupBox("分析结果")
+        self.result_group = ModernGroupBox("📊 分析结果")
         result_layout = QVBoxLayout(self.result_group)
         result_layout.setSpacing(5)  # 减小布局间距
         result_layout.setContentsMargins(15, 15, 15, 10)  # 减小边距
