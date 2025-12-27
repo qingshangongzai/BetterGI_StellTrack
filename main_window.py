@@ -1544,9 +1544,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         # 工具菜单
 
-        # 外观 / 主题菜单
-        appearance_menu = menubar.addMenu('外观')
-        theme_menu = appearance_menu.addMenu('主题模式')
+        # 主题菜单
+        theme_menu = menubar.addMenu('主题')
 
         # 主题模式动作组（互斥）
         self.theme_action_group = QActionGroup(self)
