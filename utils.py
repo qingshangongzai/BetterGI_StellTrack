@@ -749,3 +749,51 @@ def check_event_pairing(events_table):
         issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
     
     return issues
+
+
+def set_window_title_bar_theme(window, is_dark=False):
+    """
+    为窗口设置标题栏主题（Windows 10+ 深色/浅色模式）
+    
+    使用 Windows DWM API 设置窗口标题栏的沉浸式深色模式，
+    使标题栏颜色与主题保持一致。
+    
+    Args:
+        window: PyQt6 窗口对象（QMainWindow 或 QDialog）
+        is_dark: 是否使用深色模式，True 为深色，False 为浅色
+        
+    Returns:
+        bool: 设置成功返回 True，失败返回 False
+        
+    Note:
+        此功能仅支持 Windows 10 及以上系统
+        非 Windows 系统会静默跳过，不影响程序运行
+    """
+    try:
+        if sys.platform != "win32":
+            return False
+        
+        if not window or not hasattr(window, 'windowHandle'):
+            return False
+        
+        window_handle = window.windowHandle()
+        if not window_handle:
+            return False
+        
+        hwnd = int(window_handle.winId())
+        
+        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+        value = ctypes.c_int(1 if is_dark else 0)
+        
+        result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE,
+            ctypes.byref(value),
+            ctypes.sizeof(value)
+        )
+        
+        return result == 0
+        
+    except Exception as e:
+        print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")
+        return False

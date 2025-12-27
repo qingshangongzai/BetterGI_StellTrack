@@ -158,7 +158,73 @@ class StyledWidget(QWidget):
         self.font_manager = get_global_font_manager()
 
 
-class StyledDialog(QDialog):
+class TitleBarThemeMixin:
+    """标题栏主题混入类，为窗口提供 Windows 10+ 标题栏深色/浅色模式支持"""
+    
+    def __init__(self, *args, **kwargs):
+        """初始化混入类"""
+        super().__init__(*args, **kwargs)
+        self._title_bar_theme_applied = False
+        
+        # 延迟注册回调，避免循环导入
+        QTimer.singleShot(0, self._register_title_bar_callback)
+    
+    def _register_title_bar_callback(self):
+        """注册标题栏主题更新回调（延迟调用以避免循环导入）"""
+        try:
+            from styles import UnifiedStyleHelper
+            helper = UnifiedStyleHelper.get_instance()
+            helper.register_title_bar_theme_callback(self.apply_title_bar_theme)
+        except Exception as e:
+            print(f"[DEBUG] 注册标题栏主题回调失败: {e}")
+    
+    def __del__(self):
+        """析构时注销回调"""
+        try:
+            from styles import UnifiedStyleHelper
+            helper = UnifiedStyleHelper.get_instance()
+            helper.unregister_title_bar_theme_callback(self.apply_title_bar_theme)
+        except Exception:
+            pass
+    
+    def apply_title_bar_theme(self):
+        """
+        应用标题栏主题
+        
+        根据当前主题模式自动设置窗口标题栏的深色/浅色模式。
+        此方法会从 UnifiedStyleHelper 获取当前主题，并调用 Windows API 设置标题栏。
+        """
+        try:
+            from utils import set_window_title_bar_theme
+            from styles import UnifiedStyleHelper
+            helper = UnifiedStyleHelper.get_instance()
+            
+            # 判断当前是否为深色主题
+            is_dark = helper.theme_mode == "dark"
+            if helper.theme_mode == "system":
+                from utils import get_system_theme_mode
+                is_dark = get_system_theme_mode() == "dark"
+            
+            # 应用标题栏主题
+            success = set_window_title_bar_theme(self, is_dark)
+            self._title_bar_theme_applied = success
+            
+            return success
+            
+        except Exception as e:
+            print(f"[DEBUG] 应用标题栏主题失败: {e}")
+            return False
+    
+    def showEvent(self, event):
+        """窗口显示时自动应用标题栏主题"""
+        super().showEvent(event)
+        
+        # 延迟应用标题栏主题，确保窗口句柄已创建
+        if not self._title_bar_theme_applied:
+            QTimer.singleShot(50, self.apply_title_bar_theme)
+
+
+class StyledDialog(TitleBarThemeMixin, QDialog):
     """基础样式对话框类，自动初始化字体管理器和窗口基本设置"""
     
     def __init__(self, parent=None, title="", size=None, window_flags=None, icon=None):
@@ -193,7 +259,7 @@ class StyledDialog(QDialog):
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
 
 
-class StyledMainWindow(QMainWindow):
+class StyledMainWindow(TitleBarThemeMixin, QMainWindow):
     """基础样式主窗口类，自动初始化字体管理器和窗口基本设置"""
     
     def __init__(self, parent=None, title="", size=None, window_flags=None, icon=None):
@@ -368,6 +434,7 @@ class WindowIconMixin:
             self._fix_timer.stop()
             self._fix_timer = None
 
+
 # =============================================================================
 # 全局常量和映射 - 保持不变
 # =============================================================================
@@ -442,6 +509,34 @@ class UnifiedStyleHelper:
         self.SHADOWS = SHADOWS
         # 当前主题模式: "light"、"dark" 或 "system"
         self.theme_mode = "light"
+        # 标题栏主题更新回调列表
+        self._title_bar_theme_callbacks = []
+    
+    def register_title_bar_theme_callback(self, callback):
+        """注册标题栏主题更新回调
+        
+        Args:
+            callback: 回调函数，当主题变更时会被调用
+        """
+        if callback not in self._title_bar_theme_callbacks:
+            self._title_bar_theme_callbacks.append(callback)
+    
+    def unregister_title_bar_theme_callback(self, callback):
+        """注销标题栏主题更新回调
+        
+        Args:
+            callback: 要注销的回调函数
+        """
+        if callback in self._title_bar_theme_callbacks:
+            self._title_bar_theme_callbacks.remove(callback)
+    
+    def _notify_title_bar_theme_changed(self):
+        """通知所有注册的回调函数标题栏主题已变更"""
+        for callback in self._title_bar_theme_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                print(f"[DEBUG] 标题栏主题回调执行失败: {e}")
     
     def get_button_style(self, accent=False, disabled=False):
         """获取按钮样式"""
@@ -1451,6 +1546,9 @@ class UnifiedStyleHelper:
         # 如果QApplication实例不可用，尝试在传入的app对象上设置
         elif app is not None and hasattr(app, 'setStyleSheet'):
             app.setStyleSheet(global_stylesheet)
+        
+        # 通知所有窗口更新标题栏主题
+        self._notify_title_bar_theme_changed()
 
 # =============================================================================
 # 深色主题样式助手
