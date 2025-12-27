@@ -2174,68 +2174,12 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         if mode == current_mode:
             self._update_theme_action_state(mode)
             return
-        self._apply_theme_mode_with_animation(mode)
-
-    def _apply_theme_mode_with_animation(self, mode: str):
-        """使用淡入淡出动画应用主题模式
-
-        通过调整窗口不透明度实现约200-300ms的平滑过渡效果。
-        """
-        from PyQt6.QtCore import QPropertyAnimation
-        from styles import UnifiedStyleHelper
-
-        # 保护：确保窗口存在
-        if not self.isVisible():
-            UnifiedStyleHelper.get_instance().setup_global_style(theme_mode=mode, persist=True)
-            self._update_theme_action_state(mode)
-            self.theme_mode_changed.emit(mode)
-            return
-
-        # 避免重复动画
-        if getattr(self, "_theme_animating", False):
-            return
-
-        self._theme_animating = True
-
-        try:
-            # 淡出动画
-            fade_out = QPropertyAnimation(self, b"windowOpacity", self)
-            fade_out.setDuration(120)
-            fade_out.setStartValue(self.windowOpacity())
-            fade_out.setEndValue(0.85)
-
-            def on_fade_out_finished():
-                helper_inner = UnifiedStyleHelper.get_instance()
-                helper_inner.setup_global_style(theme_mode=mode, persist=True)
-
-                # 重新应用主窗口及面板样式
-                self._refresh_theme_styles()
-                self._update_theme_action_state(mode)
-                self.theme_mode_changed.emit(mode)
-
-                # 淡入动画
-                fade_in = QPropertyAnimation(self, b"windowOpacity", self)
-                fade_in.setDuration(120)
-                fade_in.setStartValue(0.85)
-                fade_in.setEndValue(1.0)
-
-                def on_fade_in_finished():
-                    self._theme_animating = False
-
-                fade_in.finished.connect(on_fade_in_finished)
-                fade_in.start()
-                self._theme_fade_in = fade_in
-
-            fade_out.finished.connect(on_fade_out_finished)
-            fade_out.start()
-            self._theme_fade_out = fade_out
-        except Exception:
-            # 动画失败时直接应用主题
-            UnifiedStyleHelper.get_instance().setup_global_style(theme_mode=mode, persist=True)
-            self._refresh_theme_styles()
-            self._update_theme_action_state(mode)
-            self.theme_mode_changed.emit(mode)
-            self._theme_animating = False
+        
+        # 直接应用新主题（无动画）
+        helper.setup_global_style(theme_mode=mode, persist=True)
+        self._refresh_theme_styles()
+        self._update_theme_action_state(mode)
+        self.theme_mode_changed.emit(mode)
 
     def _refresh_theme_styles(self):
         """刷新主窗口及主要面板的样式以应用当前主题"""

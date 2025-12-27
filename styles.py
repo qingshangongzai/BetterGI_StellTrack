@@ -511,6 +511,9 @@ class UnifiedStyleHelper:
         self.theme_mode = "light"
         # 标题栏主题更新回调列表
         self._title_bar_theme_callbacks = []
+        # 样式表缓存
+        self._light_stylesheet = None
+        self._dark_stylesheet = None
     
     def register_title_bar_theme_callback(self, callback):
         """注册标题栏主题更新回调
@@ -531,12 +534,41 @@ class UnifiedStyleHelper:
             self._title_bar_theme_callbacks.remove(callback)
     
     def _notify_title_bar_theme_changed(self):
-        """通知所有注册的回调函数标题栏主题已变更"""
+        """通知所有注册的回调函数标题栏主题已变更（批量优化）"""
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtCore import QTimer
+        
+        # 批量收集所有窗口句柄
+        windows = []
         for callback in self._title_bar_theme_callbacks:
             try:
-                callback()
+                if hasattr(callback, '__self__'):
+                    window = callback.__self__
+                    if window and hasattr(window, 'windowHandle'):
+                        windows.append(window)
             except Exception as e:
-                print(f"[DEBUG] 标题栏主题回调执行失败: {e}")
+                print(f"[DEBUG] 收集窗口句柄失败: {e}")
+        
+        # 延迟批量更新，避免阻塞
+        def batch_update_title_bars():
+            from utils import set_window_title_bar_theme
+            helper = UnifiedStyleHelper.get_instance()
+            
+            # 判断当前是否为深色主题
+            is_dark = helper.theme_mode == "dark"
+            if helper.theme_mode == "system":
+                from utils import get_system_theme_mode
+                is_dark = get_system_theme_mode() == "dark"
+            
+            # 批量更新所有窗口标题栏
+            for window in windows:
+                try:
+                    set_window_title_bar_theme(window, is_dark)
+                except Exception as e:
+                    print(f"[DEBUG] 更新窗口标题栏失败: {e}")
+        
+        # 使用定时器延迟执行，避免阻塞主线程
+        QTimer.singleShot(0, batch_update_title_bars)
     
     def get_button_style(self, accent=False, disabled=False):
         """获取按钮样式"""
@@ -1453,6 +1485,94 @@ class UnifiedStyleHelper:
         COLORS = dict(selected_colors)
         self.COLORS = COLORS
 
+        # 使用缓存的样式表（如果存在）
+        if effective_mode == "dark" and self._dark_stylesheet:
+            global_stylesheet = self._dark_stylesheet
+        elif effective_mode == "light" and self._light_stylesheet:
+            global_stylesheet = self._light_stylesheet
+        else:
+            # 构建并缓存样式表
+            scroll_bar_style = self.get_scroll_bar_style()
+            
+            global_stylesheet = f"""
+                QMainWindow {{
+                        background-color: {self.COLORS['bg']};
+                        color: {self.COLORS['text']};
+                    }}
+                    QDialog {{
+                        background-color: {self.COLORS['bg']};
+                        color: {self.COLORS['text']};
+                    }}
+                    QWidget {{
+                        background-color: {self.COLORS['bg']};
+                        color: {self.COLORS['text']};
+                    }}
+                    QGroupBox {{
+                        background-color: {self.COLORS['bg']};
+                    }}
+                    QMenuBar {{
+                        background-color: {self.COLORS['bg']};
+                        color: {self.COLORS['text']};
+                        border: none;
+                        border-radius: 8px;
+                        padding: 4px;
+                    }}
+                    QMenuBar::item {{
+                        padding: 4px 8px;
+                        border-radius: 8px;
+                    }}
+                    QMenuBar::item:selected {{
+                        background-color: {self.COLORS['primary_hover']};
+                        color: white;
+                    }}
+                    QMenu {{ 
+                        background-color: {self.COLORS['bg']};
+                        color: {self.COLORS['text']};
+                        border: 1px solid {self.COLORS['border']};
+                        border-radius: 8px;
+                        padding: 6px;
+                        {self.SHADOWS['small']}
+                    }}
+                    QMenu::item {{
+                        padding: 6px 16px;
+                        border-radius: 8px;
+                        margin: 2px 2px;
+                    }}
+                    QMenu::item:selected {{
+                        background-color: {self.COLORS['primary_hover']};
+                        color: white;
+                    }}
+                    QMenu::separator {{
+                        height: 1px;
+                        background-color: {self.COLORS['border_light']};
+                        margin: 4px 8px;
+                    }}
+                    QAction::hover {{
+                        background-color: {self.COLORS['primary_hover']};
+                        color: white;
+                    }}
+                    
+                    /* 复选框样式 - 使用系统默认勾选标记 */
+                    QCheckBox {{
+                        color: {self.COLORS['text']};
+                        spacing: 6px;
+                    }}
+                    
+                    QCheckBox::indicator {{
+                        width: 18px;
+                        height: 18px;
+                    }}
+                    
+                    /* 滚动条样式 */
+                    {scroll_bar_style}
+                """
+            
+            # 缓存样式表
+            if effective_mode == "dark":
+                self._dark_stylesheet = global_stylesheet
+            else:
+                self._light_stylesheet = global_stylesheet
+
         # 可选持久化主题设置
         if persist:
             settings.setValue("ui/theme_mode", theme_mode)
@@ -1462,83 +1582,6 @@ class UnifiedStyleHelper:
         q_app = QApplication.instance()
         if q_app:
             q_app.setFont(font_manager.get_source_han_font(9))
-
-        # 获取滚动条样式
-        scroll_bar_style = self.get_scroll_bar_style()
-
-        # 构建全局样式表
-        global_stylesheet = f"""
-            QMainWindow {{
-                background-color: {self.COLORS['bg']};
-                color: {self.COLORS['text']};
-            }}
-            QDialog {{
-                background-color: {self.COLORS['bg']};
-                color: {self.COLORS['text']};
-            }}
-            QWidget {{
-                background-color: {self.COLORS['bg']};
-                color: {self.COLORS['text']};
-            }}
-            QGroupBox {{
-                background-color: {self.COLORS['bg']};
-            }}
-            QMenuBar {{
-                background-color: {self.COLORS['bg']};
-                color: {self.COLORS['text']};
-                border: none;
-                border-radius: 8px;
-                padding: 4px;
-            }}
-            QMenuBar::item {{
-                padding: 4px 8px;
-                border-radius: 8px;
-            }}
-            QMenuBar::item:selected {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QMenu {{ 
-                background-color: {self.COLORS['bg']};
-                color: {self.COLORS['text']};
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 8px;
-                padding: 6px;
-                {self.SHADOWS['small']}
-            }}
-            QMenu::item {{
-                padding: 6px 16px;
-                border-radius: 8px;
-                margin: 2px 2px;
-            }}
-            QMenu::item:selected {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background-color: {self.COLORS['border_light']};
-                margin: 4px 8px;
-            }}
-            QAction::hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            
-            /* 复选框样式 - 使用系统默认勾选标记 */
-            QCheckBox {{
-                color: {self.COLORS['text']};
-                spacing: 6px;
-            }}
-            
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-            }}
-            
-            /* 滚动条样式 */
-            {scroll_bar_style}
-        """
 
         # 尝试在QApplication实例上设置样式表
         if q_app and hasattr(q_app, 'setStyleSheet'):
