@@ -460,22 +460,22 @@ LIGHT_COLORS = {
 }
 
 DARK_COLORS = {
-    'bg': "#121212",
-    'card_bg': "#1E1E1E",
+    'bg': "#000000",
+    'card_bg': "#000000",
     'primary': "#66ccff",
     'primary_hover': "#66ccff",
     'primary_pressed': "#3399ff",
-    'secondary': "#2D2D2D",
-    'secondary_hover': "#3A3A3A",
-    'secondary_pressed': "#444444",
+    'secondary': "#1A1A1A",
+    'secondary_hover': "#2A2A2A",
+    'secondary_pressed': "#3A3A3A",
     'text': "#E0E0E0",
     'text_secondary': "#B3B3B3",
     'success': "#4caf50",
     'error': "#ef5350",
     'warning': "#ffb74d",
-    'border': "#333333",
-    'border_light': "#444444",
-    'grid': "#2a2a2a"
+    'border': "#2A2A2A",
+    'border_light': "#3A3A3A",
+    'grid': "#1A1A1A"
 }
 
 # 当前主题颜色字典，初始为浅色主题
