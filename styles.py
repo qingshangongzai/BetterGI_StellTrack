@@ -2103,7 +2103,7 @@ class DialogFactory:
 # 自定义消息框类
 # =============================================================================
 
-class AnimatedDialog(FadeInWindowMixin, QDialog):
+class AnimatedDialog(FadeInWindowMixin, TitleBarThemeMixin, QDialog):
     """带淡入淡出动画的基础对话框"""
     
     def __init__(self, parent=None):
