@@ -127,6 +127,21 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
         html_content = load_user_agreement_html()
         self.agreement_browser.setHtml(html_content)
     
+    def refresh_theme_styles(self):
+        """刷新主题样式，重新加载HTML内容以应用当前主题"""
+        print("[DEBUG] 刷新关于窗口中的用户协议主题样式")
+        self.set_agreement_content()
+        
+        # 同时更新窗口内其他组件的样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新分隔线样式
+        if hasattr(self, '_separator') and self._separator is not None:
+            self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
+        
+        # 更新文本浏览器样式
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
+
 
 
 # =============================================================================

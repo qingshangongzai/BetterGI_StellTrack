@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
 
 from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
-                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
+                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QActionGroup, QFontDatabase)
 
 
 # 导入共享模块
@@ -994,8 +994,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     - WindowIconMixin: 提供窗口图标设置功能
     """
 
-    
-
+    # 主题模式切换信号（"light"、"dark"、"system"）
+    theme_mode_changed = pyqtSignal(str)
 
     def __init__(self):
         """初始化主窗口
@@ -1543,6 +1543,38 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 分析菜单
 
         # 工具菜单
+
+        # 外观 / 主题菜单
+        appearance_menu = menubar.addMenu('外观')
+        theme_menu = appearance_menu.addMenu('主题模式')
+
+        # 主题模式动作组（互斥）
+        self.theme_action_group = QActionGroup(self)
+        self.theme_action_group.setExclusive(True)
+
+        # 浅色主题
+        self.theme_light_action = QAction('浅色主题', self)
+        self.theme_light_action.setCheckable(True)
+        self.theme_light_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('light'))
+        self.theme_action_group.addAction(self.theme_light_action)
+        theme_menu.addAction(self.theme_light_action)
+
+        # 深色主题
+        self.theme_dark_action = QAction('深色主题', self)
+        self.theme_dark_action.setCheckable(True)
+        self.theme_dark_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('dark'))
+        self.theme_action_group.addAction(self.theme_dark_action)
+        theme_menu.addAction(self.theme_dark_action)
+
+        # 跟随系统
+        self.theme_system_action = QAction('跟随系统', self)
+        self.theme_system_action.setCheckable(True)
+        self.theme_system_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('system'))
+        self.theme_action_group.addAction(self.theme_system_action)
+        theme_menu.addAction(self.theme_system_action)
+
+        # 根据当前主题模式初始化选中状态
+        self._initialize_theme_menu_state()
 
         tools_menu = menubar.addMenu('工具')
 
@@ -2115,6 +2147,158 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
+
+    def _initialize_theme_menu_state(self):
+        """根据当前主题模式初始化菜单选中状态"""
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+        current_mode = getattr(helper, "theme_mode", "system")
+        if current_mode not in ("light", "dark", "system"):
+            current_mode = "system"
+        self._update_theme_action_state(current_mode)
+
+    def _update_theme_action_state(self, mode: str):
+        """更新主题菜单中各选项的选中状态"""
+        if hasattr(self, "theme_light_action"):
+            self.theme_light_action.setChecked(mode == "light")
+        if hasattr(self, "theme_dark_action"):
+            self.theme_dark_action.setChecked(mode == "dark")
+        if hasattr(self, "theme_system_action"):
+            self.theme_system_action.setChecked(mode == "system")
+
+    def _on_theme_mode_selected(self, mode: str):
+        """主题模式菜单项被选中时的处理"""
+        # 避免重复应用相同模式
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+        current_mode = getattr(helper, "theme_mode", "system")
+        if mode == current_mode:
+            self._update_theme_action_state(mode)
+            return
+        self._apply_theme_mode_with_animation(mode)
+
+    def _apply_theme_mode_with_animation(self, mode: str):
+        """使用淡入淡出动画应用主题模式
+
+        通过调整窗口不透明度实现约200-300ms的平滑过渡效果。
+        """
+        from PyQt6.QtCore import QPropertyAnimation
+        from styles import UnifiedStyleHelper
+
+        # 保护：确保窗口存在
+        if not self.isVisible():
+            UnifiedStyleHelper.get_instance().setup_global_style(theme_mode=mode, persist=True)
+            self._update_theme_action_state(mode)
+            self.theme_mode_changed.emit(mode)
+            return
+
+        # 避免重复动画
+        if getattr(self, "_theme_animating", False):
+            return
+
+        self._theme_animating = True
+
+        try:
+            # 淡出动画
+            fade_out = QPropertyAnimation(self, b"windowOpacity", self)
+            fade_out.setDuration(120)
+            fade_out.setStartValue(self.windowOpacity())
+            fade_out.setEndValue(0.85)
+
+            def on_fade_out_finished():
+                helper_inner = UnifiedStyleHelper.get_instance()
+                helper_inner.setup_global_style(theme_mode=mode, persist=True)
+
+                # 重新应用主窗口及面板样式
+                self._refresh_theme_styles()
+                self._update_theme_action_state(mode)
+                self.theme_mode_changed.emit(mode)
+
+                # 淡入动画
+                fade_in = QPropertyAnimation(self, b"windowOpacity", self)
+                fade_in.setDuration(120)
+                fade_in.setStartValue(0.85)
+                fade_in.setEndValue(1.0)
+
+                def on_fade_in_finished():
+                    self._theme_animating = False
+
+                fade_in.finished.connect(on_fade_in_finished)
+                fade_in.start()
+                self._theme_fade_in = fade_in
+
+            fade_out.finished.connect(on_fade_out_finished)
+            fade_out.start()
+            self._theme_fade_out = fade_out
+        except Exception:
+            # 动画失败时直接应用主题
+            UnifiedStyleHelper.get_instance().setup_global_style(theme_mode=mode, persist=True)
+            self._refresh_theme_styles()
+            self._update_theme_action_state(mode)
+            self.theme_mode_changed.emit(mode)
+            self._theme_animating = False
+
+    def _refresh_theme_styles(self):
+        """刷新主窗口及主要面板的样式以应用当前主题"""
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+
+        # 状态栏样式
+        if hasattr(self, "status_bar"):
+            self.status_bar.setStyleSheet(helper.get_status_bar_style())
+        # 时间标签
+        if hasattr(self, "time_label"):
+            self.time_label.setStyleSheet(f"color: {helper.COLORS['text_secondary']}; font-size: 10px; background-color: transparent;")
+
+        # 标题栏（HeaderWidget）
+        if hasattr(self, "header_widget"):
+            self.header_widget.setStyleSheet(helper.get_header_widget_style())
+
+        # 菜单栏样式
+        if hasattr(self, "menuBar") and hasattr(self.menuBar(), "refresh_theme_styles"):
+            self.menuBar().refresh_theme_styles()
+
+        # 中央部件样式（大容器）
+        central_widget = self.centralWidget()
+        if central_widget:
+            central_widget.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+            
+            # 主布局中的分割器和其他容器
+            for i in range(central_widget.layout().count()):
+                item = central_widget.layout().itemAt(i)
+                if item.widget():
+                    widget = item.widget()
+                    # 分割器样式
+                    if hasattr(widget, "childrenCollapsible"):  # 分割器
+                        widget.setStyleSheet(helper.get_splitter_style())
+                        
+                        # 刷新分割器中的所有子部件
+                        for j in range(widget.count()):
+                            splitter_widget = widget.widget(j)
+                            if splitter_widget:
+                                # 刷新滚动区域
+                                if hasattr(splitter_widget, "widgetResizable"):  # 滚动区域
+                                    splitter_widget.setStyleSheet(f"QScrollArea {{ background-color: {helper.COLORS['bg']}; border: none; }}")
+                                    # 刷新滚动区域中的容器
+                                    scroll_widget = splitter_widget.widget()
+                                    if scroll_widget:
+                                        scroll_widget.setStyleSheet(helper.get_container_bg_style())
+                                # 刷新普通部件
+                                else:
+                                    splitter_widget.setStyleSheet(helper.get_container_bg_style())
+                    else:
+                        widget.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+
+        # 设置和操作面板
+        if hasattr(self, "settings_panel") and hasattr(self.settings_panel, "refresh_theme_styles"):
+            self.settings_panel.refresh_theme_styles()
+        if hasattr(self, "operations_panel") and hasattr(self.operations_panel, "refresh_theme_styles"):
+            self.operations_panel.refresh_theme_styles()
+        if hasattr(self, "stats_panel") and hasattr(self.stats_panel, "refresh_theme_styles"):
+            self.stats_panel.refresh_theme_styles()
+        # 事件编辑区域
+        if hasattr(self, "event_manager") and hasattr(self.event_manager, "refresh_theme_styles"):
+            self.event_manager.refresh_theme_styles()
 
     def setup_application_style(self):
         """设置应用程序样式 - 使用全局样式管理器"""

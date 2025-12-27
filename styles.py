@@ -2,11 +2,11 @@
 import os
 import sys
 from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem, QPainterPath, QPen, QRegion, QBitmap, QImage
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect, QPropertyAnimation
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect, QPropertyAnimation, QSettings
 from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout, QVBoxLayout, QLabel, QMenu, QMenuBar
 
 # 导入资源管理器函数
-from utils import get_base_path, find_resource_file, get_resource_path, load_icon_universal, create_fallback_icon, fix_windows_taskbar_icon_for_window
+from utils import get_base_path, find_resource_file, get_resource_path, load_icon_universal, create_fallback_icon, fix_windows_taskbar_icon_for_window, get_system_theme_mode
 
 # =============================================================================
 # 全局字体管理器
@@ -372,15 +372,15 @@ class WindowIconMixin:
 # 全局常量和映射 - 保持不变
 # =============================================================================
 
-# 颜色主题 - 修改背景色为纯白色
-COLORS = {
-    'bg': "#ffffff",  # 改为纯白色
+# 颜色主题 - 浅色与深色主题
+LIGHT_COLORS = {
+    'bg': "#ffffff",
     'card_bg': "#ffffff",
     'primary': "#66ccff",
     'primary_hover': "#66ccff",
     'primary_pressed': "#3399ff",
-    'secondary': "#ffffff",  # 普通按钮改为纯白色
-    'secondary_hover': "#f5f5f5",  # 悬停时略微变灰
+    'secondary': "#ffffff",
+    'secondary_hover': "#f5f5f5",
     'secondary_pressed': "#e5e5e5",
     'text': "#323130",
     'text_secondary': "#666666",
@@ -391,6 +391,28 @@ COLORS = {
     'border_light': "#e0e0e0",
     'grid': "#e8e8e8"
 }
+
+DARK_COLORS = {
+    'bg': "#121212",
+    'card_bg': "#1E1E1E",
+    'primary': "#66ccff",
+    'primary_hover': "#66ccff",
+    'primary_pressed': "#3399ff",
+    'secondary': "#2D2D2D",
+    'secondary_hover': "#3A3A3A",
+    'secondary_pressed': "#444444",
+    'text': "#E0E0E0",
+    'text_secondary': "#B3B3B3",
+    'success': "#4caf50",
+    'error': "#ef5350",
+    'warning': "#ffb74d",
+    'border': "#333333",
+    'border_light': "#444444",
+    'grid': "#2a2a2a"
+}
+
+# 当前主题颜色字典，初始为浅色主题
+COLORS = dict(LIGHT_COLORS)
 
 # WinUI3阴影效果 - 根据控件层级定义不同深度的阴影（注释掉不支持的box-shadow）
 SHADOWS = {
@@ -418,6 +440,8 @@ class UnifiedStyleHelper:
         # 颜色主题常量
         self.COLORS = COLORS
         self.SHADOWS = SHADOWS
+        # 当前主题模式: "light"、"dark" 或 "system"
+        self.theme_mode = "light"
     
     def get_button_style(self, accent=False, disabled=False):
         """获取按钮样式"""
@@ -487,7 +511,8 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px 8px;
-                background-color: white;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
                 {self.SHADOWS['small']}
@@ -496,7 +521,6 @@ class UnifiedStyleHelper:
             }}
             QLineEdit:focus {{ 
                 border-color: {self.COLORS['primary']};
-                background-color: #fafafa;
             }}
             QLineEdit:hover {{ 
                 border-color: #a0a0a0;
@@ -511,7 +535,8 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px 8px;
-                background-color: white;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 font-size: 11px;
                 min-width: 80px;
                 {self.SHADOWS['small']}
@@ -530,7 +555,7 @@ class UnifiedStyleHelper:
             QComboBox QAbstractItemView {{ 
                 border: 1px solid {self.COLORS['border']}; 
                 border-radius: 8px; 
-                background-color: white; 
+                background-color: {self.COLORS['card_bg']}; 
                 selection-background-color: {self.COLORS['primary']}; 
                 selection-color: white; 
                 font-size: 11px; 
@@ -552,8 +577,8 @@ class UnifiedStyleHelper:
             QTableWidget {{ 
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
-                background-color: white;
-                gridline-color: #f0f0f0;
+                background-color: {self.COLORS['card_bg']};
+                gridline-color: {self.COLORS['grid']};
                 font-size: 11px;
                 outline: none;
                 {self.SHADOWS['medium']}
@@ -571,14 +596,14 @@ class UnifiedStyleHelper:
                 background-color: #CAE9FF;
             }}
             QHeaderView::section {{ 
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
                 padding: 4px 10px;
                 border: none;
-                border-right: 1px solid #e0e0e0;
-                border-bottom: 1px solid #e0e0e0;
+                border-right: 1px solid {self.COLORS['border_light']};
+                border-bottom: 1px solid {self.COLORS['border_light']};
                 font-weight: bold;
                 font-size: 12px;
-                color: #333333;
+                color: {self.COLORS['text']};
                 text-align: center;
                 min-height: 20px;
             }}
@@ -586,10 +611,10 @@ class UnifiedStyleHelper:
                 border-right: none;
             }}
             QTableCornerButton::section {{ 
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
                 border: none;
-                border-right: 1px solid #e0e0e0;
-                border-bottom: 1px solid #e0e0e0;
+                border-right: 1px solid {self.COLORS['border_light']};
+                border-bottom: 1px solid {self.COLORS['border_light']};
             }}
         """
     
@@ -620,7 +645,7 @@ class UnifiedStyleHelper:
         """获取标题栏样式"""
         return f"""
             HeaderWidget {{
-                background-color: #ffffff;
+                background-color: {self.COLORS['bg']};
                 border-bottom: 1px solid {self.COLORS['border']};
                 
             }}
@@ -668,7 +693,7 @@ class UnifiedStyleHelper:
     
     def get_container_bg_style(self):
         """获取容器背景样式"""
-        return "background-color: #ffffff;"
+        return f"background-color: {self.COLORS['card_bg']};"
     
     
     
@@ -693,7 +718,8 @@ class UnifiedStyleHelper:
             QTextEdit {{ 
                 font-family: "Consolas, SourceHanSerifCN";
                 font-size: 12px;
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 6px;
@@ -718,7 +744,8 @@ class UnifiedStyleHelper:
         """获取协议浏览器样式"""
         return f"""
             QTextBrowser {{ 
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 6px;
@@ -740,7 +767,8 @@ class UnifiedStyleHelper:
         """获取信息编辑框样式"""
         return f"""
             QPlainTextEdit {{ 
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 10px;
@@ -755,7 +783,7 @@ class UnifiedStyleHelper:
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
             QStatusBar {{ 
-                background-color: #ffffff;
+                background-color: {self.COLORS['bg']};
                 color: {self.COLORS['text']};
                 border-top: 1px solid {self.COLORS['border']};
                 font-size: 10px;
@@ -767,7 +795,8 @@ class UnifiedStyleHelper:
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
             QTextBrowser {{
-                background-color: #f8f9fa;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 10px;
@@ -793,7 +822,8 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px 4px 6px 4px;
-                background-color: white;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
                 text-align: center;
@@ -803,12 +833,10 @@ class UnifiedStyleHelper:
             }}
             QSpinBox:focus, QDoubleSpinBox:focus {{
                 border-color: {self.COLORS['primary']};
-                background-color: #fafafa;
                 border-width: 1.5px;
             }}
             QSpinBox:hover, QDoubleSpinBox:hover {{
                 border-color: #a0a0a0;
-                background-color: #fafafa;
             }}
             QSpinBox::up-button, QDoubleSpinBox::up-button {{
                 subcontrol-origin: border;
@@ -859,7 +887,7 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 4px;
                 text-align: center;
-                background-color: #f0f0f0;
+                background-color: {self.COLORS['card_bg']};
                 font-size: 10px;
             }}
             QProgressBar::chunk {{
@@ -872,7 +900,8 @@ class UnifiedStyleHelper:
         """获取文本编辑框样式"""
         return f"""
             QTextEdit {{
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 8px;
@@ -887,7 +916,7 @@ class UnifiedStyleHelper:
         return f"""
             QLabel {{
                 border: 2px solid {self.COLORS['border']};
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
             }}
         """
     
@@ -930,12 +959,12 @@ class UnifiedStyleHelper:
         """获取搜索容器样式"""
         return """
             QWidget {
-                background-color: #ffffff;
+                background-color: %s;
                 border: none;
                 border-radius: 8px;
                 %s
             }
-        """ % (self.SHADOWS['small'])
+        """ % (self.COLORS['card_bg'], self.SHADOWS['small'])
     
     def get_search_input_style(self):
         """获取搜索输入框样式"""
@@ -944,7 +973,8 @@ class UnifiedStyleHelper:
                 border: 1px solid %s;
                 border-radius: 8px;
                 padding: 6px 8px;
-                background-color: white;
+                background-color: %s;
+                color: %s;
                 font-size: 11px;
                 selection-background-color: %s;
                 %s
@@ -953,12 +983,11 @@ class UnifiedStyleHelper:
             }}
             QLineEdit:focus {{ 
                 border-color: %s;
-                background-color: #fafafa;
             }}
             QLineEdit:hover {{ 
                 border-color: #a0a0a0;
             }}
-        """ % (self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
+        """ % (self.COLORS['border'], self.COLORS['card_bg'], self.COLORS['text'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
     
     def get_filter_combo_style(self):
         """获取过滤组合框样式"""
@@ -967,7 +996,8 @@ class UnifiedStyleHelper:
                 border: 1px solid %s;
                 border-radius: 8px;
                 padding: 6px 8px;
-                background-color: white;
+                background-color: %s;
+                color: %s;
                 font-size: 11px;
                 min-width: 80px;
                 %s
@@ -986,7 +1016,7 @@ class UnifiedStyleHelper:
             QComboBox QAbstractItemView {{ 
                 border: 1px solid %s; 
                 border-radius: 8px; 
-                background-color: white; 
+                background-color: %s; 
                 selection-background-color: %s; 
                 selection-color: white; 
                 font-size: 11px; 
@@ -999,7 +1029,7 @@ class UnifiedStyleHelper:
             QComboBox:focus {{ 
                 border-color: %s;
             }}
-        """ % (self.COLORS['border'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
+        """ % (self.COLORS['border'], self.COLORS['card_bg'], self.COLORS['text'], self.SHADOWS['small'], self.COLORS['border'], self.COLORS['card_bg'], self.COLORS['primary'], self.SHADOWS['small'], self.COLORS['primary'])
     
     def get_scroll_bar_style(self):
         """获取滚动条样式 - Fluent Design风格"""
@@ -1167,7 +1197,7 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px 8px;
-                background-color: white;
+                background-color: {self.COLORS['card_bg']};
                 font-family: "SourceHanSerifCN";
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
@@ -1178,12 +1208,12 @@ class UnifiedStyleHelper:
             }}
             QSpinBox:focus {{
                 border-color: {self.COLORS['primary']};
-                background-color: #fafafa;
+                background-color: {self.COLORS['secondary_hover']};
                 border-width: 1.5px;
             }}
             QSpinBox:hover {{
                 border-color: #a0a0a0;
-                background-color: #fafafa;
+                background-color: {self.COLORS['secondary_hover']};
             }}
             QSpinBox::up-button {{
                 subcontrol-origin: border;
@@ -1231,7 +1261,7 @@ class UnifiedStyleHelper:
         """获取说明文本编辑器样式"""
         return f"""
             QTextEdit {{
-                background-color: #ffffff;
+                background-color: {self.COLORS['card_bg']};
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 6px;
                 padding: 6px;
@@ -1290,36 +1320,77 @@ class UnifiedStyleHelper:
             }}
         """
     
-    def setup_global_style(self, app):
-        """设置全局样式"""
-        from PyQt6.QtWidgets import QApplication
+    def setup_global_style(self, app=None, theme_mode=None, persist=False):
+        """设置全局样式
         
+        Args:
+            app: 可选的应用对象，通常不需要手动传入
+            theme_mode: 主题模式，可选"light"、"dark"、"system"；为None时从QSettings读取
+            persist: 是否持久化主题模式
+        """
+        from PyQt6.QtWidgets import QApplication
+
+        # 读取或使用传入的主题模式
+        settings = QSettings()
+        if theme_mode is None:
+            theme_mode = settings.value("ui/theme_mode", "system")
+        if theme_mode not in ("light", "dark", "system"):
+            theme_mode = "system"
+
+        # 保存当前主题模式（逻辑模式）
+        self.theme_mode = theme_mode
+
+        # 计算实际应用的主题（system 模式下根据系统设置决定）
+        effective_mode = theme_mode
+        if theme_mode == "system":
+            try:
+                effective_mode = get_system_theme_mode()
+            except Exception:
+                effective_mode = "light"
+
+        # 根据实际主题切换颜色字典
+        if effective_mode == "dark":
+            selected_colors = DARK_COLORS
+        else:
+            selected_colors = LIGHT_COLORS
+
+        global COLORS
+        COLORS = dict(selected_colors)
+        self.COLORS = COLORS
+
+        # 可选持久化主题设置
+        if persist:
+            settings.setValue("ui/theme_mode", theme_mode)
+
         # 设置全局字体 - 使用SourceHanSerifCN字体
         font_manager = get_global_font_manager()
         q_app = QApplication.instance()
         if q_app:
-            # 使用SourceHanSerifCN字体作为全局默认字体
             q_app.setFont(font_manager.get_source_han_font(9))
-        
+
         # 获取滚动条样式
         scroll_bar_style = self.get_scroll_bar_style()
-        
+
         # 构建全局样式表
         global_stylesheet = f"""
             QMainWindow {{
                 background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
             }}
             QDialog {{
                 background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
             }}
             QWidget {{
                 background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
             }}
             QGroupBox {{
                 background-color: {self.COLORS['bg']};
             }}
             QMenuBar {{
                 background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
                 border: none;
                 border-radius: 8px;
                 padding: 4px;
@@ -1334,6 +1405,7 @@ class UnifiedStyleHelper:
             }}
             QMenu {{ 
                 background-color: {self.COLORS['bg']};
+                color: {self.COLORS['text']};
                 border: 1px solid {self.COLORS['border']};
                 border-radius: 8px;
                 padding: 6px;
@@ -1372,13 +1444,31 @@ class UnifiedStyleHelper:
             /* 滚动条样式 */
             {scroll_bar_style}
         """
-        
+
         # 尝试在QApplication实例上设置样式表
         if q_app and hasattr(q_app, 'setStyleSheet'):
             q_app.setStyleSheet(global_stylesheet)
         # 如果QApplication实例不可用，尝试在传入的app对象上设置
-        elif hasattr(app, 'setStyleSheet'):
+        elif app is not None and hasattr(app, 'setStyleSheet'):
             app.setStyleSheet(global_stylesheet)
+
+# =============================================================================
+# 深色主题样式助手
+# =============================================================================
+
+class DarkStyleHelper(UnifiedStyleHelper):
+    """深色主题样式助手，继承自UnifiedStyleHelper"""
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if not cls._instance:
+            cls._instance = DarkStyleHelper()
+        return cls._instance
+
+    def __init__(self):
+        super().__init__()
+        self.COLORS = dict(DARK_COLORS)
 
 # =============================================================================
 # 现代化控件类
@@ -1565,12 +1655,90 @@ class ModernMenuBar(QMenuBar):
                 menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
                 return super().addMenu(menu)
         return super().addMenu(*args)
+    
+    def refresh_theme_styles(self):
+        """刷新菜单栏及所有菜单的样式，应用当前主题
+        
+        更新菜单栏本身和所有子菜单的样式，确保使用当前主题的颜色值。
+        """
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新菜单栏样式
+        self.setStyleSheet(f""
+            f"QMenuBar {{\n"
+            f"    background-color: {helper.COLORS['bg']};\n"
+            f"    color: {helper.COLORS['text']};\n"
+            f"    border: none;\n"
+            f"    border-radius: 8px;\n"
+            f"    padding: 4px;\n"
+            f"}}\n"
+            f"QMenuBar::item {{\n"
+            f"    padding: 4px 8px;\n"
+            f"    border-radius: 8px;\n"
+            f"}}\n"
+            f"QMenuBar::item:selected {{\n"
+            f"    background-color: {helper.COLORS['primary_hover']};\n"
+            f"    color: white;\n"
+            f"}}\n"
+        )
+        
+        # 创建菜单样式
+        menu_style = """QMenu {{
+    background-color: {0};
+    color: {1};
+    border: 1px solid {2};
+    padding: 6px;
+}}
+QMenu::item {{
+    padding: 6px 16px;
+    border-radius: 8px;
+    margin: 2px 2px;
+}}
+QMenu::item:selected {{
+    background-color: {3};
+    color: white;
+}}
+QMenu::separator {{
+    height: 1px;
+    background-color: {4};
+    margin: 4px 8px;
+}}
+"""
+        menu_style = menu_style.format(
+            helper.COLORS['bg'],
+            helper.COLORS['text'],
+            helper.COLORS['border'],
+            helper.COLORS['primary_hover'],
+            helper.COLORS['border_light']
+        )
+        
+        # 递归更新菜单及其所有子菜单
+        def update_menu_styles(menu):
+            if menu:
+                menu.setStyleSheet(menu_style)
+                # 递归更新所有子菜单
+                for action in menu.actions():
+                    sub_menu = action.menu()
+                    if sub_menu:
+                        update_menu_styles(sub_menu)
+        
+        # 更新所有顶级菜单
+        for action in self.actions():
+            menu = action.menu()
+            if menu:
+                update_menu_styles(menu)
 
 class ModernGroupBox(QGroupBox):
     """现代化的分组框"""
     def __init__(self, title="", parent=None):
         super().__init__(title, parent)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_group_box_style())
+    
+    def refresh_theme_styles(self):
+        """刷新分组框的样式，应用当前主题"""
+        helper = UnifiedStyleHelper.get_instance()
+        self.setStyleSheet(helper.get_group_box_style())
 
 class ModernLineEdit(QLineEdit):
     """现代化的输入框，内容居中显示"""
@@ -1815,7 +1983,7 @@ class ChineseMessageBox:
         dialog.setMaximumWidth(400)
         
         # 设置对话框样式
-        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
+        dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
         
         # 创建布局
         layout = QVBoxLayout(dialog)
@@ -1825,7 +1993,7 @@ class ChineseMessageBox:
         # 添加消息内容
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
         layout.addWidget(message_label)
         
         # 添加按钮布局
@@ -1859,7 +2027,7 @@ class ChineseMessageBox:
         dialog.setMaximumWidth(400)
         
         # 设置对话框样式
-        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
+        dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
         
         # 创建布局
         layout = QVBoxLayout(dialog)
@@ -1869,7 +2037,7 @@ class ChineseMessageBox:
         # 添加消息内容
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
         layout.addWidget(message_label)
         
         # 添加按钮布局
@@ -1902,7 +2070,7 @@ class ChineseMessageBox:
         dialog.setMaximumWidth(400)
         
         # 设置对话框样式
-        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
+        dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
         
         # 创建布局
         layout = QVBoxLayout(dialog)
@@ -1912,7 +2080,7 @@ class ChineseMessageBox:
         # 添加消息内容
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
         layout.addWidget(message_label)
         
         # 添加按钮布局
@@ -1945,7 +2113,7 @@ class ChineseMessageBox:
         dialog.setMaximumWidth(400)
         
         # 设置对话框样式
-        dialog.setStyleSheet(f"QDialog {{ background-color: white; border-radius: 8px; }}")
+        dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
         
         # 创建布局
         layout = QVBoxLayout(dialog)
@@ -1955,7 +2123,7 @@ class ChineseMessageBox:
         # 添加消息内容
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet("QLabel { font-size: 13px; color: #323130; }")
+        message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
         layout.addWidget(message_label)
         
         # 添加按钮布局

@@ -257,6 +257,14 @@ class EventManager:
         self.debug_logger = get_global_debug_logger()
         self.events_table = None
         
+        # UI 引用（用于主题刷新）
+        self.event_editor_root = None
+        self.search_container = None
+        self.search_label = None
+        self.search_btn = None
+        self.reset_btn = None
+        self.sort_tip_label = None
+        
         # 线程实例，用于处理耗时操作
         self.sort_events_thread = None
         self.batch_edit_thread = None
@@ -275,13 +283,17 @@ class EventManager:
         """
         if parent is None:
             parent = QWidget()
-            parent.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
+        # 保存事件编辑器根部件引用，便于主题刷新
+        self.event_editor_root = parent
+        # 应用容器背景样式
+        parent.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
         
         layout = QVBoxLayout(parent)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        group = ModernGroupBox("📋 事件编辑")
+        self.event_edit_group = ModernGroupBox("📋 事件编辑")
+        group = self.event_edit_group
         group_layout = QVBoxLayout(group)
         group_layout.setSpacing(12)
         group_layout.setContentsMargins(15, 20, 15, 15)
@@ -310,6 +322,7 @@ class EventManager:
         # 创建搜索和过滤区域
         search_container = QWidget()
         search_container.setStyleSheet(UnifiedStyleHelper.get_instance().get_search_container_style())
+        self.search_container = search_container
         search_layout = QHBoxLayout(search_container)
         search_layout.setSpacing(8)
         search_layout.setContentsMargins(10, 10, 10, 10)
@@ -317,6 +330,7 @@ class EventManager:
         # 搜索标签
         search_label = QLabel("🔍 搜索:")
         search_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; font-size: 12px;")
+        self.search_label = search_label
         search_layout.addWidget(search_label)
         
         # 搜索输入框
@@ -335,6 +349,7 @@ class EventManager:
         search_btn.setFixedHeight(30)
         search_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         search_btn.setFixedWidth(70)
+        self.search_btn = search_btn
         search_layout.addWidget(search_btn)
         
         # 重置按钮
@@ -342,6 +357,7 @@ class EventManager:
         reset_btn.setFixedHeight(30)
         reset_btn.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style())
         reset_btn.setFixedWidth(70)
+        self.reset_btn = reset_btn
         search_layout.addWidget(reset_btn)
         
         parent_layout.addWidget(search_container)
@@ -451,6 +467,7 @@ class EventManager:
         sort_tip = QLabel(SORT_TIP_TEXT)
         sort_tip.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
         sort_tip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sort_tip_label = sort_tip
         parent_layout.addWidget(sort_tip)
         
         # 连接信号槽
@@ -460,6 +477,113 @@ class EventManager:
         self.undo_btn.clicked.connect(self.main_window.on_undo)
         self.redo_btn.clicked.connect(self.main_window.on_redo)
         self.sort_events_btn.clicked.connect(self.sort_events_by_absolute_time)
+    
+    def refresh_theme_styles(self):
+        """根据当前主题重新应用事件编辑区域的样式"""
+        helper = UnifiedStyleHelper.get_instance()
+
+        # 根容器背景
+        if hasattr(self, "event_editor_root") and self.event_editor_root is not None:
+            self.event_editor_root.setStyleSheet(helper.get_container_bg_style())
+        
+        # 事件编辑 GroupBox
+        if hasattr(self, "event_edit_group") and self.event_edit_group is not None:
+            self.event_edit_group.refresh_theme_styles()
+
+        # 搜索区域
+        if hasattr(self, "search_container") and self.search_container is not None:
+            self.search_container.setStyleSheet(helper.get_search_container_style())
+        if hasattr(self, "search_label") and self.search_label is not None:
+            self.search_label.setStyleSheet(
+                f"color: {helper.COLORS['text']}; font-size: 12px;"
+            )
+        if hasattr(self, "search_input") and self.search_input is not None:
+            # 直接创建样式，确保使用当前主题的颜色值
+            line_edit_style = f""
+            line_edit_style += f"QLineEdit {{ "
+            line_edit_style += f"    border: 1px solid {helper.COLORS['border']}; "
+            line_edit_style += f"    border-radius: 8px; "
+            line_edit_style += f"    padding: 6px 8px; "
+            line_edit_style += f"    background-color: {helper.COLORS['card_bg']}; "
+            line_edit_style += f"    color: {helper.COLORS['text']}; "
+            line_edit_style += f"    font-size: 11px; "
+            line_edit_style += f"    selection-background-color: {helper.COLORS['primary']}; "
+            line_edit_style += f"}} "
+            line_edit_style += f"QLineEdit:focus {{ "
+            line_edit_style += f"    border-color: {helper.COLORS['primary']}; "
+            line_edit_style += f"}} "
+            line_edit_style += f"QLineEdit:hover {{ "
+            line_edit_style += f"    border-color: #a0a0a0; "
+            line_edit_style += f"}} "
+            self.search_input.setStyleSheet(line_edit_style)
+        if hasattr(self, "filter_type_combo") and self.filter_type_combo is not None:
+            # 直接创建样式，确保使用当前主题的颜色值
+            combo_style = f""
+            combo_style += f"QComboBox {{ "
+            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
+            combo_style += f"    border-radius: 8px; "
+            combo_style += f"    padding: 6px 8px; "
+            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
+            combo_style += f"    color: {helper.COLORS['text']}; "
+            combo_style += f"    font-size: 11px; "
+            combo_style += f"    min-width: 80px; "
+            combo_style += f"    text-align: center; "
+            combo_style += f"    padding-left: 15px; "
+            combo_style += f"}} "
+            combo_style += f"QComboBox::drop-down {{ "
+            combo_style += f"    border: none; "
+            combo_style += f"    width: 20px; "
+            combo_style += f"}} "
+            combo_style += f"QComboBox::down-arrow {{ "
+            combo_style += f"    width: 12px; "
+            combo_style += f"    height: 12px; "
+            combo_style += f"    border: none; "
+            combo_style += f"}} "
+            combo_style += f"QComboBox QAbstractItemView {{ "
+            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
+            combo_style += f"    border-radius: 8px; "
+            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
+            combo_style += f"    selection-background-color: {helper.COLORS['primary']}; "
+            combo_style += f"    selection-color: white; "
+            combo_style += f"    font-size: 11px; "
+            combo_style += f"    padding: 4px; "
+            combo_style += f"}} "
+            combo_style += f"QComboBox:hover {{ "
+            combo_style += f"    border-color: #a0a0a0; "
+            combo_style += f"}} "
+            combo_style += f"QComboBox:focus {{ "
+            combo_style += f"    border-color: {helper.COLORS['primary']}; "
+            combo_style += f"}} "
+            self.filter_type_combo.setStyleSheet(combo_style)
+        if hasattr(self, "search_btn") and self.search_btn is not None:
+            self.search_btn.setStyleSheet(helper.get_button_style(accent=True))
+        if hasattr(self, "reset_btn") and self.reset_btn is not None:
+            self.reset_btn.setStyleSheet(helper.get_button_style())
+
+        # 事件表格
+        if self.events_table is not None:
+            self.events_table.setStyleSheet(helper.get_table_style())
+
+        # 操作按钮和排序提示
+        if hasattr(self, "add_event_btn"):
+            all_buttons = [
+                self.add_event_btn,
+                self.edit_event_btn,
+                self.clear_events_btn,
+                self.undo_btn,
+                self.redo_btn,
+                self.sort_events_btn,
+            ]
+            for btn in all_buttons:
+                btn.setStyleSheet(helper.get_button_style())
+            # 强调色按钮
+            self.add_event_btn.setStyleSheet(helper.get_button_style(accent=True))
+            self.sort_events_btn.setStyleSheet(helper.get_button_style(accent=True))
+
+        if hasattr(self, "sort_tip_label") and self.sort_tip_label is not None:
+            self.sort_tip_label.setStyleSheet(
+                f"color: {helper.COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;"
+            )
     
     def on_show_event_context_menu(self, position):
         """显示事件表格的右键菜单

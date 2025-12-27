@@ -502,6 +502,27 @@ def get_user_data_dir():
     
     return data_dir
 
+def get_system_theme_mode():
+    """获取系统主题模式（"light" 或 "dark"）"""
+    try:
+        if sys.platform == "win32":
+            try:
+                import winreg
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                )
+                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                winreg.CloseKey(key)
+                return "light" if value == 1 else "dark"
+            except Exception:
+                # 读取失败时默认使用浅色主题
+                return "light"
+        # 其他平台暂时统一采用浅色主题
+        return "light"
+    except Exception:
+        return "light"
+
 def find_resource_file(filename):
     """查找资源文件，返回找到的路径或None
     
