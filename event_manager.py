@@ -296,7 +296,7 @@ class EventManager:
         group = self.event_edit_group
         group_layout = QVBoxLayout(group)
         group_layout.setSpacing(12)
-        group_layout.setContentsMargins(15, 20, 15, 15)
+        group_layout.setContentsMargins(0, 20, 0, 15)
         
         # 搜索和过滤组件
         self.create_search_filter_widgets(group_layout)
