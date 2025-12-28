@@ -344,6 +344,9 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         style_helper = UnifiedStyleHelper.get_instance()
         self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        
         # 设置协议内容
         self.set_agreement_content()
         
@@ -546,6 +549,9 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 设置样式 - 使用统一的样式管理方式
         style_helper = UnifiedStyleHelper.get_instance()
         self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
+        
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置协议内容
         self.set_agreement_content()

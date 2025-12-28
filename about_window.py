@@ -99,6 +99,8 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
         self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置协议内容
         self.set_agreement_content()
@@ -282,6 +284,8 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.info_edit = QPlainTextEdit()
         self.info_edit.setReadOnly(True)
         self.info_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_info_edit_style())
+        # 禁用右键菜单
+        self.info_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置信息内容
         self.set_info_content()
