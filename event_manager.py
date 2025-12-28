@@ -639,11 +639,12 @@ class EventManager:
             batch_edit_action.triggered.connect(self.on_batch_edit)
             context_menu.addAction(batch_edit_action)
         
-        # 添加删除事件菜单项
-        delete_action = QAction("🗑️ 删除事件", self.main_window)
-        delete_action.setShortcut("Delete")
-        delete_action.triggered.connect(self.on_delete_event)
-        context_menu.addAction(delete_action)
+        # 添加删除事件菜单项（如果有选中行）
+        if selected_rows:
+            delete_action = QAction("🗑️ 删除事件", self.main_window)
+            delete_action.setShortcut("Delete")
+            delete_action.triggered.connect(self.on_delete_event)
+            context_menu.addAction(delete_action)
         
         context_menu.addSeparator()
         
