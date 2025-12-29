@@ -1148,16 +1148,13 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 加载保存的状态
 
-            self.load_saved_state()
+            # 加载保存的状态
+            loaded_state = self.load_saved_state()
 
-            
-
-
-            # 如果没有加载到保存的状态，添加示例数据用于测试
-
+            # 如果没有加载到事件数据，添加示例数据用于测试
             if self.event_manager.events_table.rowCount() == 0:
-
                 self.event_manager.add_sample_data()
+                self.debug_logger.log_info("未加载到事件数据，已添加示例数据")
 
             
 
@@ -2558,35 +2555,77 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     def get_system_scale(self):
         """获取系统缩放比例"""
         try:
-            user32 = ctypes.windll.user32
+            # 定义所需的API常量和结构
+            class MONITORINFOEX(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", ctypes.c_ulong),
+                    ("rcMonitor", ctypes.c_long * 4),
+                    ("rcWork", ctypes.c_long * 4),
+                    ("dwFlags", ctypes.c_ulong),
+                    ("szDevice", ctypes.c_wchar * 32)
+                ]
             
-            # 获取主显示器的DPI
+            # DPI类型
+            MDT_EFFECTIVE_DPI = 0
+            MDT_ANGULAR_DPI = 1
+            MDT_RAW_DPI = 2
+            
+            # 获取主显示器句柄
+            user32 = ctypes.windll.user32
+            gdi32 = ctypes.windll.gdi32
+            shcore = ctypes.windll.shcore
+            
+            scale = 100
+            
             try:
-                hdc = user32.GetDC(0)
-                if hdc:
-                    # 获取逻辑DPI
-                    logical_dpi_x = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
-                    user32.ReleaseDC(0, hdc)
+                # 方法1: 使用GetDpiForMonitor API（Windows 8.1+）获取当前DPI
+                try:
+                    # 获取主显示器句柄
+                    monitor = user32.MonitorFromWindow(0, 1)  # MONITOR_DEFAULTTOPRIMARY
                     
-                    # 计算缩放比例（基于96 DPI为100%）
-                    if logical_dpi_x > 0:
-                        scale_percent = int((logical_dpi_x / 96.0) * 100)
+                    if monitor:
+                        # 定义输出参数
+                        dpi_x = ctypes.c_uint()
+                        dpi_y = ctypes.c_uint()
                         
-                        # 四舍五入到最接近的标准值
-                        standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                        # 调用GetDpiForMonitor获取DPI
+                        result = shcore.GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, ctypes.byref(dpi_x), ctypes.byref(dpi_y))
                         
-                        # 计算与每个标准值的差值
-                        differences = [abs(scale_percent - standard) for standard in standard_scales]
-                        
-                        # 找到最小差值对应的索引
-                        closest_index = differences.index(min(differences))
-                        
-                        # 获取最接近的标准缩放值
-                        scale = standard_scales[closest_index]
-                    else:
-                        scale = 100
-                else:
-                    scale = 100
+                        if result == 0:  # S_OK
+                            logical_dpi_x = dpi_x.value
+                        else:
+                            # API调用失败，使用备用方法
+                            logical_dpi_x = 96
+                except Exception as inner_e:
+                    self.debug_logger.log_debug(f"GetDpiForMonitor调用失败: {inner_e}")
+                    logical_dpi_x = 96
+                
+                # 如果GetDpiForMonitor失败，使用GetDeviceCaps获取逻辑DPI
+                if logical_dpi_x == 96:
+                    try:
+                        hdc = user32.GetDC(0)
+                        if hdc:
+                            logical_dpi_x = gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
+                            user32.ReleaseDC(0, hdc)
+                    except Exception as inner_e:
+                        self.debug_logger.log_debug(f"GetDeviceCaps获取DPI失败: {inner_e}")
+                        logical_dpi_x = 96
+                
+                # 计算缩放比例（基于96 DPI为100%）
+                if logical_dpi_x > 0:
+                    scale_percent = int((logical_dpi_x / 96.0) * 100)
+                    
+                    # 四舍五入到最接近的标准值
+                    standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                    
+                    # 计算与每个标准值的差值
+                    differences = [abs(scale_percent - standard) for standard in standard_scales]
+                    
+                    # 找到最小差值对应的索引
+                    closest_index = differences.index(min(differences))
+                    
+                    # 获取最接近的标准缩放值
+                    scale = standard_scales[closest_index]
             except Exception as inner_e:
                 self.debug_logger.log_debug(f"获取DPI失败: {inner_e}")
                 scale = 100
@@ -2833,25 +2872,30 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                         state = json.load(f)
                     
                     # 验证状态数据的完整性
-                    if isinstance(state, dict) and 'events' in state and isinstance(state['events'], list):
+                    if isinstance(state, dict):
                         # 恢复事件
-                        event_count = len(state['events'])
-                        self.debug_logger.log_info(f"开始恢复 {event_count} 个事件")
-                        
-                        for i, event_data in enumerate(state['events']):
-                            # 创建行数据，包括行号
-                            row_data = [str(i + 1)] + event_data
-                            self.event_manager.add_table_row(row_data)
+                        if 'events' in state and isinstance(state['events'], list):
+                            event_count = len(state['events'])
+                            self.debug_logger.log_info(f"开始恢复 {event_count} 个事件")
+                            
+                            for i, event_data in enumerate(state['events']):
+                                # 创建行数据，包括行号
+                                row_data = [str(i + 1)] + event_data
+                                self.event_manager.add_table_row(row_data)
+                            
+                            self.debug_logger.log_info(f"已成功恢复 {event_count} 个事件")
+                        else:
+                            self.debug_logger.log_warning(f"状态文件中events字段缺失或格式错误，跳过事件恢复")
                         
                         # 加载设置
                         if 'settings' in state:
                             self.settings_panel.restore_settings(state['settings'])
                             self.debug_logger.log_info(f"已成功加载保存的设置")
                         
-                        self.debug_logger.log_info(f"已成功加载保存的状态，包含 {event_count} 个事件")
+                        self.debug_logger.log_info(f"已成功加载保存的状态")
                         return True
                     else:
-                        self.debug_logger.log_error(f"状态文件格式不正确，缺少必要的events字段或格式错误")
+                        self.debug_logger.log_error(f"状态文件格式不正确，不是有效的字典")
                         return False
                 except json.JSONDecodeError as e:
                     self.debug_logger.log_error(f"解析状态文件失败: {e}")
