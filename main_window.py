@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
 
 from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
-                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
+                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QActionGroup, QFontDatabase)
 
 
 # 导入共享模块
@@ -994,8 +994,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     - WindowIconMixin: 提供窗口图标设置功能
     """
 
-    
-
+    # 主题模式切换信号（"light"、"dark"、"system"）
+    theme_mode_changed = pyqtSignal(str)
 
     def __init__(self):
         """初始化主窗口
@@ -1148,16 +1148,13 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 加载保存的状态
 
-            self.load_saved_state()
+            # 加载保存的状态
+            loaded_state = self.load_saved_state()
 
-            
-
-
-            # 如果没有加载到保存的状态，添加示例数据用于测试
-
+            # 如果没有加载到事件数据，添加示例数据用于测试
             if self.event_manager.events_table.rowCount() == 0:
-
                 self.event_manager.add_sample_data()
+                self.debug_logger.log_info("未加载到事件数据，已添加示例数据")
 
             
 
@@ -1543,6 +1540,37 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 分析菜单
 
         # 工具菜单
+
+        # 主题菜单
+        theme_menu = menubar.addMenu('主题')
+
+        # 主题模式动作组（互斥）
+        self.theme_action_group = QActionGroup(self)
+        self.theme_action_group.setExclusive(True)
+
+        # 浅色主题
+        self.theme_light_action = QAction('浅色主题', self)
+        self.theme_light_action.setCheckable(True)
+        self.theme_light_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('light'))
+        self.theme_action_group.addAction(self.theme_light_action)
+        theme_menu.addAction(self.theme_light_action)
+
+        # 深色主题
+        self.theme_dark_action = QAction('深色主题', self)
+        self.theme_dark_action.setCheckable(True)
+        self.theme_dark_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('dark'))
+        self.theme_action_group.addAction(self.theme_dark_action)
+        theme_menu.addAction(self.theme_dark_action)
+
+        # 跟随系统
+        self.theme_system_action = QAction('跟随系统', self)
+        self.theme_system_action.setCheckable(True)
+        self.theme_system_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('system'))
+        self.theme_action_group.addAction(self.theme_system_action)
+        theme_menu.addAction(self.theme_system_action)
+
+        # 根据当前主题模式初始化选中状态
+        self._initialize_theme_menu_state()
 
         tools_menu = menubar.addMenu('工具')
 
@@ -2116,6 +2144,102 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
+    def _initialize_theme_menu_state(self):
+        """根据当前主题模式初始化菜单选中状态"""
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+        current_mode = getattr(helper, "theme_mode", "system")
+        if current_mode not in ("light", "dark", "system"):
+            current_mode = "system"
+        self._update_theme_action_state(current_mode)
+
+    def _update_theme_action_state(self, mode: str):
+        """更新主题菜单中各选项的选中状态"""
+        if hasattr(self, "theme_light_action"):
+            self.theme_light_action.setChecked(mode == "light")
+        if hasattr(self, "theme_dark_action"):
+            self.theme_dark_action.setChecked(mode == "dark")
+        if hasattr(self, "theme_system_action"):
+            self.theme_system_action.setChecked(mode == "system")
+
+    def _on_theme_mode_selected(self, mode: str):
+        """主题模式菜单项被选中时的处理"""
+        # 避免重复应用相同模式
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+        current_mode = getattr(helper, "theme_mode", "system")
+        if mode == current_mode:
+            self._update_theme_action_state(mode)
+            return
+        
+        # 直接应用新主题（无动画）
+        helper.setup_global_style(theme_mode=mode, persist=True)
+        self._refresh_theme_styles()
+        self._update_theme_action_state(mode)
+        self.theme_mode_changed.emit(mode)
+
+    def _refresh_theme_styles(self):
+        """刷新主窗口及主要面板的样式以应用当前主题"""
+        from styles import UnifiedStyleHelper
+        helper = UnifiedStyleHelper.get_instance()
+
+        # 状态栏样式
+        if hasattr(self, "status_bar"):
+            self.status_bar.setStyleSheet(helper.get_status_bar_style())
+        # 时间标签
+        if hasattr(self, "time_label"):
+            self.time_label.setStyleSheet(f"color: {helper.COLORS['text_secondary']}; font-size: 10px; background-color: transparent;")
+
+        # 标题栏（HeaderWidget）
+        if hasattr(self, "header_widget"):
+            self.header_widget.setStyleSheet(helper.get_header_widget_style())
+
+        # 菜单栏样式
+        if hasattr(self, "menuBar") and hasattr(self.menuBar(), "refresh_theme_styles"):
+            self.menuBar().refresh_theme_styles()
+
+        # 中央部件样式（大容器）
+        central_widget = self.centralWidget()
+        if central_widget:
+            central_widget.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+            
+            # 主布局中的分割器和其他容器
+            for i in range(central_widget.layout().count()):
+                item = central_widget.layout().itemAt(i)
+                if item.widget():
+                    widget = item.widget()
+                    # 分割器样式
+                    if hasattr(widget, "childrenCollapsible"):  # 分割器
+                        widget.setStyleSheet(helper.get_splitter_style())
+                        
+                        # 刷新分割器中的所有子部件
+                        for j in range(widget.count()):
+                            splitter_widget = widget.widget(j)
+                            if splitter_widget:
+                                # 刷新滚动区域
+                                if hasattr(splitter_widget, "widgetResizable"):  # 滚动区域
+                                    splitter_widget.setStyleSheet(f"QScrollArea {{ background-color: {helper.COLORS['bg']}; border: none; }}")
+                                    # 刷新滚动区域中的容器
+                                    scroll_widget = splitter_widget.widget()
+                                    if scroll_widget:
+                                        scroll_widget.setStyleSheet(helper.get_container_bg_style())
+                                # 刷新普通部件
+                                else:
+                                    splitter_widget.setStyleSheet(helper.get_container_bg_style())
+                    else:
+                        widget.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+
+        # 设置和操作面板
+        if hasattr(self, "settings_panel") and hasattr(self.settings_panel, "refresh_theme_styles"):
+            self.settings_panel.refresh_theme_styles()
+        if hasattr(self, "operations_panel") and hasattr(self.operations_panel, "refresh_theme_styles"):
+            self.operations_panel.refresh_theme_styles()
+        if hasattr(self, "stats_panel") and hasattr(self.stats_panel, "refresh_theme_styles"):
+            self.stats_panel.refresh_theme_styles()
+        # 事件编辑区域
+        if hasattr(self, "event_manager") and hasattr(self.event_manager, "refresh_theme_styles"):
+            self.event_manager.refresh_theme_styles()
+
     def setup_application_style(self):
         """设置应用程序样式 - 使用全局样式管理器"""
         # 使用styles模块中的UnifiedStyleHelper来统一管理应用程序样式
@@ -2431,35 +2555,77 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     def get_system_scale(self):
         """获取系统缩放比例"""
         try:
-            user32 = ctypes.windll.user32
+            # 定义所需的API常量和结构
+            class MONITORINFOEX(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", ctypes.c_ulong),
+                    ("rcMonitor", ctypes.c_long * 4),
+                    ("rcWork", ctypes.c_long * 4),
+                    ("dwFlags", ctypes.c_ulong),
+                    ("szDevice", ctypes.c_wchar * 32)
+                ]
             
-            # 获取主显示器的DPI
+            # DPI类型
+            MDT_EFFECTIVE_DPI = 0
+            MDT_ANGULAR_DPI = 1
+            MDT_RAW_DPI = 2
+            
+            # 获取主显示器句柄
+            user32 = ctypes.windll.user32
+            gdi32 = ctypes.windll.gdi32
+            shcore = ctypes.windll.shcore
+            
+            scale = 100
+            
             try:
-                hdc = user32.GetDC(0)
-                if hdc:
-                    # 获取逻辑DPI
-                    logical_dpi_x = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
-                    user32.ReleaseDC(0, hdc)
+                # 方法1: 使用GetDpiForMonitor API（Windows 8.1+）获取当前DPI
+                try:
+                    # 获取主显示器句柄
+                    monitor = user32.MonitorFromWindow(0, 1)  # MONITOR_DEFAULTTOPRIMARY
                     
-                    # 计算缩放比例（基于96 DPI为100%）
-                    if logical_dpi_x > 0:
-                        scale_percent = int((logical_dpi_x / 96.0) * 100)
+                    if monitor:
+                        # 定义输出参数
+                        dpi_x = ctypes.c_uint()
+                        dpi_y = ctypes.c_uint()
                         
-                        # 四舍五入到最接近的标准值
-                        standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                        # 调用GetDpiForMonitor获取DPI
+                        result = shcore.GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, ctypes.byref(dpi_x), ctypes.byref(dpi_y))
                         
-                        # 计算与每个标准值的差值
-                        differences = [abs(scale_percent - standard) for standard in standard_scales]
-                        
-                        # 找到最小差值对应的索引
-                        closest_index = differences.index(min(differences))
-                        
-                        # 获取最接近的标准缩放值
-                        scale = standard_scales[closest_index]
-                    else:
-                        scale = 100
-                else:
-                    scale = 100
+                        if result == 0:  # S_OK
+                            logical_dpi_x = dpi_x.value
+                        else:
+                            # API调用失败，使用备用方法
+                            logical_dpi_x = 96
+                except Exception as inner_e:
+                    self.debug_logger.log_debug(f"GetDpiForMonitor调用失败: {inner_e}")
+                    logical_dpi_x = 96
+                
+                # 如果GetDpiForMonitor失败，使用GetDeviceCaps获取逻辑DPI
+                if logical_dpi_x == 96:
+                    try:
+                        hdc = user32.GetDC(0)
+                        if hdc:
+                            logical_dpi_x = gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
+                            user32.ReleaseDC(0, hdc)
+                    except Exception as inner_e:
+                        self.debug_logger.log_debug(f"GetDeviceCaps获取DPI失败: {inner_e}")
+                        logical_dpi_x = 96
+                
+                # 计算缩放比例（基于96 DPI为100%）
+                if logical_dpi_x > 0:
+                    scale_percent = int((logical_dpi_x / 96.0) * 100)
+                    
+                    # 四舍五入到最接近的标准值
+                    standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                    
+                    # 计算与每个标准值的差值
+                    differences = [abs(scale_percent - standard) for standard in standard_scales]
+                    
+                    # 找到最小差值对应的索引
+                    closest_index = differences.index(min(differences))
+                    
+                    # 获取最接近的标准缩放值
+                    scale = standard_scales[closest_index]
             except Exception as inner_e:
                 self.debug_logger.log_debug(f"获取DPI失败: {inner_e}")
                 scale = 100
@@ -2706,25 +2872,30 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                         state = json.load(f)
                     
                     # 验证状态数据的完整性
-                    if isinstance(state, dict) and 'events' in state and isinstance(state['events'], list):
+                    if isinstance(state, dict):
                         # 恢复事件
-                        event_count = len(state['events'])
-                        self.debug_logger.log_info(f"开始恢复 {event_count} 个事件")
-                        
-                        for i, event_data in enumerate(state['events']):
-                            # 创建行数据，包括行号
-                            row_data = [str(i + 1)] + event_data
-                            self.event_manager.add_table_row(row_data)
+                        if 'events' in state and isinstance(state['events'], list):
+                            event_count = len(state['events'])
+                            self.debug_logger.log_info(f"开始恢复 {event_count} 个事件")
+                            
+                            for i, event_data in enumerate(state['events']):
+                                # 创建行数据，包括行号
+                                row_data = [str(i + 1)] + event_data
+                                self.event_manager.add_table_row(row_data)
+                            
+                            self.debug_logger.log_info(f"已成功恢复 {event_count} 个事件")
+                        else:
+                            self.debug_logger.log_warning(f"状态文件中events字段缺失或格式错误，跳过事件恢复")
                         
                         # 加载设置
                         if 'settings' in state:
                             self.settings_panel.restore_settings(state['settings'])
                             self.debug_logger.log_info(f"已成功加载保存的设置")
                         
-                        self.debug_logger.log_info(f"已成功加载保存的状态，包含 {event_count} 个事件")
+                        self.debug_logger.log_info(f"已成功加载保存的状态")
                         return True
                     else:
-                        self.debug_logger.log_error(f"状态文件格式不正确，缺少必要的events字段或格式错误")
+                        self.debug_logger.log_error(f"状态文件格式不正确，不是有效的字典")
                         return False
                 except json.JSONDecodeError as e:
                     self.debug_logger.log_error(f"解析状态文件失败: {e}")

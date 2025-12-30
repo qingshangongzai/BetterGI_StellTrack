@@ -167,6 +167,10 @@ class ApplicationMonitor(QObject):
         self.warning_count = 0
         self.info_count = 0
         
+        # 主题切换监控
+        self.theme_mode = "system"
+        self.last_theme_change_time = None
+        
         # 资源使用情况
         self.memory_usage = 0
         self.cpu_usage = 0
@@ -243,7 +247,9 @@ class ApplicationMonitor(QObject):
             'error_count': self.error_count,
             'warning_count': self.warning_count,
             'info_count': self.info_count,
-            'timestamp': timestamp
+            'timestamp': timestamp,
+            'theme_mode': getattr(self, 'theme_mode', None),
+            'last_theme_change_time': getattr(self, 'last_theme_change_time', None),
         }
         
         # 尝试使用psutil获取详细系统信息
@@ -294,10 +300,24 @@ class ApplicationMonitor(QObject):
         self.warning_count += 1
     
     def increment_info_count(self):
-        """
+        """\
         增加信息计数器，用于追踪应用程序信息日志数量
         """
         self.info_count += 1
+
+    def record_theme_change(self, mode: str):
+        """记录主题切换事件
+
+        Args:
+            mode (str): 新的主题模式（"light"、"dark" 或 "system"）
+        """
+        self.theme_mode = mode
+        try:
+            self.last_theme_change_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            self.last_theme_change_time = None
+        # 主题切换视为信息级事件
+        self.increment_info_count()
 
 # =============================================================================
 # 应用程序类
@@ -659,6 +679,10 @@ class BetterGIApplication:
             if hasattr(self.main_window, 'status_bar'):
                 # 可以在这里添加状态栏更新等连接
                 pass
+
+            # 连接主题模式切换信号
+            if hasattr(self.main_window, 'theme_mode_changed'):
+                self.main_window.theme_mode_changed.connect(self.on_theme_mode_changed_from_ui)
                 
             print("[DEBUG] 主窗口创建完成")
             return True
@@ -802,6 +826,27 @@ class BetterGIApplication:
                 
         except Exception as e:
             print(f"处理状态更新时出错: {e}")
+
+    def on_theme_mode_changed_from_ui(self, mode: str):
+        """处理来自主窗口的主题模式切换事件
+
+        Args:
+            mode (str): 新的主题模式（"light"、"dark" 或 "system"）
+        """
+        try:
+            # 在监控器中记录主题切换事件
+            if self.monitor:
+                if hasattr(self.monitor, "record_theme_change"):
+                    self.monitor.record_theme_change(mode)
+                else:
+                    # 向后兼容：至少增加信息计数
+                    self.monitor.increment_info_count()
+            
+            # 记录到调试日志
+            if self.debug_logger:
+                self.debug_logger.log_info(f"主题模式切换为: {mode}")
+        except Exception as e:
+            print(f"[DEBUG] 处理主题模式切换事件时出错: {e}")
     
     def cleanup(self):
         """

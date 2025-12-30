@@ -53,6 +53,9 @@ class SettingsPanel(QWidget):
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        # 保存组控件引用
+        self.groups = []
+        
         # 循环设置
         self.create_loop_settings(layout)
 
@@ -65,6 +68,7 @@ class SettingsPanel(QWidget):
     def create_loop_settings(self, parent_layout):
         """创建循环设置组"""
         group = ModernGroupBox("🔄 循环设置")
+        self.groups.append(group)  # 添加到组列表
         layout = QGridLayout(group)
         layout.setSpacing(10)
         layout.setContentsMargins(15, 20, 15, 15)
@@ -137,6 +141,7 @@ class SettingsPanel(QWidget):
     def create_screen_settings(self, parent_layout):
         """创建窗口设置组"""
         group = ModernGroupBox("🖥️ 窗口设置")
+        self.groups.append(group)  # 添加到组列表
         layout = QGridLayout(group)
         layout.setSpacing(10)
         layout.setContentsMargins(15, 20, 15, 15)
@@ -236,6 +241,43 @@ class SettingsPanel(QWidget):
         self.width_input.setText(state.get('width', '1920'))
         self.height_input.setText(state.get('height', '1080'))
         self.scale_combo.setCurrentText(state.get('scale', '100%'))
+    
+    def refresh_theme_styles(self):
+        """根据当前主题重新应用设置面板样式"""
+        helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新面板背景色
+        self.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+        
+        # 更新组框样式
+        for group in self.groups:
+            group.setStyleSheet(helper.get_group_box_style())
+        
+        # 更新SpinBox组件样式
+        if hasattr(self, "loop_count_input"):
+            self.loop_count_input.setStyleSheet(helper.get_spin_box_style())
+        if hasattr(self, "interval_input"):
+            self.interval_input.setStyleSheet(helper.get_spin_box_style())
+        
+        # 更新组合框样式
+        if hasattr(self, "time_unit_combo"):
+            self.time_unit_combo.setStyleSheet(helper.get_centered_combo_box_style())
+        if hasattr(self, "scale_combo"):
+            self.scale_combo.setStyleSheet(helper.get_centered_combo_box_style())
+        
+        # 更新LineEdit组件样式
+        if hasattr(self, "width_input"):
+            self.width_input.setStyleSheet(helper.get_line_edit_style())
+        if hasattr(self, "height_input"):
+            self.height_input.setStyleSheet(helper.get_line_edit_style())
+        
+        # 更新按钮样式
+        if hasattr(self, "detect_screen_btn"):
+            self.detect_screen_btn.setStyleSheet(helper.get_button_style())
+        
+        # 更新标签样式
+        if hasattr(self, "total_time_display"):
+            self.total_time_display.setStyleSheet(helper.get_total_time_label_style())
 
 # =============================================================================
 # 操作面板 - 包含操作按钮和预览功能
@@ -280,8 +322,12 @@ class OperationsPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 保存组控件引用
+        self.groups = []
 
         group = ModernGroupBox("⚡ 操作")
+        self.groups.append(group)  # 添加到组列表
         group_layout = QVBoxLayout(group)
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 15, 10, 10)
@@ -328,6 +374,27 @@ class OperationsPanel(QWidget):
 
         # 设置尺寸策略
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+
+    def refresh_theme_styles(self):
+        """根据当前主题重新应用按钮样式"""
+        helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新面板背景色
+        self.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+        
+        # 更新组框样式
+        for group in self.groups:
+            group.setStyleSheet(helper.get_group_box_style())
+        
+        # 更新按钮样式
+        if hasattr(self, "generate_btn"):
+            self.generate_btn.setStyleSheet(helper.get_button_style(accent=True))
+        if hasattr(self, "save_btn"):
+            self.save_btn.setStyleSheet(helper.get_button_style())
+        if hasattr(self, "preview_btn"):
+            self.preview_btn.setStyleSheet(helper.get_button_style())
+        if hasattr(self, "import_script_btn"):
+            self.import_script_btn.setStyleSheet(helper.get_button_style())
     
     def on_preview_script(self):
         """预览脚本 - 从主窗口转移过来的功能"""
@@ -423,23 +490,28 @@ class StatsPanel(QWidget):
 
         创建并布局统计信息面板的主要组件，包括：
         - 统计信息显示区域
-        - 预设的统计信息文本格式
 
-        使用文本编辑控件展示格式化的统计数据。
+        使用垂直布局组织所有统计信息组件。
         """
         from PyQt6.QtWidgets import QSizePolicy
 
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 保存组控件引用
+        self.groups = []
 
         group = ModernGroupBox("📊 统计信息")
+        self.groups.append(group)  # 添加到组列表
         group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(10, 15, 10, 10)
 
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
         self.stats_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
+        # 设置思源宋体
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.stats_text, 10)
         self.stats_text.setPlainText(f"""脚本信息将在此显示...
 
 • 总事件数: 0
@@ -458,6 +530,21 @@ class StatsPanel(QWidget):
 
         # 设置尺寸策略
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+
+    def refresh_theme_styles(self):
+        """根据当前主题重新应用统计信息面板样式"""
+        helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新面板背景色
+        self.setStyleSheet(f"background-color: {helper.COLORS['bg']};")
+        
+        # 更新组框样式
+        for group in self.groups:
+            group.setStyleSheet(helper.get_group_box_style())
+        
+        # 更新统计文本样式
+        if hasattr(self, "stats_text"):
+            self.stats_text.setStyleSheet(helper.get_explanation_text_edit_style())
     
     def update_stats(self):
         """更新统计信息"""
