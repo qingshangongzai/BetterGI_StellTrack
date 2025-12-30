@@ -18,7 +18,7 @@ from utils import find_resource_file
 # 事件编辑对话框相关组件
 # =============================================================================
 
-class SimpleCoordinateCapture(QDialog):
+class SimpleCoordinateCapture(StyledDialog):
     """简化版坐标捕获对话框"""
     
     def __init__(self, image_path):

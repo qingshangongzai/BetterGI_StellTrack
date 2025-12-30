@@ -99,6 +99,8 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
         self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置协议内容
         self.set_agreement_content()
@@ -127,6 +129,21 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
         html_content = load_user_agreement_html()
         self.agreement_browser.setHtml(html_content)
     
+    def refresh_theme_styles(self):
+        """刷新主题样式，重新加载HTML内容以应用当前主题"""
+        print("[DEBUG] 刷新关于窗口中的用户协议主题样式")
+        self.set_agreement_content()
+        
+        # 同时更新窗口内其他组件的样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新分隔线样式
+        if hasattr(self, '_separator') and self._separator is not None:
+            self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
+        
+        # 更新文本浏览器样式
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
+
 
 
 # =============================================================================
@@ -267,6 +284,8 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.info_edit = QPlainTextEdit()
         self.info_edit.setReadOnly(True)
         self.info_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_info_edit_style())
+        # 禁用右键菜单
+        self.info_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置信息内容
         self.set_info_content()

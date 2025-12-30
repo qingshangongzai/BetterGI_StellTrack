@@ -92,34 +92,109 @@ def load_user_agreement_html():
         
         # 注入自定义样式，使用实际的字体family名称
         style_helper = UnifiedStyleHelper.get_instance()
+        
+        # 完全替换HTML中的样式块，而不是添加新样式
+        # 首先移除原有的style块
+        import re
+        html_content = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL)
+        
+        # 创建完整的样式块，覆盖所有必要的样式
         custom_style = f"""
         <style>
             body {{
-                font-family: '{source_han_family}', 'Microsoft YaHei', 'SimSun', sans-serif !important;
-                background-color: #ffffff !important;
-                color: {style_helper.COLORS['text']} !important;
+                font-family: '{source_han_family}', 'Microsoft YaHei', 'SimSun', serif;
+                font-size: 12px;
+                line-height: 1.8;
+                margin: 0;
+                padding: 0;
+                background-color: {style_helper.COLORS['bg']};
+                color: {style_helper.COLORS['text']};
             }}
             .container {{
-                background-color: #ffffff !important;
+                max-width: 800px;
+                margin: 0;
+                padding: 20px 30px;
+                background-color: {style_helper.COLORS['bg']};
             }}
-            h1, h2, h3, h4, h5, h6 {{
-                font-family: '{smiley_family}', '{source_han_family}', 'Microsoft YaHei', sans-serif !important;
-                color: {style_helper.COLORS['primary']} !important;
+            header {{
+                text-align: center;
+                border-bottom: 1px solid {style_helper.COLORS['border']};
+                padding-bottom: 1em;
+                margin-bottom: 2em;
+            }}
+            h1 {{
+                font-family: '{smiley_family}', '{source_han_family}', 'Microsoft YaHei', serif;
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0;
+                color: {style_helper.COLORS['primary']};
+            }}
+            .last-modified {{
+                font-size: 11px;
+                color: {style_helper.COLORS['text_secondary']};
+                margin-top: 0.5em;
+            }}
+            main section {{
+                margin-bottom: 2em;
             }}
             h2 {{
-                border-left-color: {style_helper.COLORS['primary']} !important;
+                font-family: '{smiley_family}', '{source_han_family}', 'Microsoft YaHei', serif;
+                font-size: 16px;
+                font-weight: 600;
+                color: {style_helper.COLORS['primary']};
+                border-left: 4px solid {style_helper.COLORS['primary']};
+                padding-left: 0.8em;
+                margin-top: 1.5em;
+                margin-bottom: 1em;
+            }}
+            h3 {{
+                font-family: '{smiley_family}', '{source_han_family}', 'Microsoft YaHei', serif;
+                font-size: 14px;
+                font-weight: 600;
+                color: {style_helper.COLORS['text']};
+                margin-top: 1.2em;
+                margin-bottom: 0.8em;
+            }}
+            p, li {{
+                margin-bottom: 0.8em;
+                text-align: justify;
+                color: {style_helper.COLORS['text']};
+            }}
+            ol, ul {{
+                padding-left: 2em;
+            }}
+            li {{
+                margin-bottom: 0.6em;
+            }}
+            .indent {{
+                padding-left: 2em;
             }}
             .warning {{
-                color: #d13438 !important;
+                color: #d13438;
+                font-weight: bold;
             }}
             .important {{
-                color: #ff6b35 !important;
-            }}
-            a {{
-                color: {style_helper.COLORS['primary']} !important;
+                color: #ff8c00;
+                font-weight: bold;
             }}
             strong, b {{
                 color: {style_helper.COLORS['text']};
+                font-weight: 600;
+            }}
+            footer {{
+                margin-top: 2.5em;
+                padding-top: 1.5em;
+                border-top: 1px solid {style_helper.COLORS['border']};
+            }}
+            footer h2 {{
+                border-left-color: {style_helper.COLORS['primary']};
+            }}
+            a {{
+                color: {style_helper.COLORS['primary']};
+                text-decoration: none;
+            }}
+            a:hover {{
+                text-decoration: underline;
             }}
         </style>
         """
@@ -269,6 +344,9 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         style_helper = UnifiedStyleHelper.get_instance()
         self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        
         # 设置协议内容
         self.set_agreement_content()
         
@@ -325,6 +403,25 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
         self.agree_button.setEnabled(state == Qt.CheckState.Checked.value)
         print(f"[DEBUG] 用户协议复选框状态: {'同意' if state == Qt.CheckState.Checked.value else '未同意'}")
     
+    def refresh_theme_styles(self):
+        """刷新主题样式，重新加载HTML内容以应用当前主题"""
+        print("[DEBUG] 刷新用户协议对话框主题样式")
+        self.set_agreement_content()
+        
+        # 同时更新窗口内其他组件的样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新分隔线样式
+        if hasattr(self, '_separator') and self._separator is not None:
+            self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
+        
+        # 更新文本浏览器样式
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
+        
+        # 更新复选框样式
+        font_manager = get_global_font_manager()
+        self.agree_checkbox.setFont(font_manager.get_source_han_font(10))
+
 
 
 
@@ -453,6 +550,9 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         style_helper = UnifiedStyleHelper.get_instance()
         self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
         
+        # 禁用右键菜单
+        self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        
         # 设置协议内容
         self.set_agreement_content()
         
@@ -481,6 +581,20 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         html_content = load_user_agreement_html()
         self.agreement_browser.setHtml(html_content)
     
+    def refresh_theme_styles(self):
+        """刷新主题样式，重新加载HTML内容以应用当前主题"""
+        print("[DEBUG] 刷新用户协议窗口主题样式")
+        self.set_agreement_content()
+        
+        # 同时更新窗口内其他组件的样式
+        style_helper = UnifiedStyleHelper.get_instance()
+        
+        # 更新分隔线样式
+        if hasattr(self, '_separator') and self._separator is not None:
+            self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
+        
+        # 更新文本浏览器样式
+        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
 
 
 def check_user_agreement():
