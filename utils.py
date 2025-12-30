@@ -773,18 +773,36 @@ def set_window_title_bar_theme(window, is_dark=False):
         if sys.platform != "win32":
             return False
         
-        if not window or not hasattr(window, 'windowHandle'):
+        # 全面的窗口有效性检查
+        if not window:
             return False
-        
+            
+        # 检查窗口是否已被删除或无效
+        if hasattr(window, 'isValid') and callable(window.isValid):
+            if not window.isValid():
+                return False
+                
+        # 检查窗口是否有windowHandle属性
+        if not hasattr(window, 'windowHandle'):
+            return False
+            
+        # 获取windowHandle
         window_handle = window.windowHandle()
         if not window_handle:
             return False
-        
+            
+        # 检查windowHandle是否有效
+        if hasattr(window_handle, 'isValid') and callable(window_handle.isValid):
+            if not window_handle.isValid():
+                return False
+                
+        # 获取窗口句柄
         hwnd = int(window_handle.winId())
         
         DWMWA_USE_IMMERSIVE_DARK_MODE = 20
         value = ctypes.c_int(1 if is_dark else 0)
         
+        # 调用DWM API设置窗口标题栏主题
         result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
             hwnd,
             DWMWA_USE_IMMERSIVE_DARK_MODE,
@@ -794,6 +812,14 @@ def set_window_title_bar_theme(window, is_dark=False):
         
         return result == 0
         
+    except RuntimeError as e:
+        # 捕获"wrapped C/C++ object of type X has been deleted"错误
+        if "wrapped C/C++ object" in str(e) and "has been deleted" in str(e):
+            print(f"[DEBUG] 尝试设置已删除窗口的标题栏主题，跳过")
+            return False
+        else:
+            print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")
+            return False
     except Exception as e:
         print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")
         return False

@@ -1,6 +1,7 @@
 # styles.py - 全局样式和字体管理模块
 import os
 import sys
+import weakref
 from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem, QPainterPath, QPen, QRegion, QBitmap, QImage
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QRect, QPropertyAnimation, QSettings
 from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout, QVBoxLayout, QLabel, QMenu, QMenuBar
@@ -165,6 +166,7 @@ class TitleBarThemeMixin:
         """初始化混入类"""
         super().__init__(*args, **kwargs)
         self._title_bar_theme_applied = False
+        self._callback_registered = False
         
         # 延迟注册回调，避免循环导入
         QTimer.singleShot(0, self._register_title_bar_callback)
@@ -174,16 +176,18 @@ class TitleBarThemeMixin:
         try:
             from styles import UnifiedStyleHelper
             helper = UnifiedStyleHelper.get_instance()
-            helper.register_title_bar_theme_callback(self.apply_title_bar_theme)
+            helper.register_title_bar_theme_callback(self)
+            self._callback_registered = True
         except Exception as e:
             print(f"[DEBUG] 注册标题栏主题回调失败: {e}")
     
     def __del__(self):
         """析构时注销回调"""
         try:
-            from styles import UnifiedStyleHelper
-            helper = UnifiedStyleHelper.get_instance()
-            helper.unregister_title_bar_theme_callback(self.apply_title_bar_theme)
+            if self._callback_registered:
+                from styles import UnifiedStyleHelper
+                helper = UnifiedStyleHelper.get_instance()
+                helper.unregister_title_bar_theme_callback(self)
         except Exception:
             pass
     
@@ -509,45 +513,39 @@ class UnifiedStyleHelper:
         self.SHADOWS = SHADOWS
         # 当前主题模式: "light"、"dark" 或 "system"
         self.theme_mode = "light"
-        # 标题栏主题更新回调列表
-        self._title_bar_theme_callbacks = []
+        # 标题栏主题更新回调列表 - 使用弱引用存储窗口对象
+        self._title_bar_theme_windows = []
         # 样式表缓存
         self._light_stylesheet = None
         self._dark_stylesheet = None
     
-    def register_title_bar_theme_callback(self, callback):
+    def register_title_bar_theme_callback(self, window):
         """注册标题栏主题更新回调
         
         Args:
-            callback: 回调函数，当主题变更时会被调用
+            window: 窗口对象，当主题变更时会调用其apply_title_bar_theme方法
         """
-        if callback not in self._title_bar_theme_callbacks:
-            self._title_bar_theme_callbacks.append(callback)
+        # 使用弱引用存储窗口对象，避免内存泄漏
+        window_ref = weakref.ref(window)
+        if window_ref not in self._title_bar_theme_windows:
+            self._title_bar_theme_windows.append(window_ref)
     
-    def unregister_title_bar_theme_callback(self, callback):
+    def unregister_title_bar_theme_callback(self, window):
         """注销标题栏主题更新回调
         
         Args:
-            callback: 要注销的回调函数
+            window: 要注销的窗口对象
         """
-        if callback in self._title_bar_theme_callbacks:
-            self._title_bar_theme_callbacks.remove(callback)
+        # 遍历弱引用列表，查找并移除对应的窗口引用
+        for window_ref in self._title_bar_theme_windows:
+            if window_ref() is window:
+                self._title_bar_theme_windows.remove(window_ref)
+                break
     
     def _notify_title_bar_theme_changed(self):
         """通知所有注册的回调函数标题栏主题已变更（批量优化）"""
         from PyQt6.QtWidgets import QApplication
         from PyQt6.QtCore import QTimer
-        
-        # 批量收集所有窗口句柄
-        windows = []
-        for callback in self._title_bar_theme_callbacks:
-            try:
-                if hasattr(callback, '__self__'):
-                    window = callback.__self__
-                    if window and hasattr(window, 'windowHandle'):
-                        windows.append(window)
-            except Exception as e:
-                print(f"[DEBUG] 收集窗口句柄失败: {e}")
         
         # 延迟批量更新，避免阻塞
         def batch_update_title_bars():
@@ -560,12 +558,24 @@ class UnifiedStyleHelper:
                 from utils import get_system_theme_mode
                 is_dark = get_system_theme_mode() == "dark"
             
-            # 批量更新所有窗口标题栏
-            for window in windows:
-                try:
-                    set_window_title_bar_theme(window, is_dark)
-                except Exception as e:
-                    print(f"[DEBUG] 更新窗口标题栏失败: {e}")
+            # 清理无效的弱引用
+            valid_windows = []
+            for window_ref in helper._title_bar_theme_windows:
+                window = window_ref()
+                if window is not None:
+                    valid_windows.append(window_ref)
+                
+            # 更新有效窗口列表
+            helper._title_bar_theme_windows = valid_windows
+            
+            # 批量更新所有有效窗口标题栏
+            for window_ref in helper._title_bar_theme_windows:
+                window = window_ref()
+                if window is not None:
+                    try:
+                        set_window_title_bar_theme(window, is_dark)
+                    except Exception as e:
+                        print(f"[DEBUG] 更新窗口标题栏失败: {e}")
         
         # 使用定时器延迟执行，避免阻塞主线程
         QTimer.singleShot(0, batch_update_title_bars)
