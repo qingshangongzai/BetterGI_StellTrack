@@ -284,6 +284,8 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.info_edit = QPlainTextEdit()
         self.info_edit.setReadOnly(True)
         self.info_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_info_edit_style())
+        # 设置思源宋体
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.info_edit, 12)
         # 禁用右键菜单
         self.info_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         

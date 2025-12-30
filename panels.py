@@ -510,6 +510,8 @@ class StatsPanel(QWidget):
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
         self.stats_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
+        # 设置思源宋体
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.stats_text, 10)
         self.stats_text.setPlainText(f"""脚本信息将在此显示...
 
 • 总事件数: 0
