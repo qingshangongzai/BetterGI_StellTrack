@@ -782,7 +782,7 @@ class UnifiedStyleHelper:
         """获取标语标签样式"""
         return f"""
             QLabel {{
-                font-family: "SourceHanSerifCN";
+                
                 font-size: 12px;
                 color: {self.COLORS['text_secondary']};
                 font-style: italic;
@@ -843,7 +843,7 @@ class UnifiedStyleHelper:
         """获取脚本文本样式"""
         return f"""
             QTextEdit {{ 
-                font-family: "Consolas, SourceHanSerifCN";
+                font-family: Consolas;
                 font-size: 12px;
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
@@ -857,7 +857,7 @@ class UnifiedStyleHelper:
         """获取日志显示样式"""
         return f"""
             QTextEdit {{ 
-                font-family: "Consolas, SourceHanSerifCN";
+                font-family: Consolas;
                 font-size: 10px;
                 background-color: {self.COLORS['bg']};
                 color: {self.COLORS['text']};
@@ -876,7 +876,7 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 6px;
-                font-family: SourceHanSerifCN;
+                
                 font-size: 10px;
                 line-height: 1.3;
             }}
@@ -899,7 +899,7 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 8px;
                 padding: 10px;
-                font-family: SourceHanSerifCN;
+                
                 font-size: 12px;
                 line-height: 1.3;
             }}
@@ -1325,7 +1325,6 @@ class UnifiedStyleHelper:
                 border-radius: 8px;
                 padding: 6px 8px;
                 background-color: {self.COLORS['card_bg']};
-                font-family: "SourceHanSerifCN";
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
                 text-align: center;
@@ -1392,7 +1391,6 @@ class UnifiedStyleHelper:
                 border: 1px solid {self.COLORS['border_light']};
                 border-radius: 6px;
                 padding: 6px;
-                font-family: "SourceHanSerifCN";
                 font-size: 10px;
                 {self.SHADOWS['small']}
             }}
