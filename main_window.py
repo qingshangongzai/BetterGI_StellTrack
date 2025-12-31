@@ -808,7 +808,7 @@ class ModernTableWidget(QTableWidget):
 
         # 设置行高
 
-        self.verticalHeader().setDefaultSectionSize(32)
+        self.verticalHeader().setDefaultSectionSize(30)
 
         self.verticalHeader().setVisible(False)
 
