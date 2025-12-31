@@ -20,7 +20,7 @@ class VersionManager:
         """
         # 版本号统一修改点
         self.major = 3
-        self.minor = 12
+        self.minor = 13
         self.patch = 0
         self.build = 0
         

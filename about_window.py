@@ -350,7 +350,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         copyright_layout.setContentsMargins(0, 5, 0, 0)  # 减少顶部边距
         
         copyright_text = QLabel(
-            "版权所有 © 2025 HXiaoStudio\n"
+            "版权所有 © 2025-2026 HXiaoStudio\n"
             "基于GPL v3开源，仅供学习交流使用，切勿用于商用项目。"
         )
         copyright_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
