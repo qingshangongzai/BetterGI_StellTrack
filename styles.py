@@ -1897,6 +1897,7 @@ class ModernLineEdit(QLineEdit):
         if width:
             self.setFixedWidth(width)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_line_edit_style())
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
 class ModernComboBox(QComboBox):
     """现代化的下拉框，内容居中显示"""
@@ -1947,6 +1948,7 @@ class ModernSpinBox(QSpinBox):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QSpinBox.ButtonSymbols.PlusMinus)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
 class ModernDoubleSpinBox(QDoubleSpinBox):
     """现代化的浮点数输入框，带上下按钮，内容居中显示"""
@@ -1957,6 +1959,7 @@ class ModernDoubleSpinBox(QDoubleSpinBox):
         if width:
             self.setFixedWidth(width)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
 
 class CenteredComboBox(QComboBox):
@@ -2006,6 +2009,8 @@ class CenteredLineEdit(QLineEdit):
         super().__init__(parent)
         # 设置文本居中对齐
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # 禁用右键菜单
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         # 获取基础样式并添加居中对齐样式
         base_style = UnifiedStyleHelper.get_instance().get_line_edit_style()
         # 在样式表中添加高度限制，覆盖原有设置
@@ -2027,6 +2032,7 @@ class TimeOffsetSpinBox(QSpinBox):
         self.setMaximum(999999)
         self.setSingleStep(100)
         self.setValue(0)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
         # 设置样式表，保持与界面风格统一
         base_style = UnifiedStyleHelper.get_instance().get_time_offset_spin_box_style()

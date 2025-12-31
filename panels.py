@@ -423,6 +423,7 @@ class OperationsPanel(QWidget):
             # 脚本内容显示
             script_text = QTextEdit()
             script_text.setReadOnly(True)
+            script_text.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
             script_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_script_text_style())
             script_text.setPlainText(json.dumps(self.parent_window.script, ensure_ascii=False, indent=2))
             layout.addWidget(script_text)

@@ -953,6 +953,8 @@ class PasteOptionsDialog(AnimatedDialog):
         # 说明文本
         explanation = QTextEdit()
         explanation.setReadOnly(True)
+        explanation.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        explanation.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         explanation.setPlainText("""选项说明：
 
 • 仅修改当前事件时间：
@@ -1033,6 +1035,7 @@ class DeleteOptionsDialog(AnimatedDialog):
         # 说明文本
         explanation = QTextEdit()
         explanation.setReadOnly(True)
+        explanation.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         explanation.setPlainText("""选项说明：
 
 • 仅修改当前事件时间：
