@@ -1308,9 +1308,9 @@ class UnifiedStyleHelper:
                 background-color: {self.COLORS['bg']}; /* 使用纯白色背景 */
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
-                {self.SHADOWS['small']}
                 min-height: 18px;
                 max-height: 18px;
+                {self.SHADOWS['small']}
             }}
         """
     
@@ -2039,8 +2039,8 @@ class TimeOffsetSpinBox(QSpinBox):
         # 添加高度限制样式
         enhanced_style = base_style + """
             QSpinBox {
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }
         """
         self.setStyleSheet(enhanced_style)
