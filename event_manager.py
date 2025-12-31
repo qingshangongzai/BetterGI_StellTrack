@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QComboBox, QPushButton, QTableWidgetItem,
                             QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
                             QListView, QFileDialog, QTextBrowser, QSpinBox, QMenu,
-                            QDialog, QHeaderView)
+                            QDialog, QHeaderView, QTableWidget)
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QThread
 from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
                         QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
@@ -384,6 +384,9 @@ class EventManager:
         self.events_table = ModernTableWidget(0, 8)  # 8列：行号 + 原有7列
         headers = ["序号", "事件名称", "事件类型", "键码", "X坐标", "Y坐标", "相对偏移时间", "绝对偏移时间"]
         self.events_table.setHorizontalHeaderLabels(headers)
+        
+        # 禁用表格的双击编辑功能
+        self.events_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         
         # 设置列宽和拉伸因子，保持原有比例关系
         # 序号: 50px → 拉伸因子 5
