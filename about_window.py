@@ -162,7 +162,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title=f"关于 BetterGI 星轨",
-                       size=(700, 530),
+                       size=(600, 530),
                        window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
         
         # 设置图标修复 - 在窗口显示后调用

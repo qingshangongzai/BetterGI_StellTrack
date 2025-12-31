@@ -73,7 +73,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         super().__init__(
             parent,
             title="检查更新",
-            size=(380, 320),
+            size=(500, 320),
             window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
         )
         

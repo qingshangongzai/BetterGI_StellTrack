@@ -16,7 +16,7 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         super().__init__(parent)
         self.events_table = events_table
         self.setWindowTitle("事件时间分析")
-        self.setFixedSize(600, 480)  # 大幅增加窗口大小以确保内容完全显示
+        self.setFixedSize(500, 480)  # 大幅增加窗口大小以确保内容完全显示
         
         # 设置窗口标志，删除最小化和最大化按钮
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
