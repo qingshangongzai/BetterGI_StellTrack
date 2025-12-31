@@ -103,7 +103,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
 
         self.setWindowTitle("批量编辑事件")
 
-        self.setFixedSize(492, 400)
+        self.setFixedSize(500, 400)
 
         
 
@@ -423,7 +423,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
         self.setWindowTitle("调试工具入口")
 
-        self.setFixedSize(480, 320)  # 增加高度，确保内容完全显示
+        self.setFixedSize(500, 320)  # 增加高度，确保内容完全显示
 
         
 

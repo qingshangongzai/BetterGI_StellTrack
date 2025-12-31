@@ -184,7 +184,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         try:
             # 设置最小尺寸和大小策略
-            self.setMinimumSize(450, 700)
+            self.setMinimumSize(450, 830)
             self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             
             # 应用对话框背景样式
