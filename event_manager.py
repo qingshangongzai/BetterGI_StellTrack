@@ -1277,12 +1277,13 @@ class EventManager:
                 # 获取前一个事件的绝对时间，用于计算绝对偏移时间
                 prev_absolute_time = self.get_prev_absolute_time(row)
                 
-                # 打开编辑对话框，传入前一个事件的绝对时间
+                # 打开编辑对话框，传入前一个事件的绝对时间和当前行号
                 dialog = EventEditDialog(
                     self.main_window, 
                     event_data=event_data, 
                     is_edit_mode=True,
-                    prev_absolute_time=prev_absolute_time
+                    prev_absolute_time=prev_absolute_time,
+                    current_row=row
                 )
                 if dialog.exec() == QDialog.DialogCode.Accepted:
                     new_event_data = dialog.get_event_data()

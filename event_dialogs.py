@@ -168,7 +168,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
     - insert_after_item: 插入后项目（用于插入模式）
     """
     
-    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0):
+    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
@@ -179,6 +179,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.insert_position = insert_position
         self.insert_after_item = insert_after_item
         self.prev_absolute_time = prev_absolute_time
+        self.current_row = current_row
         self.key_capture_active = False
         
         try:
@@ -456,18 +457,25 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         layout.addWidget(time_group)
         
-        # 插入位置信息 - 新增
+        # 位置信息 - 新增
+        group_title = "📌 插入位置信息" if not self.is_edit_mode else "📌 编辑位置信息"
+        insert_info_group = ModernGroupBox(group_title)
+        insert_info_layout = QVBoxLayout(insert_info_group)
+        insert_info_layout.setSpacing(8)
+        
+        # 位置显示
         if not self.is_edit_mode:
-            insert_info_group = ModernGroupBox("📌 插入位置信息")
-            insert_info_layout = QVBoxLayout(insert_info_group)
-            insert_info_layout.setSpacing(8)
-            
-            # 插入位置显示
             self.insert_position_label = QLabel("将在最后添加事件")
-            self.insert_position_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px;")
-            insert_info_layout.addWidget(self.insert_position_label)
-            
-            layout.addWidget(insert_info_group)
+        else:
+            current_event_number = self.current_row + 1 if self.current_row is not None else ""
+            self.insert_position_label = QLabel(f"正在编辑事件 {current_event_number}")
+        
+        # 设置样式：居中显示，使用primary颜色（与事件后插入新事件的颜色一致）
+        self.insert_position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.insert_position_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 10px;")
+        insert_info_layout.addWidget(self.insert_position_label)
+        
+        layout.addWidget(insert_info_group)
         
         # 添加弹性空间
         layout.addStretch()
