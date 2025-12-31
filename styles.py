@@ -591,8 +591,8 @@ class UnifiedStyleHelper:
                     border-radius: 8px;
                     padding: 6px 12px;
                     font-size: 11px;
-                    min-height: 20px;
-                    max-height: 20px;
+                    min-height: 18px;
+                    max-height: 18px;
                     {self.SHADOWS['small']}
 
                 }}
@@ -608,8 +608,8 @@ class UnifiedStyleHelper:
                     padding: 6px 12px;
                     font-weight: bold;
                     font-size: 11px;
-                    min-height: 20px;
-                    max-height: 20px;
+                    min-height: 18px;
+                    max-height: 18px;
                     {self.SHADOWS['small']}
                 }}
                 QPushButton:hover {{
@@ -628,8 +628,8 @@ class UnifiedStyleHelper:
                     border-radius: 8px;
                     padding: 6px 12px;
                     font-size: 11px;
-                    min-height: 20px;
-                    max-height: 20px;
+                    min-height: 18px;
+                    max-height: 18px;
                     {self.SHADOWS['small']}
                 }}
                 QPushButton:hover {{
@@ -653,8 +653,8 @@ class UnifiedStyleHelper:
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
                 {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }}
             QLineEdit:focus {{ 
                 border-color: {self.COLORS['primary']};
@@ -677,8 +677,8 @@ class UnifiedStyleHelper:
                 font-size: 11px;
                 min-width: 80px;
                 {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }}
             QComboBox::drop-down {{ 
                 border: none;
@@ -965,8 +965,8 @@ class UnifiedStyleHelper:
                 selection-background-color: {self.COLORS['primary']};
                 text-align: center;
                 {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }}
             QSpinBox:focus, QDoubleSpinBox:focus {{
                 border-color: {self.COLORS['primary']};
@@ -1309,8 +1309,8 @@ class UnifiedStyleHelper:
                 font-size: 11px;
                 selection-background-color: {self.COLORS['primary']};
                 {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }}
         """
     
@@ -1969,8 +1969,8 @@ class CenteredComboBox(QComboBox):
         # 添加高度限制样式
         enhanced_style = base_style + """
             QComboBox {
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }
         """
         self.setStyleSheet(enhanced_style)
@@ -2011,8 +2011,8 @@ class CenteredLineEdit(QLineEdit):
         # 在样式表中添加高度限制，覆盖原有设置
         enhanced_style = base_style + """
             QLineEdit {
-                min-height: 20px;
-                max-height: 20px;
+                min-height: 18px;
+                max-height: 18px;
             }
         """
         self.setStyleSheet(enhanced_style)
@@ -2405,8 +2405,8 @@ class EventEditButton(AnimatedButton):
         # 添加显式的高度控制样式，确保与其他UI元素高度一致
         enhanced_style = base_style + "\n"
         enhanced_style += "QPushButton {\n"
-        enhanced_style += "    min-height: 20px;\n"
-        enhanced_style += "    max-height: 20px;\n"
+        enhanced_style += "    min-height: 18px;\n"
+        enhanced_style += "    max-height: 18px;\n"
         enhanced_style += "}"
         self.setStyleSheet(enhanced_style)
         
