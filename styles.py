@@ -853,7 +853,7 @@ class UnifiedStyleHelper:
         """获取脚本文本样式"""
         return f"""
             QTextEdit {{ 
-                font-family: Consolas;
+                font-family: SourceHanSerifCN;
                 font-size: 12px;
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
@@ -867,7 +867,7 @@ class UnifiedStyleHelper:
         """获取日志显示样式"""
         return f"""
             QTextEdit {{ 
-                font-family: Consolas;
+                font-family: SourceHanSerifCN;
                 font-size: 10px;
                 background-color: {self.COLORS['bg']};
                 color: {self.COLORS['text']};
