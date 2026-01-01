@@ -388,7 +388,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
   许可证地址：https://atelier-anchor.com/typefaces/smiley-sans/license/
 
 · 本程序默认字体使用了「思源宋体」，基于SIL Open Font License 1.1协议授权。
-  版权所有：版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
+  版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
   项目地址：https://github.com/adobe-fonts/source-han-serif
   许可证地址：http://scripts.sil.org/OFL
 
