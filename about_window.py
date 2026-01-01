@@ -162,7 +162,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title=f"关于 BetterGI 星轨",
-                       size=(700, 530),
+                       size=(600, 530),
                        window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
         
         # 设置图标修复 - 在窗口显示后调用
@@ -350,7 +350,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         copyright_layout.setContentsMargins(0, 5, 0, 0)  # 减少顶部边距
         
         copyright_text = QLabel(
-            "版权所有 © 2025 HXiaoStudio\n"
+            "版权所有 © 2025-2026 HXiaoStudio\n"
             "基于GPL v3开源，仅供学习交流使用，切勿用于商用项目。"
         )
         copyright_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -388,7 +388,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
   许可证地址：https://atelier-anchor.com/typefaces/smiley-sans/license/
 
 · 本程序默认字体使用了「思源宋体」，基于SIL Open Font License 1.1协议授权。
-  版权所有：版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
+  版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
   项目地址：https://github.com/adobe-fonts/source-han-serif
   许可证地址：http://scripts.sil.org/OFL
 

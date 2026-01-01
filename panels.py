@@ -423,6 +423,7 @@ class OperationsPanel(QWidget):
             # 脚本内容显示
             script_text = QTextEdit()
             script_text.setReadOnly(True)
+            script_text.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
             script_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_script_text_style())
             script_text.setPlainText(json.dumps(self.parent_window.script, ensure_ascii=False, indent=2))
             layout.addWidget(script_text)
@@ -507,25 +508,15 @@ class StatsPanel(QWidget):
         group_layout = QVBoxLayout(group)
         group_layout.setContentsMargins(10, 15, 10, 10)
 
-        self.stats_text = QTextEdit()
-        self.stats_text.setReadOnly(True)
-        self.stats_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
+        self.stats_label = QLabel()
+        self.stats_label.setWordWrap(True)
+        self.stats_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.stats_label.setStyleSheet(UnifiedStyleHelper.get_instance().get_explanation_text_edit_style())
         # 设置思源宋体
-        UnifiedStyleHelper.get_instance().set_source_han_font(self.stats_text, 10)
-        self.stats_text.setPlainText(f"""脚本信息将在此显示...
+        UnifiedStyleHelper.get_instance().set_source_han_font(self.stats_label, 8)
+        self.stats_label.setText(f"脚本信息将在此显示...\n\n• 总事件数: 0\n• 按键事件: 0\n• 鼠标事件: 0  \n• 总执行时间: 0ms\n• 循环次数: 1\n• 循环间隔: 0ms\n\n窗口设置:\n• 分辨率: 1920x1080\n• 缩放比例: 100%")
 
-• 总事件数: 0
-• 按键事件: 0
-• 鼠标事件: 0  
-• 总执行时间: 0ms
-• 循环次数: 1
-• 循环间隔: 0ms
-
-窗口设置:
-• 分辨率: 1920x1080
-• 缩放比例: 100%""")
-
-        group_layout.addWidget(self.stats_text)
+        group_layout.addWidget(self.stats_label)
         layout.addWidget(group)
 
         # 设置尺寸策略
@@ -543,8 +534,8 @@ class StatsPanel(QWidget):
             group.setStyleSheet(helper.get_group_box_style())
         
         # 更新统计文本样式
-        if hasattr(self, "stats_text"):
-            self.stats_text.setStyleSheet(helper.get_explanation_text_edit_style())
+        if hasattr(self, "stats_label"):
+            self.stats_label.setStyleSheet(helper.get_explanation_text_edit_style())
     
     def update_stats(self):
         """更新统计信息"""
@@ -613,7 +604,7 @@ class StatsPanel(QWidget):
                 scale
             )
             
-            self.stats_text.setPlainText(stats_text)
+            self.stats_label.setText(stats_text)
             
             # 同时更新预计总时间标签
             if hasattr(self.parent_window, 'on_calculate_total_time'):
@@ -622,7 +613,7 @@ class StatsPanel(QWidget):
         except Exception as e:
             error_msg = f"更新统计信息时出错: {e}"
             self.debug_logger.log_error(error_msg)
-            self.stats_text.setPlainText(f"统计信息更新失败: {error_msg}")
+            self.stats_label.setText(f"统计信息更新失败: {error_msg}")
     
     def count_events(self, event_manager):
         """统计各类事件数量"""
@@ -652,9 +643,9 @@ class StatsPanel(QWidget):
                           mouse_click_count, single_loop_time_ms, total_time_ms, avg_interval, 
                           loop_count, interval, time_unit, width, height, scale):
         """生成统计信息文本"""
-        return f"""═════════════════
+        return f"""═══════════
 📊 脚本统计信息
-═════════════════
+═══════════
 
 🔢 事件统计:
 • 总事件数: {row_count}
@@ -721,4 +712,4 @@ class StatsPanel(QWidget):
     
     def update_stats_display(self, stats_text):
         """更新统计信息显示 - 保持向后兼容"""
-        self.stats_text.setPlainText(stats_text)
+        self.stats_label.setText(stats_text)
