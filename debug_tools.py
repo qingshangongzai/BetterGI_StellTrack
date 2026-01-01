@@ -490,6 +490,7 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
             self.password_input = QLineEdit()
             self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
             self.password_input.setPlaceholderText("输入密码...")
+            self.password_input.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
             self.password_input.setStyleSheet(UnifiedStyleHelper.get_instance().get_line_edit_style())
             self.password_input.returnPressed.connect(self.verify_password)
             layout.addWidget(self.password_input)
@@ -792,6 +793,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 创建日志文本显示区域
             self.log_display = QTextEdit()
             self.log_display.setReadOnly(True)  # 设置为只读模式
+            self.log_display.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
             # 配置暗色主题样式，提高长时间阅读的舒适度
             self.log_display.setStyleSheet(UnifiedStyleHelper.get_instance().get_log_display_style())
             log_layout.addWidget(self.log_display)

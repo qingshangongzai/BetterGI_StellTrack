@@ -73,7 +73,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         super().__init__(
             parent,
             title="检查更新",
-            size=(380, 320),
+            size=(500, 320),
             window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
         )
         
@@ -149,6 +149,7 @@ class UpdateDialog(FadeInWindowMixin, StyledDialog):
         # 状态信息文本框
         self.status_text = QTextEdit()
         self.status_text.setReadOnly(True)
+        self.status_text.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.status_text.setStyleSheet(UnifiedStyleHelper.get_instance().get_text_edit_style() + """
             QTextEdit {
                 text-align: center;
