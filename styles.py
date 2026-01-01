@@ -883,7 +883,7 @@ class UnifiedStyleHelper:
             QTextBrowser {{ 
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
-                border: 1px solid {self.COLORS['border_light']};
+                border: none;
                 border-radius: 8px;
                 padding: 6px;
                 
@@ -906,7 +906,7 @@ class UnifiedStyleHelper:
             QPlainTextEdit {{ 
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
-                border: 1px solid {self.COLORS['border_light']};
+                border: none;
                 border-radius: 8px;
                 padding: 10px;
                 
@@ -1039,7 +1039,7 @@ class UnifiedStyleHelper:
             QTextEdit {{
                 background-color: {self.COLORS['card_bg']};
                 color: {self.COLORS['text']};
-                border: 1px solid {self.COLORS['border_light']};
+                border: none;
                 border-radius: 8px;
                 padding: 8px;
                 font-size: 10px;
