@@ -1082,10 +1082,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.setWindowTitle(f"{app_info['name']} v{version}")
 
             # 设置主窗口大小
-
             self.setMinimumSize(1100, 500)
-
-            self.resize(1200,820)
+            self.resize(1200, 790)
 
             
 
