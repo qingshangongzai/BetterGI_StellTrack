@@ -823,6 +823,11 @@ class ModernTableWidget(QTableWidget):
         # 设置表头右键菜单策略
         self.horizontalHeader().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
+    def refresh_theme_styles(self):
+        """刷新表格的样式，应用当前主题"""
+        helper = UnifiedStyleHelper.get_instance()
+        self.setStyleSheet(helper.get_table_style())
+
 
 
 
@@ -2239,6 +2244,10 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 事件编辑区域
         if hasattr(self, "event_manager") and hasattr(self.event_manager, "refresh_theme_styles"):
             self.event_manager.refresh_theme_styles()
+        
+        # 直接刷新事件表格样式，确保边框设置正确
+        if hasattr(self, "event_manager") and hasattr(self.event_manager, "events_table"):
+            self.event_manager.events_table.refresh_theme_styles()
 
     def setup_application_style(self):
         """设置应用程序样式 - 使用全局样式管理器"""
