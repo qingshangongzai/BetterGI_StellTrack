@@ -341,7 +341,7 @@ class EventManager:
         # 事件类型过滤
         self.filter_type_combo = ModernComboBox(width=150)
         self.filter_type_combo.addItem("全部事件类型")
-        self.filter_type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
+        self.filter_type_combo.addItems(["按键按下", "按键释放", "指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         search_layout.addWidget(self.filter_type_combo)
         
         # 搜索按钮
@@ -852,7 +852,7 @@ class EventManager:
                         keycode_item = self.events_table.item(row_idx, 3)
                         if keycode_item:
                             # 鼠标事件类型列表
-                            mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+                            mouse_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
                             # 按键事件类型列表
                             key_event_types = ["按键按下", "按键释放"]
                             
@@ -930,7 +930,7 @@ class EventManager:
         sample_data = [
             [1, "按下回车", "按键按下", "13", "0", "0", "0", "0"],
             [2, "释放回车", "按键释放", "13", "0", "0", "100", "100"],
-            [3, "鼠标移动", "鼠标移动", "", "500", "500", "300", "400"],
+            [3, "平行移动", "平行移动", "", "500", "500", "300", "400"],
             [4, "左键按下", "左键按下", "", "500", "500", "500", "900"],
             [5, "左键释放", "左键释放", "", "500", "500", "600", "1500"]
         ]
