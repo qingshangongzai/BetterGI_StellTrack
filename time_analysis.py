@@ -144,11 +144,11 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         main_layout.addLayout(reset_layout)
     
     def populate_event_combos(self):
-        """从事件表格中填充事件列表到下拉框，只严格排除鼠标移动事件"""
+        """从事件表格中填充事件列表到下拉框，只严格排除指针移动和平行移动事件"""
         if not self.events_table:
             return
         
-        # 获取所有唯一事件名称，只严格排除鼠标移动事件
+        # 获取所有唯一事件名称，只严格排除指针移动和平行移动事件
         event_names = set()
         for row in range(self.events_table.rowCount()):
             item = self.events_table.item(row, 1)  # 事件名称在第2列（索引1）
@@ -156,17 +156,17 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
             
             # 确保项目存在且有文本内容
             if item and item.text():
-                # 只排除明确标识为鼠标移动的事件
+                # 只排除明确标识为指针移动或平行移动的事件
                 skip_event = False
                 
-                # 通过事件类型判断是否为鼠标移动事件
-                if event_type_item and event_type_item.text() == "鼠标移动":
+                # 通过事件类型判断是否为指针移动或平行移动事件
+                if event_type_item and (event_type_item.text() == "指针移动" or event_type_item.text() == "平行移动"):
                     skip_event = True
-                # 只在事件名称完全匹配"鼠标移动"时才排除
-                elif item.text().strip() == "鼠标移动":
+                # 只在事件名称完全匹配"指针移动"或"平行移动"时才排除
+                elif item.text().strip() == "指针移动" or item.text().strip() == "平行移动":
                     skip_event = True
                     
-                # 添加非鼠标移动事件
+                # 添加非指针移动和平行移动事件
                 if not skip_event:
                     event_names.add(item.text())
         
