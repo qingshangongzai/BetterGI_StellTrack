@@ -204,7 +204,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
                         self.key_events[event_name] = (event_type, keycode)
         
         # 基本事件类型（移除了"按键按下"和"按键释放"）
-        base_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+        base_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
         # 创建事件类型替换标签
         type_replace_label = QLabel("事件类型替换:")
@@ -823,6 +823,11 @@ class ModernTableWidget(QTableWidget):
         # 设置表头右键菜单策略
         self.horizontalHeader().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
+    def refresh_theme_styles(self):
+        """刷新表格的样式，应用当前主题"""
+        helper = UnifiedStyleHelper.get_instance()
+        self.setStyleSheet(helper.get_table_style())
+
 
 
 
@@ -1077,10 +1082,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.setWindowTitle(f"{app_info['name']} v{version}")
 
             # 设置主窗口大小
-
             self.setMinimumSize(1100, 500)
-
-            self.resize(1200,820)
+            self.resize(1200, 790)
 
             
 
@@ -2239,6 +2242,10 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 事件编辑区域
         if hasattr(self, "event_manager") and hasattr(self.event_manager, "refresh_theme_styles"):
             self.event_manager.refresh_theme_styles()
+        
+        # 直接刷新事件表格样式，确保边框设置正确
+        if hasattr(self, "event_manager") and hasattr(self.event_manager, "events_table"):
+            self.event_manager.events_table.refresh_theme_styles()
 
     def setup_application_style(self):
         """设置应用程序样式 - 使用全局样式管理器"""

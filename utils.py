@@ -62,7 +62,8 @@ KEY_NAME_MAPPING = {
 EVENT_TYPE_MAP = {
     "按键按下": 0,
     "按键释放": 1,
-    "鼠标移动": 2,
+    "指针移动": 2,
+    "平行移动": 3,
     "左键按下": 4,
     "左键释放": 5,
     "右键按下": 4,
@@ -117,7 +118,8 @@ def convert_event_type_num_to_str_with_button(type_num, mouse_button=None):
     type_mapping = {
         0: "按键按下",
         1: "按键释放", 
-        2: "鼠标移动",
+        2: "指针移动",
+        3: "平行移动",
         4: "左键按下",   # 默认左键
         5: "左键释放",   # 默认左键
         6: "鼠标滚轮"    # 滚轮事件
@@ -170,7 +172,7 @@ def generate_key_event_name(event_type_str, keycode):
         except (ValueError, TypeError):
             # 如果键码不是数字，返回默认名称
             return event_type_str
-    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标移动", "鼠标滚轮"]:
+    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"]:
         # 鼠标事件，返回原名称
         return event_type_str
     else:

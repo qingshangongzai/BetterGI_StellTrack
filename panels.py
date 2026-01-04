@@ -630,7 +630,7 @@ class StatsPanel(QWidget):
                     key_press_count += 1
                 elif event_type == "按键释放":
                     key_release_count += 1
-                elif event_type == "鼠标移动":
+                elif event_type == "指针移动" or event_type == "平行移动":
                     mouse_move_count += 1
                 elif event_type in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放"]:
                     mouse_click_count += 1

@@ -712,7 +712,7 @@ class UnifiedStyleHelper:
         # 使用系统默认字体，避免硬编码字体名称
         return f"""
             QTableWidget {{ 
-                border: 1px solid {self.COLORS['border']};
+                border: none;
                 border-radius: 8px;
                 background-color: {self.COLORS['card_bg']};
                 gridline-color: {self.COLORS['grid']};

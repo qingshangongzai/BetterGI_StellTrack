@@ -83,7 +83,7 @@ class SimpleCoordinateCapture(StyledDialog):
         self.image_label.mousePressEvent = self.on_mouse_press
         
     def on_mouse_move(self, event):
-        """鼠标移动事件"""
+        """指针移动事件"""
         if self.pixmap is None or self.pixmap.isNull():
             return
             
@@ -156,7 +156,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
     
     支持的事件类型包括：
     - 按键按下/释放
-    - 鼠标移动
+    - 指针移动
     - 鼠标按键按下/释放（左、右、中键）
     - 鼠标滚轮
     
@@ -238,7 +238,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 事件类型
         basic_layout.addWidget(QLabel("事件类型:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
         self.type_combo = CenteredComboBox()
-        self.type_combo.addItems(["按键按下", "按键释放", "鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
+        self.type_combo.addItems(["按键按下", "按键释放", "指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"])
         self.type_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         basic_layout.addWidget(self.type_combo, 1, 1)
         
@@ -713,7 +713,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             return
         
         # 定义鼠标事件类型列表
-        mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+        mouse_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
         # 判断是否为自定义名称的辅助函数
         def is_custom_name(name):
@@ -813,7 +813,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                     if re.search(r'-\d+$', name):
                         return True
                     # 精确匹配系统生成的鼠标事件名称
-                    mouse_event_types = ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
+                    mouse_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
                     if name in mouse_event_types:
                         return False
                     # 精确匹配系统生成的按键事件名称格式
@@ -829,7 +829,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             except ValueError:
                 # 如果键码不是数字，忽略
                 pass
-        elif self.type_combo.currentText() in ["鼠标移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"] and keycode.strip():
+        elif self.type_combo.currentText() in ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"] and keycode.strip():
             # 鼠标事件时输入了键码，提示冲突
             ChineseMessageBox.show_warning(self, "事件类型冲突", "鼠标事件不需要键码")
             self.keycode_edit.clear()
