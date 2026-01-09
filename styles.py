@@ -1076,6 +1076,16 @@ class UnifiedStyleHelper:
             QComboBox::down-arrow {{
                 image: none;
             }}
+            QComboBox QAbstractItemView {{
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 8px;
+                background-color: {self.COLORS['card_bg']};
+                selection-background-color: {self.COLORS['primary']};
+                selection-color: white;
+                font-size: 11px;
+                padding: 4px;
+                {self.SHADOWS['small']}
+            }}
         """
     
     def get_splitter_style(self):

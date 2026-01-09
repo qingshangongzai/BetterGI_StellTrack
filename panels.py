@@ -112,7 +112,7 @@ class SettingsPanel(QWidget):
         self.time_unit_combo = ModernComboBox()
         self.time_unit_combo.addItems(["ms", "s", "min"])
         self.time_unit_combo.setCurrentText("s")
-        self.time_unit_combo.setFixedWidth(50)  # 设置固定宽度为50px
+        self.time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
         # 使用统一的居中组合框样式
         self.time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
         
