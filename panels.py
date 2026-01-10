@@ -242,6 +242,192 @@ class SettingsPanel(QWidget):
         self.height_input.setText(state.get('height', '1080'))
         self.scale_combo.setCurrentText(state.get('scale', '100%'))
     
+    def on_detect_screen_info(self):
+        """检测屏幕分辨率和缩放比例"""
+        self.debug_logger.log_info("开始检测屏幕信息...")
+        
+        # 获取屏幕分辨率
+        width, height = self.get_screen_resolution()
+        
+        # 获取系统缩放比例
+        scale = self.get_system_scale()
+        
+        # 更新设置面板
+        self.update_screen_settings(width, height, scale)
+        
+        # 更新统计信息
+        if self.parent_window and hasattr(self.parent_window, 'event_manager'):
+            self.parent_window.event_manager.update_stats()
+        
+        # 更新状态栏
+        if self.parent_window and hasattr(self.parent_window, 'status_bar'):
+            self.parent_window.status_bar.showMessage(f"✅ 已获取屏幕信息: {width}×{height}, 缩放: {scale}")
+        
+        self.debug_logger.log_info(f"屏幕信息获取完成: {width}×{height}, 缩放: {scale}")
+    
+    def get_screen_resolution(self):
+        """获取屏幕分辨率（参考原代码实现）"""
+        try:
+            user32 = ctypes.windll.user32
+            
+            # 方法1: 使用GetSystemMetrics获取主显示器分辨率
+            width = user32.GetSystemMetrics(0)  # SM_CXSCREEN
+            height = user32.GetSystemMetrics(1)  # SM_CYSCREEN
+            
+            # 方法2: 使用GetDeviceCaps获取更准确的分辨率（考虑DPI缩放）
+            try:
+                hdc = user32.GetDC(0)
+                if hdc:
+                    # 获取实际像素分辨率
+                    actual_width = ctypes.windll.gdi32.GetDeviceCaps(hdc, 118)  # HORZRES
+                    actual_height = ctypes.windll.gdi32.GetDeviceCaps(hdc, 117)  # VERTRES
+                    
+                    # 如果获取到了实际分辨率，使用它
+                    if actual_width > 0 and actual_height > 0:
+                        width, height = actual_width, actual_height
+                    
+                    user32.ReleaseDC(0, hdc)
+            except Exception as inner_e:
+                self.debug_logger.log_debug(f"获取实际分辨率失败: {inner_e}")
+            
+            return width, height
+        except Exception as e:
+            self.debug_logger.log_error(f"获取屏幕分辨率失败: {e}")
+            return 1920, 1080
+    
+    def get_system_scale(self):
+        """获取系统缩放比例"""
+        try:
+            # 定义所需的API常量和结构
+            class MONITORINFOEX(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", ctypes.c_ulong),
+                    ("rcMonitor", ctypes.c_long * 4),
+                    ("rcWork", ctypes.c_long * 4),
+                    ("dwFlags", ctypes.c_ulong),
+                    ("szDevice", ctypes.c_wchar * 32)
+                ]
+            
+            # DPI类型
+            MDT_EFFECTIVE_DPI = 0
+            MDT_ANGULAR_DPI = 1
+            MDT_RAW_DPI = 2
+            
+            # 获取主显示器句柄
+            user32 = ctypes.windll.user32
+            gdi32 = ctypes.windll.gdi32
+            shcore = ctypes.windll.shcore
+            
+            scale = 100
+            
+            try:
+                # 方法1: 使用GetDpiForMonitor API（Windows 8.1+）获取当前DPI
+                try:
+                    # 获取主显示器句柄
+                    monitor = user32.MonitorFromWindow(0, 1)  # MONITOR_DEFAULTTOPRIMARY
+                    
+                    if monitor:
+                        # 定义输出参数
+                        dpi_x = ctypes.c_uint()
+                        dpi_y = ctypes.c_uint()
+                        
+                        # 调用GetDpiForMonitor获取DPI
+                        result = shcore.GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, ctypes.byref(dpi_x), ctypes.byref(dpi_y))
+                        
+                        if result == 0:  # S_OK
+                            logical_dpi_x = dpi_x.value
+                        else:
+                            # API调用失败，使用备用方法
+                            logical_dpi_x = 96
+                except Exception as inner_e:
+                    self.debug_logger.log_debug(f"GetDpiForMonitor调用失败: {inner_e}")
+                    logical_dpi_x = 96
+                
+                # 如果GetDpiForMonitor失败，使用GetDeviceCaps获取逻辑DPI
+                if logical_dpi_x == 96:
+                    try:
+                        hdc = user32.GetDC(0)
+                        if hdc:
+                            logical_dpi_x = gdi32.GetDeviceCaps(hdc, 88)   # LOGPIXELSX
+                            user32.ReleaseDC(0, hdc)
+                    except Exception as inner_e:
+                        self.debug_logger.log_debug(f"GetDeviceCaps获取DPI失败: {inner_e}")
+                        logical_dpi_x = 96
+                
+                # 计算缩放比例（基于96 DPI为100%）
+                if logical_dpi_x > 0:
+                    scale_percent = int((logical_dpi_x / 96.0) * 100)
+                    
+                    # 四舍五入到最接近的标准值
+                    standard_scales = [100, 125, 150, 175, 200, 225, 250]
+                    
+                    # 计算与每个标准值的差值
+                    differences = [abs(scale_percent - standard) for standard in standard_scales]
+                    
+                    # 找到最小差值对应的索引
+                    closest_index = differences.index(min(differences))
+                    
+                    # 获取最接近的标准缩放值
+                    scale = standard_scales[closest_index]
+            except Exception as inner_e:
+                self.debug_logger.log_debug(f"获取DPI失败: {inner_e}")
+                scale = 100
+            
+            return f"{scale}%"
+        except Exception as e:
+            self.debug_logger.log_error(f"获取系统缩放比例失败: {e}")
+            return "100%"
+    
+    def on_calculate_total_time(self):
+        """计算并显示总时间"""
+        try:
+            if not self.parent_window or not hasattr(self.parent_window, 'event_manager'):
+                self.update_total_time_display(0)
+                return
+                
+            events_table = self.parent_window.event_manager.events_table
+            
+            if events_table.rowCount() == 0:
+                self.update_total_time_display(0)
+                return
+                
+            # 获取最后一个事件的绝对时间
+            last_row = events_table.rowCount() - 1
+            last_abs_time_item = events_table.item(last_row, 7)
+            if not last_abs_time_item:
+                self.update_total_time_display(0)
+                return
+                
+            single_loop_time_ms = int(last_abs_time_item.text()) if last_abs_time_item.text().isdigit() else 0
+            
+            # 获取循环次数
+            loop_count = self.get_safe_loop_count()
+            
+            # 获取间隔时间
+            interval = self.interval_input.value()
+            time_unit = self.time_unit_combo.currentText()
+            
+            # 转换间隔时间为毫秒
+            if time_unit == "s":
+                interval_ms = interval * 1000
+            elif time_unit == "min":
+                interval_ms = interval * 60000
+            else:  # ms
+                interval_ms = interval
+            
+            # 计算总时间：单次循环时间 * 循环次数 + 间隔时间 * (循环次数 - 1)
+            total_time_ms = single_loop_time_ms * loop_count + interval_ms * (loop_count - 1)
+            
+            # 更新设置面板的总时间显示
+            self.update_total_time_display(total_time_ms)
+            
+            self.debug_logger.log_info(f"已计算总时间: {total_time_ms}ms (单次循环: {single_loop_time_ms}ms, 循环次数: {loop_count}, 间隔: {interval}{time_unit})")
+        except Exception as e:
+            error_msg = f"计算总时间失败: {str(e)}"
+            self.debug_logger.log_error(error_msg)
+            # 显示错误信息但不崩溃
+            self.update_total_time_display(0)
+
     def refresh_theme_styles(self):
         """根据当前主题重新应用设置面板样式"""
         helper = UnifiedStyleHelper.get_instance()
@@ -607,8 +793,8 @@ class StatsPanel(QWidget):
             self.stats_label.setText(stats_text)
             
             # 同时更新预计总时间标签
-            if hasattr(self.parent_window, 'on_calculate_total_time'):
-                self.parent_window.on_calculate_total_time()
+            if hasattr(self.parent_window, 'settings_panel'):
+                self.parent_window.settings_panel.on_calculate_total_time()
             
         except Exception as e:
             error_msg = f"更新统计信息时出错: {e}"

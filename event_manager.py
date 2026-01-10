@@ -915,7 +915,7 @@ class EventManager:
             self.update_stats()
             
             # 立即更新预计总时间
-            self.main_window.on_calculate_total_time()
+            self.main_window.settings_panel.on_calculate_total_time()
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
@@ -1015,7 +1015,7 @@ class EventManager:
             self.debug_logger.log_info("已按绝对时间排序事件并重新计算相对时间")
             
             # 立即更新预计总时间
-            self.main_window.on_calculate_total_time()
+            self.main_window.settings_panel.on_calculate_total_time()
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
@@ -1161,7 +1161,7 @@ class EventManager:
         """更新应用状态"""
         self.update_stats()
         self.main_window.mark_state_dirty()
-        self.main_window.on_calculate_total_time()
+        self.main_window.settings_panel.on_calculate_total_time()
     
     def on_add_event(self):
         """添加事件 - 在指定位置插入"""
@@ -1460,7 +1460,7 @@ class EventManager:
             self.debug_logger.log_info(f"已删除 {len(selected_rows)} 个事件，使用逻辑: {time_option}")
             
             # 立即更新预计总时间
-            self.main_window.on_calculate_total_time()
+            self.main_window.settings_panel.on_calculate_total_time()
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
@@ -1636,7 +1636,7 @@ class EventManager:
             self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件，使用逻辑: {time_option}")
             
             # 立即更新预计总时间
-            self.main_window.on_calculate_total_time()
+            self.main_window.settings_panel.on_calculate_total_time()
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False
@@ -1746,7 +1746,7 @@ class EventManager:
             self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件到第一个位置，使用逻辑: {time_option}")
             
             # 立即更新预计总时间
-            self.main_window.on_calculate_total_time()
+            self.main_window.settings_panel.on_calculate_total_time()
         finally:
             # 结束批量操作
             self.main_window._batch_operation = False

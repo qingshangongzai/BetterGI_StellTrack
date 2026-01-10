@@ -701,7 +701,7 @@ class ScriptManager:
                 ChineseMessageBox.show_info(self.main_window, "成功", f"脚本导入成功！\n包含 {len(imported_events)} 个事件")
                 
                 # 立即更新预计总时间
-                self.main_window.on_calculate_total_time()
+                self.main_window.settings_panel.on_calculate_total_time()
             finally:
                 # 结束批量操作
                 self.main_window._batch_operation = False

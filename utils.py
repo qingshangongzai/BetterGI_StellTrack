@@ -334,8 +334,8 @@ def update_app_state(main_window, event_manager=None):
         main_window.stats_panel.update_stats()
     
     # 立即更新预计总时间
-    if hasattr(main_window, 'on_calculate_total_time'):
-        main_window.on_calculate_total_time()
+    if hasattr(main_window, 'settings_panel'):
+        main_window.settings_panel.on_calculate_total_time()
 
 # =============================================================================
 # Windows 任务栏图标修复相关函数
