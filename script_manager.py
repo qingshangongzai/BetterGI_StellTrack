@@ -8,7 +8,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 # 导入共享模块
 from styles import ChineseMessageBox, UnifiedStyleHelper, FadeInWindowMixin, StyledDialog, get_global_font_manager, DialogFactory
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_user_data_dir
+from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_script_default_dir
 from debug_tools import get_global_debug_logger
 
 # =============================================================================
@@ -594,9 +594,9 @@ class ScriptManager:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
             default_filename = f"BetterGI_GCM_{timestamp}.json"
             
-            # 获取用户数据目录作为默认保存路径
-            user_data_dir = get_user_data_dir()
-            default_path = os.path.join(user_data_dir, default_filename)
+            # 获取脚本默认目录作为默认保存路径
+            script_default_dir = get_script_default_dir()
+            default_path = os.path.join(script_default_dir, default_filename)
             
             filename, _ = QFileDialog.getSaveFileName(
                 self.main_window,
@@ -636,13 +636,13 @@ class ScriptManager:
                 return
             
             # 打开文件对话框选择要导入的脚本文件
-            # 获取用户数据目录作为默认导入路径
-            user_data_dir = get_user_data_dir()
+            # 获取脚本默认目录作为默认导入路径
+            script_default_dir = get_script_default_dir()
             
             filename, _ = QFileDialog.getOpenFileName(
                 self.main_window,
                 "导入脚本",
-                user_data_dir,
+                script_default_dir,
                 "JSON文件 (*.json);;所有文件 (*.*)"
             )
             

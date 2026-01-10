@@ -504,6 +504,19 @@ def get_user_data_dir():
     
     return data_dir
 
+def get_script_default_dir():
+    r"""获取脚本默认目录，用于打开和保存脚本文件
+    
+    返回: C:\Program Files\BetterGI\User\KeyMouseScript
+    """
+    script_dir = r"C:\Program Files\BetterGI\User\KeyMouseScript"
+    
+    # 确保目录存在
+    if not os.path.exists(script_dir):
+        os.makedirs(script_dir, exist_ok=True)
+    
+    return script_dir
+
 def get_system_theme_mode():
     """获取系统主题模式（"light" 或 "dark"）"""
     try:
