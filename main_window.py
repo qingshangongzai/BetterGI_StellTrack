@@ -2504,9 +2504,25 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
         # 设置面板信号 - 修改为调用面板的方法
         self.settings_panel.detect_screen_btn.clicked.connect(self.settings_panel.on_detect_screen_info)
-        self.settings_panel.loop_count_input.valueChanged.connect(self.settings_panel.on_calculate_total_time)
-        self.settings_panel.interval_input.valueChanged.connect(self.settings_panel.on_calculate_total_time)
-        self.settings_panel.time_unit_combo.currentTextChanged.connect(self.settings_panel.on_calculate_total_time)
+        
+        # 循环设置更改时同时更新设置面板的总时间和统计面板的信息
+        self.settings_panel.loop_count_input.valueChanged.connect(self.on_loop_settings_changed)
+        self.settings_panel.interval_input.valueChanged.connect(self.on_loop_settings_changed)
+        self.settings_panel.time_unit_combo.currentTextChanged.connect(self.on_loop_settings_changed)
+
+    def on_loop_settings_changed(self):
+        """循环设置更改时的处理函数
+        
+        当循环次数、间隔时间或时间单位更改时，同时更新：
+        1. 设置面板中的预计总时间
+        2. 统计面板中的统计信息
+        """
+        # 更新设置面板的总时间
+        self.settings_panel.on_calculate_total_time()
+        
+        # 更新统计面板的信息
+        if hasattr(self, 'stats_panel'):
+            self.stats_panel.update_stats()
 
 
 
