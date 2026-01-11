@@ -20,8 +20,8 @@ class VersionManager:
         """
         # 版本号统一修改点
         self.major = 3
-        self.minor = 14
-        self.patch = 1
+        self.minor = 15
+        self.patch = 0
         self.build = 0
         
         # 核心版本信息 - 动态生成
