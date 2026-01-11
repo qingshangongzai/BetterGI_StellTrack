@@ -478,8 +478,8 @@ class EventManager:
         self.add_event_btn.clicked.connect(self.on_add_event)
         self.edit_event_btn.clicked.connect(self.on_edit_event)
         self.clear_events_btn.clicked.connect(self.on_clear_events)
-        self.undo_btn.clicked.connect(self.main_window.on_undo)
-        self.redo_btn.clicked.connect(self.main_window.on_redo)
+        self.undo_btn.clicked.connect(self.main_window.state_manager.on_undo)
+        self.redo_btn.clicked.connect(self.main_window.state_manager.on_redo)
         self.sort_events_btn.clicked.connect(self.sort_events_by_absolute_time)
     
     def refresh_theme_styles(self):
@@ -790,7 +790,7 @@ class EventManager:
         selected_row_indices.sort()  # 从小到大排序
         
         # 保存当前状态到撤销栈
-        self.main_window.save_state_to_undo_stack()
+        self.main_window.state_manager.save_state_to_undo_stack()
         
         # 创建并启动批量编辑线程
         self.batch_edit_thread = BatchEditThread(
@@ -984,7 +984,7 @@ class EventManager:
             return
         
         # 保存当前状态到撤销栈
-        self.main_window.save_state_to_undo_stack()
+        self.main_window.state_manager.save_state_to_undo_stack()
         
         # 创建并启动事件排序线程
         self.sort_events_thread = SortEventsThread(self.events_table)
@@ -1009,7 +1009,7 @@ class EventManager:
             self.update_stats()
             
             # 标记状态变更
-            self.main_window.mark_state_dirty()
+            self.main_window.state_manager.mark_state_dirty()
             
             self.main_window.status_bar.showMessage("✅ 已按绝对时间排序事件并重新计算相对时间")
             self.debug_logger.log_info("已按绝对时间排序事件并重新计算相对时间")
@@ -1160,7 +1160,7 @@ class EventManager:
     def update_app_state(self):
         """更新应用状态"""
         self.update_stats()
-        self.main_window.mark_state_dirty()
+        self.main_window.state_manager.mark_state_dirty()
         self.main_window.settings_panel.on_calculate_total_time()
     
     def on_add_event(self):
@@ -1179,7 +1179,7 @@ class EventManager:
                 insert_after_item = None  # 在最后插入
             
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -1265,7 +1265,7 @@ class EventManager:
                 return
             
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -1385,7 +1385,7 @@ class EventManager:
             time_option = "仅修改当前事件时间" if delete_logic == 'current' else "修改后重新计算后续事件时间"
         
         # 保存当前状态到撤销栈
-        self.main_window.save_state_to_undo_stack()
+        self.main_window.state_manager.save_state_to_undo_stack()
         
         # 开始批量操作
         self.main_window._batch_operation = True
@@ -1456,7 +1456,7 @@ class EventManager:
             self.update_stats()
             
             # 标记状态变更
-            self.main_window.mark_state_dirty()
+            self.main_window.state_manager.mark_state_dirty()
             
             self.main_window.status_bar.showMessage(f"✅ 已删除 {len(selected_rows)} 个事件")
             self.debug_logger.log_info(f"已删除 {len(selected_rows)} 个事件，使用逻辑: {time_option}")
@@ -1551,7 +1551,7 @@ class EventManager:
             time_option = "仅修改当前事件时间" if paste_logic == 'current' else "修改后重新计算后续事件时间"
         
         # 保存当前状态到撤销栈
-        self.main_window.save_state_to_undo_stack()
+        self.main_window.state_manager.save_state_to_undo_stack()
         
         # 开始批量操作
         self.main_window._batch_operation = True
@@ -1632,7 +1632,7 @@ class EventManager:
             self.update_stats()
             
             # 标记状态变更
-            self.main_window.mark_state_dirty()
+            self.main_window.state_manager.mark_state_dirty()
             
             self.main_window.status_bar.showMessage(f"✅ 已粘贴 {len(self.main_window.copied_events)} 个事件")
             self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件，使用逻辑: {time_option}")
@@ -1671,7 +1671,7 @@ class EventManager:
             time_option = "仅修改当前事件时间" if paste_logic == 'current' else "修改后重新计算后续事件时间"
         
         # 保存当前状态到撤销栈
-        self.main_window.save_state_to_undo_stack()
+        self.main_window.state_manager.save_state_to_undo_stack()
         
         # 开始批量操作
         self.main_window._batch_operation = True
@@ -1742,7 +1742,7 @@ class EventManager:
             self.update_stats()
             
             # 标记状态变更
-            self.main_window.mark_state_dirty()
+            self.main_window.state_manager.mark_state_dirty()
             
             self.main_window.status_bar.showMessage(f"✅ 已粘贴 {len(self.main_window.copied_events)} 个事件到第一个位置")
             self.debug_logger.log_info(f"已粘贴 {len(self.main_window.copied_events)} 个事件到第一个位置，使用逻辑: {time_option}")
@@ -1765,7 +1765,7 @@ class EventManager:
             insert_after_item = None  # 在最前面插入
             
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -1854,7 +1854,7 @@ class EventManager:
         reply = ChineseMessageBox.show_question(self.main_window, "确认清空", "确定要清空所有事件吗？")
         if reply:
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -1867,7 +1867,7 @@ class EventManager:
                 self.update_stats()
                 
                 # 标记状态变更
-                self.main_window.mark_state_dirty()
+                self.main_window.state_manager.mark_state_dirty()
                 
                 self.main_window.status_bar.showMessage("✅ 已清空所有事件")
                 self.debug_logger.log_info("已清空所有事件")
