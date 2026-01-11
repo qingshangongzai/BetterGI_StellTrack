@@ -541,7 +541,7 @@ class ModernComboBox(QComboBox):
         combo_style = UnifiedStyleHelper.get_instance().get_combo_box_style() + "\n"
         combo_style += "QComboBox {\n"
         combo_style += "    text-align: center;\n"
-        combo_style += "    padding-left: 15px;\n"
+        combo_style += "    padding: 6px 12px;\n"
         combo_style += "}\n"
         self.setStyleSheet(combo_style)
 
@@ -549,8 +549,8 @@ class ModernComboBox(QComboBox):
         if view:
             view.setStyleSheet("""
                  QListView::item {
-                     padding: 6px 8px;
-                     min-height: 20px;
+                     padding: 4px 8px;
+                     min-height: 18px;
                      text-align: center;
                  }
              """)
@@ -611,8 +611,8 @@ class CenteredComboBox(QComboBox):
         if view:
             view.setStyleSheet("""
                 QListView::item {
-                    padding: 6px 8px;
-                    min-height: 20px;
+                    padding: 4px 8px;
+                    min-height: 18px;
                 }
             """)
 
