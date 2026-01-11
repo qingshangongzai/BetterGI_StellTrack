@@ -1027,6 +1027,12 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self._table_changing = False  # 防止表格变化时的递归调用
         self._batch_operation = False  # 批量操作标志
         self.app_icon = None  # 预加载的应用图标
+        
+        # 时间逻辑设置初始化
+        self.delete_logic = 'prompt'  # 删除事件逻辑
+        self.paste_logic = 'prompt'  # 粘贴事件逻辑
+        self.edit_logic = 'current'  # 编辑事件逻辑
+        self.skip_end_events_prompt = True  # 末尾事件操作跳过弹窗
 
         
 
@@ -1490,16 +1496,24 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
         paste_recalculate_action = QAction('默认：重新计算后续事件时间', self)
-
         paste_recalculate_action.setCheckable(True)
-
         paste_recalculate_action.triggered.connect(lambda: self.set_paste_logic('recalculate'))
-
         paste_logic_menu.addAction(paste_recalculate_action)
-
         
-
-
+        # 编辑事件逻辑子菜单
+        edit_logic_menu = time_logic_menu.addMenu('编辑事件逻辑')
+        
+        # 编辑事件逻辑选项
+        edit_current_action = QAction('默认：仅修改当前事件时间', self)
+        edit_current_action.setCheckable(True)
+        edit_current_action.triggered.connect(lambda: self.set_edit_logic('current'))
+        edit_logic_menu.addAction(edit_current_action)
+        
+        edit_recalculate_action = QAction('默认：重新计算后续事件时间', self)
+        edit_recalculate_action.setCheckable(True)
+        edit_recalculate_action.triggered.connect(lambda: self.set_edit_logic('recalculate'))
+        edit_logic_menu.addAction(edit_recalculate_action)
+        
         # 末尾事件操作跳过弹窗开关
         skip_end_events_action = QAction('末尾事件操作跳过弹窗', self)
         skip_end_events_action.setCheckable(True)
@@ -1528,18 +1542,16 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
         self.paste_logic_actions = {
-
             'prompt': paste_prompt_action,
-
             'current': paste_current_action,
-
             'recalculate': paste_recalculate_action
-
         }
-
         
-
-
+        self.edit_logic_actions = {
+            'current': edit_current_action,
+            'recalculate': edit_recalculate_action
+        }
+        
         # 分析菜单
 
         # 工具菜单
@@ -1721,19 +1733,20 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
     def set_paste_logic(self, logic):
-
         """设置粘贴事件逻辑"""
-
         self.paste_logic = logic
-
         self.update_time_logic_menu_state()
-
         self.save_time_logic_settings()
-
         self.status_bar.showMessage(f"✅ 粘贴事件逻辑已设置为: {self.get_paste_logic_display_name(logic)}")
-
         self.debug_logger.log_info(f"粘贴事件逻辑设置为: {logic}")
 
+    def set_edit_logic(self, logic):
+        """设置编辑事件逻辑"""
+        self.edit_logic = logic
+        self.update_time_logic_menu_state()
+        self.save_time_logic_settings()
+        self.status_bar.showMessage(f"✅ 编辑事件逻辑已设置为: {self.get_edit_logic_display_name(logic)}")
+        self.debug_logger.log_info(f"编辑事件逻辑设置为: {logic}")
 
     def set_skip_end_events_prompt(self, checked):
         """设置末尾事件操作是否跳过弹窗"""
@@ -1750,28 +1763,21 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
     def update_time_logic_menu_state(self):
-
         """更新时间逻辑菜单的选中状态"""
-
         # 更新删除逻辑菜单状态
-
         if hasattr(self, 'delete_logic_actions'):
-
             for logic, action in self.delete_logic_actions.items():
-
                 action.setChecked(getattr(self, 'delete_logic', 'prompt') == logic)
-
         
-
-
         # 更新粘贴逻辑菜单状态
-
         if hasattr(self, 'paste_logic_actions'):
-
             for logic, action in self.paste_logic_actions.items():
-
                 action.setChecked(getattr(self, 'paste_logic', 'prompt') == logic)
-
+        
+        # 更新编辑逻辑菜单状态
+        if hasattr(self, 'edit_logic_actions'):
+            for logic, action in self.edit_logic_actions.items():
+                action.setChecked(getattr(self, 'edit_logic', 'current') == logic)
         
         # 更新末尾事件操作跳过弹窗开关状态
         if hasattr(self, 'skip_end_events_action'):
@@ -1800,20 +1806,25 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
     def get_paste_logic_display_name(self, logic):
-
         """获取粘贴逻辑的显示名称"""
-
         names = {
-
             'prompt': '每次弹出提示选择',
-
             'current': '仅修改当前事件时间',
-
             'recalculate': '重新计算后续事件时间'
-
         }
-
         return names.get(logic, '每次弹出提示选择')
+
+    def get_edit_logic_display_name(self, logic):
+        """获取编辑逻辑的显示名称"""
+        names = {
+            'current': '仅修改当前事件时间',
+            'recalculate': '重新计算后续事件时间'
+        }
+        return names.get(logic, '仅修改当前事件时间')
+
+    def get_edit_logic(self):
+        """获取当前编辑事件逻辑"""
+        return getattr(self, 'edit_logic', 'current')
 
 
 
@@ -1882,25 +1893,16 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
             # 更新时间逻辑设置
-
             settings['delete_logic'] = self.get_delete_logic()
-
             settings['paste_logic'] = self.get_paste_logic()
+            settings['edit_logic'] = self.get_edit_logic()
             settings['skip_end_events_prompt'] = self.get_skip_end_events_prompt()
-
             
-
-
             # 保存设置
-
             with open(settings_file, 'w', encoding='utf-8') as f:
-
                 json.dump(settings, f, ensure_ascii=False, indent=2)
-
             
-
-
-            self.debug_logger.log_info(f"时间逻辑设置已保存: 删除={self.delete_logic}, 粘贴={self.paste_logic}")
+            self.debug_logger.log_info(f"时间逻辑设置已保存: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 编辑={self.edit_logic}")
 
         except Exception as e:
 
@@ -1945,49 +1947,32 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
                 # 加载时间逻辑设置
-
                 self.delete_logic = settings.get('delete_logic', 'prompt')
-
                 self.paste_logic = settings.get('paste_logic', 'prompt')
+                self.edit_logic = settings.get('edit_logic', 'current')
                 self.skip_end_events_prompt = settings.get('skip_end_events_prompt', True)
-
                 
-
                 # 更新菜单状态
                 self.update_time_logic_menu_state()
-
                 
-
-                self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 跳过末尾事件弹窗={self.skip_end_events_prompt}")
-
+                self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 编辑={self.edit_logic}, 跳过末尾事件弹窗={self.skip_end_events_prompt}")
                 return True
-
             else:
-
                 # 设置默认值
-
                 self.delete_logic = 'prompt'
-
                 self.paste_logic = 'prompt'
+                self.edit_logic = 'current'
                 self.skip_end_events_prompt = True
-
                 self.debug_logger.log_info("使用默认时间逻辑设置")
-
-                return False
-
+                return True
             
-
-
         except Exception as e:
-
             self.debug_logger.log_error(f"加载时间逻辑设置失败: {e}")
-
             # 设置默认值
-
             self.delete_logic = 'prompt'
-
             self.paste_logic = 'prompt'
-
+            self.edit_logic = 'current'
+            self.skip_end_events_prompt = True
             return False
 
 

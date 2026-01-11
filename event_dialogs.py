@@ -166,9 +166,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
     - is_edit_mode: 是否为编辑模式
     - insert_position: 插入位置（用于插入模式）
     - insert_after_item: 插入后项目（用于插入模式）
+    - edit_logic: 编辑事件逻辑（'current' 或 'recalculate'），默认为 'current'
     """
     
-    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None):
+    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None, edit_logic='current'):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
@@ -180,6 +181,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.insert_after_item = insert_after_item
         self.prev_absolute_time = prev_absolute_time
         self.current_row = current_row
+        self.edit_logic = edit_logic
         self.key_capture_active = False
         
         try:
@@ -451,6 +453,13 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.time_option_combo = CenteredComboBox()
         self.time_option_combo.addItems(["仅修改当前事件时间", "修改后重新计算后续事件时间"])
         self.time_option_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        
+        # 根据edit_logic设置默认选项
+        if self.edit_logic == 'current':
+            self.time_option_combo.setCurrentText("仅修改当前事件时间")
+        elif self.edit_logic == 'recalculate':
+            self.time_option_combo.setCurrentText("修改后重新计算后续事件时间")
+        
         time_layout.addWidget(self.time_option_combo, 2, 1)
         
         # 绝对偏移时间信息
