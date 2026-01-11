@@ -77,704 +77,177 @@ from time_analysis import EventTimeAnalyzerDialog
 
 
 
-
-class BatchEditDialog(FadeInWindowMixin, StyledDialog):
-
-    """批量编辑对话框"""
-
-    
-
-
-    def __init__(self, parent=None, selected_rows=None, events_table=None):
-
-        super().__init__(parent)
-
-        self.selected_rows = selected_rows or []
-        self.events_table = events_table
-
-        self.setup_ui()
-
-    
-
-
-    def setup_ui(self):
-
-        """设置UI界面"""
-
-        self.setWindowTitle("批量编辑事件")
-
-        self.setFixedSize(500, 400)
-
-        
-
-
-        layout = QVBoxLayout(self)
-
-        layout.setSpacing(15)
-
-        layout.setContentsMargins(20, 15, 20, 15)
-
-        
-
-
-        # 标题区域
-
-        title_label = QLabel("批量编辑事件")
-
-        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
-
-        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 10px;")
-
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(title_label)
-
-        
-
-
-        # 操作选项组
-
-        operation_group = ModernGroupBox("⚙️ 操作选项")
-
-        operation_layout = QGridLayout(operation_group)  # 使用GridLayout确保精确对齐
-
-        operation_layout.setSpacing(10)
-
-        operation_layout.setContentsMargins(15, 15, 15, 15)
-
-        
-
-
-        # 设置统一的输入框宽度
-        input_width = 120
-        
-        # 1. 增减偏移时间
-        offset_label = QLabel("增减绝对时间:")
-        offset_label.setFixedWidth(120)
-        self.offset_input = ModernDoubleSpinBox(width=input_width)
-        self.offset_input.setMinimum(-999999)
-        self.offset_input.setMaximum(999999)
-        self.offset_input.setValue(0)
-        self.offset_input.setDecimals(0)
-        self.offset_input.setSingleStep(100)
-
-        offset_label_unit = QLabel("ms")
-        offset_label_unit.setFixedWidth(20)
-        offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
-
-        operation_layout.addWidget(offset_label, 0, 0)
-        operation_layout.addWidget(self.offset_input, 0, 1)
-        operation_layout.addWidget(offset_label_unit, 0, 2)
-
-        # 2. 统一相对时间
-        rel_time_label = QLabel("统一相对时间:")
-        rel_time_label.setFixedWidth(120)
-        self.rel_time_input = ModernDoubleSpinBox(width=input_width)
-        self.rel_time_input.setMinimum(0)
-        self.rel_time_input.setMaximum(999999)
-        self.rel_time_input.setValue(0)
-        self.rel_time_input.setDecimals(0)
-        self.rel_time_input.setSingleStep(100)
-
-        rel_time_label_unit = QLabel("ms")
-        rel_time_label_unit.setFixedWidth(20)
-        rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
-
-        operation_layout.addWidget(rel_time_label, 1, 0)
-        operation_layout.addWidget(self.rel_time_input, 1, 1)
-        operation_layout.addWidget(rel_time_label_unit, 1, 2)
-
-        
-
-
-        # 3. 事件类型替换
-        # 提取所有按键事件（使用字典保存，事件名称为键，(event_type, keycode)为值）
-        self.key_events = {}
-        if self.events_table:
-            for row in range(self.events_table.rowCount()):
-                event_name_item = self.events_table.item(row, 1)
-                event_type_item = self.events_table.item(row, 2)
-                keycode_item = self.events_table.item(row, 3)
-                if event_name_item and event_type_item and keycode_item:
-                    event_name = event_name_item.text()
-                    event_type = event_type_item.text()
-                    keycode = keycode_item.text()
-                    if event_type in ["按键按下", "按键释放"] and keycode:
-                        # 只保存每个事件名称对应的事件类型和键码
-                        self.key_events[event_name] = (event_type, keycode)
-        
-        # 基本事件类型（移除了"按键按下"和"按键释放"）
-        base_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
-        
-        # 创建事件类型替换标签
-        type_replace_label = QLabel("事件类型替换:")
-        type_replace_label.setFixedWidth(120)
-        
-        # 创建事件类型替换的水平布局,不使用GridLayout的列,而是独立的水平布局
-        type_replace_layout = QHBoxLayout()
-        type_replace_layout.setSpacing(5)
-        type_replace_layout.setContentsMargins(0, 0, 0, 0)
-                
-        # 确保old_type_combo宽度一致
-        self.old_type_combo = ModernComboBox(width=input_width)
-        self.old_type_combo.addItem("不替换类型")
-        self.old_type_combo.addItems(base_event_types)
-        # 添加具体按键事件到old_type_combo,只显示事件名称
-        for event_name in sorted(self.key_events.keys()):
-            self.old_type_combo.addItem(event_name)
-        
-        type_arrow_label = QLabel("→")
-        type_arrow_label.setFixedWidth(30)
-        type_arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # 确保new_type_combo宽度一致
-        self.new_type_combo = ModernComboBox(width=input_width)
-        self.new_type_combo.addItems(base_event_types)
-        # 添加具体按键事件到new_type_combo,只显示事件名称
-        for event_name in sorted(self.key_events.keys()):
-            self.new_type_combo.addItem(event_name)
-        
-        # 将控件添加到水平布局
-        type_replace_layout.addWidget(self.old_type_combo)
-        type_replace_layout.addWidget(type_arrow_label)
-        type_replace_layout.addWidget(self.new_type_combo)
-        type_replace_layout.addStretch()
-        
-        # 将标签和布局添加到GridLayout
-        operation_layout.addWidget(type_replace_label, 2, 0)
-        operation_layout.addLayout(type_replace_layout, 2, 1, 1, 3)
-        
-        # 4. 统一坐标（带开关）
-        # 清除之前的所有组件，重新设计布局
-        
-        # 创建水平布局来容纳统一坐标的所有组件
-        unified_coords_layout = QHBoxLayout()
-        unified_coords_layout.setContentsMargins(0, 0, 0, 0)
-        unified_coords_layout.setSpacing(0)
-        
-        # 1. 统一坐标复选框
-        self.unified_coords_checkbox = QCheckBox()
-        unified_coords_layout.addWidget(self.unified_coords_checkbox)
-        
-        # 2. 统一坐标标签
-        unified_label = QLabel("统一坐标:")
-        unified_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        unified_coords_layout.addWidget(unified_label)
-        
-        # 3. 空白间距
-        unified_coords_layout.addSpacing(17)
-        
-        # 4. x坐标标签
-        x_label = QLabel("X坐标:")
-        x_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        unified_coords_layout.addWidget(x_label)
-        
-        # 5. x坐标输入框
-        self.x_input = ModernLineEdit()
-        self.x_input.setText("0")
-        self.x_input.setFixedWidth(input_width)
-        unified_coords_layout.addWidget(self.x_input)
-        
-        # 6. 空白间距
-        unified_coords_layout.addSpacing(3)
-        
-        # 7. y坐标标签
-        y_label = QLabel("Y坐标:")
-        y_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        unified_coords_layout.addWidget(y_label)
-        
-        # 8. y坐标输入框
-        self.y_input = ModernLineEdit()
-        self.y_input.setText("0")
-        self.y_input.setFixedWidth(input_width)
-        unified_coords_layout.addWidget(self.y_input)
-        
-        # 9. 拉伸空间
-        unified_coords_layout.addStretch()
-        
-        # 将整个水平布局添加到GridLayout中
-        operation_layout.addLayout(unified_coords_layout, 3, 0, 1, 5, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        
-        # 将操作选项组添加到主布局
-        layout.addWidget(operation_group)
-
-        # 添加提示信息
-        hint_label = QLabel("💡 提示：按键事件替换支持将事件列表中已有的按键事件替换为另一个已有的按键事件")
-        hint_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-top: 5px; background-color: transparent;")
-        hint_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(hint_label)
-
-        
-
-
-        # 按钮区域
-
-        button_layout = DialogFactory.create_ok_cancel_buttons(
-
-            parent=self,
-
-            on_ok=self.accept,
-
-            on_cancel=self.reject,
-
-            ok_text="应用",
-
-            cancel_text="取消"
-
-        )
-
-        layout.addLayout(button_layout)
-        
-        # 设置对话框布局
-        self.setLayout(layout)
-
-    
-
-
-    def get_offset_adjustment(self):
-
-        """获取偏移调整值"""
-
-        return int(self.offset_input.value())
-    
-
-
-
-    def get_unified_rel_time(self):
-
-        """获取统一相对时间值"""
-
-        return int(self.rel_time_input.value())
-
-    
-
-
-    def get_type_replacement(self):
-
-        """获取类型替换信息"""
-
-        old_type_text = self.old_type_combo.currentText()
-
-        new_type_text = self.new_type_combo.currentText()
-
-        if old_type_text == "不替换类型":
-
-            return None, None
-        
-        # 解析旧类型
-        old_type = old_type_text
-        old_keycode = None
-        
-        # 检查是否是按键事件名称
-        if old_type in self.key_events:
-            # 从key_events字典中获取事件类型和键码
-            old_type, old_keycode = self.key_events[old_type]
-        
-        # 解析新类型
-        new_type = new_type_text
-        new_keycode = None
-        
-        # 检查是否是按键事件名称
-        if new_type in self.key_events:
-            # 从key_events字典中获取事件类型和键码
-            new_type, new_keycode = self.key_events[new_type]
-        
-        return (old_type, old_keycode), (new_type, new_keycode)
-    
-    def get_unified_coordinates(self):
-        """获取统一坐标值和应用标志"""
-        apply_coords = self.unified_coords_checkbox.isChecked()
-        
-        try:
-            x = int(self.x_input.text())
-        except ValueError:
-            x = 0
-        try:
-            y = int(self.y_input.text())
-        except ValueError:
-            y = 0
-        
-        return apply_coords, x, y
-
-
-
-
 class CustomInputDialog(FadeInWindowMixin, StyledDialog):
 
     """自定义输入对话框，与程序风格保持一致"""
-
     
-
-
     def __init__(self, parent=None):
-
         super().__init__(parent)
 
         # 字体管理器已通过StyledDialog自动获取
-
         self.setup_ui()
-
-        
-
-
+    
     def setup_ui(self):
-
         """设置UI界面"""
-
         self.setWindowTitle("调试工具入口")
-
         self.setFixedSize(500, 320)  # 增加高度，确保内容完全显示
-
         
-
-
         # 设置窗口标志，删除最小化和最大化按钮
-
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-
                            Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-
         
-
-
         # 设置窗口图标
-
         self.setWindowIcon(load_icon_universal())
-
         
-
-
         layout = QVBoxLayout(self)
-
         layout.setSpacing(15)  # 减少间距
-
         layout.setContentsMargins(25, 20, 25, 20)  # 调整边距
-
         
-
-
         # 标题区域
-
         title_layout = QVBoxLayout()
-
         
-
-
         # 主标题 - 使用得意黑字体
-
         title_label = QLabel("🔐 调试工具入口")
-
         UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
-
         title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 3px;")
-
         title_layout.addWidget(title_label)
-
         
-
-
         # 副标题 - 使用SourceHanSerifCN字体
-
         subtitle_label = QLabel("请输入访问密码或特殊文字")
-
         UnifiedStyleHelper.get_instance().set_source_han_font(subtitle_label, 11)
-
         subtitle_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-bottom: 8px;")
-
         title_layout.addWidget(subtitle_label)
-
         
-
-
         # 提示信息
-
         hint_label = QLabel("💡 提示：尝试输入一些有意义的句子")
-
         hint_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; font-style: italic; margin-bottom: 12px;")
-
         title_layout.addWidget(hint_label)
-
         layout.addLayout(title_layout)
-
         
-
-
         # 输入区域
-
         input_layout = QVBoxLayout()
-
         
-
-
         # 输入框标签
-
         input_label = QLabel("输入内容：")
-
         UnifiedStyleHelper.get_instance().set_source_han_font(input_label, 10)
-
         input_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-bottom: 3px;")
-
         input_layout.addWidget(input_label)
-
         
-
-
         # 输入框
-
         self.input_edit = ModernLineEdit()
-
         self.input_edit.setFixedHeight(32)  # 减少高度
-
         self.input_edit.setPlaceholderText("请输入密码或特殊文字...")
-
         input_layout.addWidget(self.input_edit)
-
         layout.addLayout(input_layout)
-
         
-
-
         # 添加弹性空间，确保按钮在底部
-
         layout.addStretch()
-
         
-
-
         # 按钮区域
-
         # 使用DialogFactory创建确定和取消按钮布局
-
         button_layout = DialogFactory.create_ok_cancel_buttons(
-
             parent=self,
-
             on_ok=self.on_ok_clicked,
-
             on_cancel=self.reject,
-
             ok_text="确定",
-
             cancel_text="取消"
-
         )
-
         
-
-
         layout.addLayout(button_layout)
-
         
-
-
         # 获取按钮引用并设置固定尺寸
-
         self.ok_btn = button_layout.itemAt(1).widget()  # itemAt(0)是stretch
-
         self.cancel_btn = button_layout.itemAt(2).widget()
-
         
-
-
         self.cancel_btn.setMinimumHeight(30)
-
         self.ok_btn.setMinimumHeight(30)
-
         
-
-
         # 设置焦点到输入框
-
         self.input_edit.setFocus()
-
-        
-
-
-
-
     
-
-
     def get_text(self):
-
         """获取输入的文本"""
-
         return self.input_edit.text().strip()
-
     
-
-
     def set_text(self, text):
-
         """设置输入框的文本"""
-
         self.input_edit.setText(text)
-
     
-
-
     def on_ok_clicked(self):
-
         """确定按钮点击事件 - 增加确认逻辑"""
-
         text = self.get_text()
-
         
-
-
         # 检查彩蛋文字
-
         easter_eggs = {
-
             "当你的天空突然下起了大雨": "https://www.bilibili.com/video/BV18X4y1N7Yh?vd_source=8eb122854e92913741ace2b5024fe442"
-
         }
-
         
-
-
         if text in easter_eggs:
-
             # 彩蛋触发，显示确认对话框
-
             confirm_dialog = QDialog(self)
-
             confirm_dialog.setWindowTitle("彩蛋确认")
-
             confirm_dialog.setFixedSize(300, 150)
-
             confirm_dialog.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
                                         Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-
             
-
-
             confirm_layout = QVBoxLayout(confirm_dialog)
-
             confirm_layout.setSpacing(15)
-
             confirm_layout.setContentsMargins(20, 20, 20, 20)
-
             
-
-
-
             # 彩蛋信息
-
             info_label = QLabel("恭喜你发现了彩蛋")
-
             info_label.setFont(self.font_manager.get_source_han_font(10))
-
             info_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']};")
-
             info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
             confirm_layout.addWidget(info_label)
-
             
-
-
             # 使用DialogFactory创建确定和取消按钮布局
-
             button_layout = DialogFactory.create_ok_cancel_buttons(
-
                 parent=confirm_dialog,
-
                 on_ok=confirm_dialog.accept,
-
                 on_cancel=confirm_dialog.reject,
-
                 ok_text="打开视频",
-
                 cancel_text="取消"
-
             )
-
             
-
-
             confirm_layout.addLayout(button_layout)
-
             
-
-
             # 获取按钮引用并设置固定尺寸
-
             yes_btn = button_layout.itemAt(1).widget()  # itemAt(0)是stretch
-
             no_btn = button_layout.itemAt(2).widget()
-
             
-
-
             no_btn.setFixedHeight(30)
-
             yes_btn.setFixedHeight(30)
-
             
-
-
             # 显示确认对话框
-
             if confirm_dialog.exec() == QDialog.DialogCode.Accepted:
-
                 # 用户确认打开视频
-
                 url = easter_eggs[text]
-
                 QDesktopServices.openUrl(QUrl(url))
-
                 
-
-
                 # 存储结果供主窗口使用
-
                 self.result = "easter_egg"
-
                 self.url = url
-
                 self.accept()
-
             else:
-
                 # 用户取消，关闭输入对话框
-
                 self.reject()
-
         
-
-
         elif text == "39782877":
-
             # 密码正确，直接设置结果并接受
-
             self.result = "password"
-
             self.accept()
-
         else:
-
             # 密码错误，显示错误提示但不关闭对话框
-
             ChineseMessageBox.show_error(
-
                 self, 
-
                 "访问失败", 
-
                 f"输入的内容不正确。\n\n你输入的是：{text}\n\n请输入正确的密码或尝试彩蛋文字。"
-
             )
-
             # 清空输入框并重新获得焦点
-
             self.input_edit.clear()
-
             self.input_edit.setFocus()
-
             return  # 不关闭对话框
-
-
 
 
 class ModernTableWidget(QTableWidget):
@@ -790,7 +263,6 @@ class ModernTableWidget(QTableWidget):
         
 
         
-
         # 设置表格属性
 
         self.setAlternatingRowColors(False)
@@ -798,26 +270,20 @@ class ModernTableWidget(QTableWidget):
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 
         self.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
-
         # 调整表头行高
         self.horizontalHeader().setDefaultSectionSize(24)
 
         
 
         
-
         # 设置行高
 
         self.verticalHeader().setDefaultSectionSize(30)
 
         self.verticalHeader().setVisible(False)
-
         
 
-
-
         # 设置右键菜单策略
-
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         
         # 设置表头右键菜单策略
@@ -827,7 +293,6 @@ class ModernTableWidget(QTableWidget):
         """刷新表格的样式，应用当前主题"""
         helper = UnifiedStyleHelper.get_instance()
         self.setStyleSheet(helper.get_table_style())
-
 
 
 
@@ -845,20 +310,17 @@ class HeaderWidget(QFrame):
 
         
 
-
         layout = QHBoxLayout(self)
 
         layout.setContentsMargins(20, 10, 20, 10)
 
         
 
-
         # Logo和标题
 
         title_layout = QHBoxLayout()
 
         
-
 
         # Logo - 尝试加载图片
 
@@ -872,20 +334,17 @@ class HeaderWidget(QFrame):
 
         
 
-
         # 标题区域 - 修改为垂直布局以显示主标题和副标题
 
         title_text_layout = QVBoxLayout()
 
         
 
-
         # 获取字体管理器
 
         font_manager = get_global_font_manager()
 
         
-
 
         # 获取版本信息
 
@@ -894,7 +353,6 @@ class HeaderWidget(QFrame):
         version = get_current_version()
 
         
-
 
         # 主标题 - 使用得意黑字体
 
@@ -907,7 +365,6 @@ class HeaderWidget(QFrame):
         title_text_layout.addWidget(main_title)
 
         
-
 
         # 副标题 - 英文名 - 使用得意黑字体
 
@@ -925,7 +382,6 @@ class HeaderWidget(QFrame):
 
         
 
-
         # 移除版本信息和关于按钮，替换为标语
 
         slogan_label = QLabel("风带来故事的种子，时间使之发芽")
@@ -937,7 +393,6 @@ class HeaderWidget(QFrame):
         layout.addLayout(title_layout)
 
     
-
 
     def load_logo(self):
 
@@ -965,7 +420,6 @@ class HeaderWidget(QFrame):
 
     
 
-
     def set_fallback_logo(self):
 
         """设置备用Logo"""
@@ -977,14 +431,11 @@ class HeaderWidget(QFrame):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
-
-
 # =============================================================================
 
 # 主窗口类
 
 # =============================================================================
-
 
 
 
@@ -1036,7 +487,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 撤销延迟保存相关
 
         self._undo_save_timer = QTimer()
@@ -1050,7 +500,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self._pending_undo_save = False
 
         
-
 
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()
@@ -1066,7 +515,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         try:
 
             # 获取应用程序信息
@@ -1077,22 +525,18 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 设置窗口标志为标准主窗口样式，允许移动和调整大小
 
             self.setWindowFlags(Qt.WindowType.Window)
 
             
 
-
             self.setWindowTitle(f"{app_info['name']} v{version}")
-
             # 设置主窗口大小
             self.setMinimumSize(1100, 500)
             self.resize(1200, 790)
 
             
-
 
             # 设置窗口图标 - 在应用程序创建后立即设置
 
@@ -1100,13 +544,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 设置应用程序样式 - 纯白色背景
 
             self.setup_application_style()
 
             
-
 
             # 创建中央部件
 
@@ -1115,7 +557,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.setCentralWidget(central_widget)
 
             
-
 
             # 创建主布局
 
@@ -1126,7 +567,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             main_layout.setContentsMargins(12, 12, 12, 12)
 
             
-
 
             # 创建界面
 
@@ -1140,20 +580,17 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 连接信号槽
 
             self.connect_signals()
 
             
 
-
             # 加载时间逻辑设置
 
             self.load_time_logic_settings()
 
             
-
 
             # 加载保存的状态
 
@@ -1167,7 +604,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 立即设置任务栏图标，不使用延迟
             self.fix_taskbar_icon()
             
@@ -1179,7 +615,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_info("主窗口初始化完成")
 
             
-
 
         except Exception as e:
 
@@ -1194,7 +629,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             traceback.print_exc()
 
     
-
 
     def create_menu_bar(self):
         """创建应用程序菜单栏
@@ -1211,13 +645,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 文件菜单
 
         file_menu = menubar.addMenu('文件')
 
         
-
 
         # 新建
 
@@ -1231,7 +663,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 打开
 
         open_action = QAction('打开', self)
@@ -1243,7 +674,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         file_menu.addAction(open_action)
 
         
-
 
         # 保存
 
@@ -1257,11 +687,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         file_menu.addSeparator()
 
         
-
 
         # 退出
 
@@ -1275,13 +703,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 编辑菜单
 
         edit_menu = menubar.addMenu('编辑')
 
         
-
 
         # 撤销
 
@@ -1295,7 +721,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 重做
 
         redo_action = QAction('重做', self)
@@ -1308,10 +733,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         edit_menu.addSeparator()
-        
 
+        
 
         # 添加事件
 
@@ -1347,7 +771,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 复制
 
         copy_action = QAction('复制', self)
@@ -1359,7 +782,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         edit_menu.addAction(copy_action)
 
         
-
 
         # 粘贴
 
@@ -1373,11 +795,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         edit_menu.addSeparator()
 
         
-
 
         # 删除
 
@@ -1390,7 +810,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         edit_menu.addAction(delete_action)
 
         
-
 
         # 全选
 
@@ -1414,20 +833,17 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 新增：时间逻辑菜单
 
         time_logic_menu = menubar.addMenu('时间逻辑')
 
         
 
-
         # 删除事件逻辑子菜单
 
         delete_logic_menu = time_logic_menu.addMenu('删除事件逻辑')
 
         
-
 
         # 删除事件逻辑选项
 
@@ -1441,7 +857,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         delete_current_action = QAction('默认：仅修改当前事件时间', self)
 
         delete_current_action.setCheckable(True)
@@ -1451,7 +866,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         delete_logic_menu.addAction(delete_current_action)
 
         
-
 
         delete_recalculate_action = QAction('默认：重新计算后续事件时间', self)
 
@@ -1463,13 +877,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 粘贴事件逻辑子菜单
 
         paste_logic_menu = time_logic_menu.addMenu('粘贴事件逻辑')
 
         
-
 
         # 粘贴事件逻辑选项
 
@@ -1483,7 +895,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         paste_current_action = QAction('默认：仅修改当前事件时间', self)
 
         paste_current_action.setCheckable(True)
@@ -1494,10 +905,12 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         paste_recalculate_action = QAction('默认：重新计算后续事件时间', self)
+
         paste_recalculate_action.setCheckable(True)
+
         paste_recalculate_action.triggered.connect(lambda: self.set_paste_logic('recalculate'))
+
         paste_logic_menu.addAction(paste_recalculate_action)
         
         # 编辑事件逻辑子菜单
@@ -1539,7 +952,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         }
 
         
-
 
         self.paste_logic_actions = {
             'prompt': paste_prompt_action,
@@ -1591,7 +1003,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 事件时间分析工具
 
         time_analysis_action = QAction('事件时间分析', self)
@@ -1604,13 +1015,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 添加分隔线
 
         tools_menu.addSeparator()
 
         
-
 
         # 调试工具
 
@@ -1624,13 +1033,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 帮助菜单 - 增加链接
 
         help_menu = menubar.addMenu('帮助')
 
         
-
 
         # 个人主页
 
@@ -1642,7 +1049,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 项目地址
 
         project_action = QAction('项目地址', self)
@@ -1652,7 +1058,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         help_menu.addAction(project_action)
 
         
-
 
         # 使用说明
 
@@ -1664,11 +1069,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         help_menu.addSeparator()
 
         
-
 
         # 检查更新
 
@@ -1680,11 +1083,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         help_menu.addSeparator()
 
         
-
 
         # 关于
 
@@ -1696,7 +1097,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 用户协议
 
         agreement_action = QAction('用户协议', self)
@@ -1707,13 +1107,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 初始化菜单状态
 
         self.update_time_logic_menu_state()
 
     
-
 
     def set_delete_logic(self, logic):
 
@@ -1728,7 +1126,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.status_bar.showMessage(f"✅ 删除事件逻辑已设置为: {self.get_delete_logic_display_name(logic)}")
 
         self.debug_logger.log_info(f"删除事件逻辑设置为: {logic}")
-
 
 
 
@@ -1756,11 +1153,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.status_bar.showMessage(f"✅ 末尾事件操作跳过弹窗已{status}")
         self.debug_logger.log_info(f"末尾事件操作跳过弹窗已设置为: {checked}")
 
-
     def get_skip_end_events_prompt(self):
         """获取末尾事件操作是否跳过弹窗的设置"""
         return getattr(self, 'skip_end_events_prompt', True)
-
 
     def update_time_logic_menu_state(self):
         """更新时间逻辑菜单的选中状态"""
@@ -1783,9 +1178,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         if hasattr(self, 'skip_end_events_action'):
             self.skip_end_events_action.setChecked(self.get_skip_end_events_prompt())
 
-
-
-
     def get_delete_logic_display_name(self, logic):
 
         """获取删除逻辑的显示名称"""
@@ -1801,7 +1193,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         }
 
         return names.get(logic, '每次弹出提示选择')
-
 
 
 
@@ -1826,9 +1217,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         """获取当前编辑事件逻辑"""
         return getattr(self, 'edit_logic', 'current')
 
-
-
-
     def get_delete_logic(self):
 
         """获取当前删除事件逻辑"""
@@ -1837,13 +1225,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
-
     def get_paste_logic(self):
 
         """获取当前粘贴事件逻辑"""
 
         return getattr(self, 'paste_logic', 'prompt')
-
 
 
 
@@ -1865,13 +1251,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 设置文件路径
 
             settings_file = os.path.join(app_dir, "BetterGI_StellTrack_settings.json")
 
             
-
 
             # 读取现有设置
 
@@ -1891,7 +1275,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 更新时间逻辑设置
             settings['delete_logic'] = self.get_delete_logic()
             settings['paste_logic'] = self.get_paste_logic()
@@ -1907,7 +1290,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         except Exception as e:
 
             self.debug_logger.log_error(f"保存时间逻辑设置失败: {e}")
-
 
 
 
@@ -1929,13 +1311,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 设置文件路径
 
             settings_file = os.path.join(app_dir, "BetterGI_StellTrack_settings.json")
 
             
-
 
             if os.path.exists(settings_file):
 
@@ -1944,7 +1324,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                     settings = json.load(f)
 
                 
-
 
                 # 加载时间逻辑设置
                 self.delete_logic = settings.get('delete_logic', 'prompt')
@@ -1975,9 +1354,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.skip_end_events_prompt = True
             return False
 
-
-
-
     def open_url(self, url):
 
         """打开URL链接"""
@@ -1998,7 +1374,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
-
     def open_manual(self):
 
         """打开使用说明"""
@@ -2012,7 +1387,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             manual_files = ["使用说明.pdf"]
 
             
-
 
             for manual_file in manual_files:
 
@@ -2028,7 +1402,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
             # 如果没有找到本地文件，提示用户
 
             ChineseMessageBox.show_info(self, "提示", "未找到本地使用说明文件，请查看项目文档或联系开发者")
@@ -2037,7 +1410,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             
 
-
         except Exception as e:
 
             error_msg = f"打开使用说明失败: {str(e)}"
@@ -2045,9 +1417,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
 
             ChineseMessageBox.show_error(self, "错误", error_msg)
-
-
-
 
     def on_event_time_analysis(self):
 
@@ -2068,9 +1437,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
 
             ChineseMessageBox.show_error(self, "错误", error_msg)
-
-
-
 
     def set_app_icon(self, icon):
         """设置应用图标
@@ -2100,13 +1466,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
             print(error_msg)
 
-
-
-
     def showEvent(self, event):
 
         """主窗口显示事件 - 首次显示时触发淡入动画"""
-
         if not hasattr(self, "_main_first_show_done"):
 
             self._main_first_show_done = True
@@ -2121,16 +1483,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         super().showEvent(event)
 
-
-
     def fix_taskbar_icon(self):
 
         """修复任务栏图标 - 在窗口显示后调用"""
 
         self._fix_icon_safe()
-
-
-
 
     def _initialize_theme_menu_state(self):
         """根据当前主题模式初始化菜单选中状态"""
@@ -2261,9 +1618,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 不是我们要处理的事件，交给父类处理
         return super().eventFilter(obj, event)
 
-
-
-
     def create_header(self, parent_layout):
         """创建窗口顶部标题和信息区域
         
@@ -2277,9 +1631,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.header_widget = HeaderWidget()
 
         parent_layout.addWidget(self.header_widget)
-
-
-
 
     def create_content_area(self, parent_layout):
 
@@ -2297,7 +1648,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 左侧设置面板
 
         left_panel = self.create_left_panel()
@@ -2305,7 +1655,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         splitter.addWidget(left_panel)
 
         
-
 
         # 右侧区域（包含事件编辑和统计信息）
 
@@ -2315,13 +1664,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 设置分割比例，使用相对比例而非固定数值
         # 总宽度会根据窗口大小自动调整
         parent_layout.addWidget(splitter, 1)
-
-
-
 
     def create_left_panel(self):
         """创建左侧设置面板"""
@@ -2358,9 +1703,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         scroll_area.setWidget(container)
         return scroll_area
 
-
-
-
     def create_right_panel(self):
 
         """创建右侧面板（包含事件编辑和统计信息）"""
@@ -2379,7 +1721,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 事件编辑区域（占据大部分空间）
 
         event_editor = self.create_event_editor()
@@ -2387,7 +1728,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         layout.addWidget(event_editor, 4)  # 权重为4
 
         
-
 
         # 统计信息面板（占据较小空间，放在最右边）
 
@@ -2397,18 +1737,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         return container
-
-
-
 
     def create_event_editor(self, parent=None):
         """创建事件编辑器 - 调用事件管理器"""
         return self.event_manager.create_event_editor(parent)
-
-
-
 
     def create_status_bar(self):
 
@@ -2420,18 +1753,15 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 修复状态栏样式 - 纯白色背景
 
         self.status_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_status_bar_style())
 
         
 
-
         self.status_bar.showMessage("✅ 就绪")
 
         
-
 
         # 添加时间显示
 
@@ -2442,7 +1772,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.status_bar.addPermanentWidget(self.time_label)
 
         
-
 
         # 更新时间
 
@@ -2456,7 +1785,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         
 
-
         # 更新快捷键提示，包含新的快捷键
 
         shortcuts_label = QLabel("快捷键: Ctrl+Z撤销 | Ctrl+Y重做 | Ctrl+I添加事件 | Ctrl+E编辑事件 | Ctrl+B批量编辑 | Ctrl+A全选 | Ctrl+X剪切 | Ctrl+C复制 | Ctrl+V粘贴 | Delete删除 | Ctrl+S保存")
@@ -2465,9 +1793,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         self.status_bar.addPermanentWidget(shortcuts_label)
 
-
-
-
     def update_time(self):
 
         """更新时间显示"""
@@ -2475,9 +1800,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         current_time = QDateTime.currentDateTime().toString("HH:mm:ss")
 
         self.time_label.setText(f"🕒 {current_time}")
-
-
-
 
     def connect_signals(self):
         """连接信号槽"""
@@ -2509,9 +1831,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         if hasattr(self, 'stats_panel'):
             self.stats_panel.update_stats()
 
-
-
-
     def save_state_to_undo_stack(self):
         """保存当前状态到撤销栈"""
         if self._batch_operation:
@@ -2541,17 +1860,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
         self.debug_logger.log_info(f"状态已保存到撤销栈，当前撤销栈大小: {len(self.undo_stack)}")
 
-
-
-
     def _delayed_save_state(self):
         """延迟保存状态到撤销栈"""
         if self._pending_undo_save:
             self.save_state_to_undo_stack()
             self._pending_undo_save = False
-
-
-
 
     def mark_state_dirty(self):
         """标记状态已更改，延迟保存到撤销栈"""
@@ -2561,9 +1874,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 延迟保存状态，避免频繁保存
         self._pending_undo_save = True
         self._undo_save_timer.start(500)  # 500ms后保存
-
-
-
 
     def on_undo(self):
         """撤销操作"""
@@ -2593,9 +1903,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.status_bar.showMessage("✅ 已撤销操作")
         self.debug_logger.log_info("已撤销操作")
 
-
-
-
     def on_redo(self):
         """重做操作"""
         if not self.redo_stack:
@@ -2624,9 +1931,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.status_bar.showMessage("✅ 已重做操作")
         self.debug_logger.log_info("已重做操作")
 
-
-
-
     def _restore_state(self, state):
         """恢复状态"""
         # 清空当前事件
@@ -2651,9 +1955,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             # 结束批量操作
             self._batch_operation = False
 
-
-
-
     def on_new_file(self):
         """新建文件"""
         # 询问用户是否确认新建
@@ -2675,9 +1976,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         
         self.status_bar.showMessage("✅ 已新建文件")
         self.debug_logger.log_info("已新建文件")
-
-
-
 
     def load_saved_state(self):
         """加载保存的状态"""
@@ -2736,9 +2034,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         except Exception as e:
             self.debug_logger.log_error(f"加载保存的状态失败: {e}", exc_info=True)
             return False
-
-
-
 
     def save_saved_state(self):
         """保存当前状态到文件"""
@@ -2807,57 +2102,33 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(f"保存状态到文件失败: {e}", exc_info=True)
             return False
 
-
-
-
     def on_add_event(self):
         """添加事件 - 调用事件管理器"""
         self.event_manager.on_add_event()
-
-
-
 
     def on_edit_event(self):
         """编辑事件 - 调用事件管理器"""
         self.event_manager.on_edit_event()
 
-
-
-
     def on_delete_event(self):
         """删除事件 - 调用事件管理器"""
         self.event_manager.on_delete_event()
-
-
-
 
     def on_copy_event(self):
         """复制事件 - 调用事件管理器"""
         self.event_manager.on_copy_event()
 
-
-
-
     def on_cut_event(self):
         """剪切事件 - 调用事件管理器"""
         self.event_manager.on_cut_event()
-
-
-
 
     def on_paste_event(self):
         """粘贴事件 - 调用事件管理器"""
         self.event_manager.on_paste_event()
 
-
-
-
     def on_select_all_events(self):
         """全选事件 - 调用事件管理器"""
         self.event_manager.on_select_all_events()
-
-
-
 
     def on_open_debug_tool(self):
         """打开调试工具"""
@@ -2877,9 +2148,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
             ChineseMessageBox.show_error(self, "错误", error_msg)
 
-
-
-
     def on_about(self):
         """打开关于窗口"""
         try:
@@ -2890,9 +2158,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
             ChineseMessageBox.show_error(self, "错误", error_msg)
 
-
-
-
     def on_user_agreement(self):
         """用户协议"""
         self.debug_logger.log_info("打开用户协议窗口")
@@ -2902,9 +2167,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         agreement_window = UserAgreementWindow(self)
         
         agreement_window.show()
-
-
-
 
     def on_check_update(self):
         """检查更新"""
@@ -2917,22 +2179,13 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.debug_logger.log_error(error_msg)
             ChineseMessageBox.show_error(self, "错误", error_msg)
 
-
-
-
     def on_search_filter_changed(self):
         """搜索过滤条件改变时调用"""
         self.event_manager.on_search_filter_changed()
 
-
-
-
     def on_reset_search_filter(self):
         """重置搜索过滤条件"""
         self.event_manager.on_reset_search_filter()
-
-
-
 
     def on_batch_edit(self):
         """批量编辑事件"""
@@ -2947,11 +2200,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         event.accept()
 
 
-
 # =============================================================================
+
 # 主程序入口
-# =============================================================================
 
+# =============================================================================
 
 
 

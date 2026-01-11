@@ -15,6 +15,7 @@ from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen
 from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, ModernMenu
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, generate_key_event_name, SORT_TIP_TEXT, get_event_data_from_table
 from event_dialogs import EventEditDialog, PasteOptionsDialog, DeleteOptionsDialog
+from batch_dialog import BatchEditDialog
 from debug_tools import get_global_debug_logger
 
 # =============================================================================
@@ -765,7 +766,6 @@ class EventManager:
         self.selected_rows = selected_rows
         
         # 打开批量编辑对话框
-        from main_window import BatchEditDialog
         dialog = BatchEditDialog(self.main_window, selected_rows, self.events_table)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # 应用批量编辑
