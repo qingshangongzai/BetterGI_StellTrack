@@ -82,7 +82,7 @@ class MenuManager:
         # 新建
         new_action = QAction('新建', self.parent_window)
         new_action.setShortcut('Ctrl+N')
-        new_action.triggered.connect(self.parent_window.state_manager.on_new_file)
+        new_action.triggered.connect(self.parent_window.on_new_file)
         file_menu.addAction(new_action)
         
         # 打开
@@ -112,13 +112,13 @@ class MenuManager:
         # 撤销
         undo_action = QAction('撤销', self.parent_window)
         undo_action.setShortcut('Ctrl+Z')
-        undo_action.triggered.connect(self.parent_window.state_manager.on_undo)
+        undo_action.triggered.connect(self.parent_window.on_undo)
         edit_menu.addAction(undo_action)
         
         # 重做
         redo_action = QAction('重做', self.parent_window)
         redo_action.setShortcut('Ctrl+Y')
-        redo_action.triggered.connect(self.parent_window.state_manager.on_redo)
+        redo_action.triggered.connect(self.parent_window.on_redo)
         edit_menu.addAction(redo_action)
         
         edit_menu.addSeparator()
@@ -487,6 +487,9 @@ class MenuManager:
         # 加载末尾事件跳过弹窗设置
         skip_end_events_prompt = settings.value("skip_end_events_prompt", True, type=bool)
         self.parent_window.skip_end_events_prompt = skip_end_events_prompt
+        
+        # 更新菜单项的选中状态
+        self.update_time_logic_menu_state()
         
         self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}")
     

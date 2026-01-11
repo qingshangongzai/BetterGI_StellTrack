@@ -675,7 +675,7 @@ class ScriptManager:
             event_manager.on_reset_search_filter()
             
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -692,9 +692,6 @@ class ScriptManager:
                 
                 # 更新统计信息
                 event_manager.update_stats()
-                
-                # 标记状态变更
-                self.main_window.mark_state_dirty()
                 
                 self.main_window.status_bar.showMessage("✅ 脚本导入成功")
                 self.debug_logger.log_info(f"脚本导入成功: {len(imported_events)} 个事件")

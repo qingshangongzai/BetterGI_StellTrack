@@ -323,10 +323,6 @@ def update_app_state(main_window, event_manager=None):
     Returns:
         None
     """
-    # 标记状态变更
-    if hasattr(main_window, 'mark_state_dirty'):
-        main_window.mark_state_dirty()
-    
     # 更新统计信息
     if event_manager and hasattr(event_manager, 'update_stats'):
         event_manager.update_stats()

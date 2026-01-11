@@ -759,6 +759,18 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
+    def on_new_file(self):
+        """新建文件 - 调用状态管理器"""
+        self.state_manager.on_new_file()
+
+    def on_undo(self):
+        """撤销操作 - 调用状态管理器"""
+        self.state_manager.on_undo()
+
+    def on_redo(self):
+        """重做操作 - 调用状态管理器"""
+        self.state_manager.on_redo()
+
     def on_add_event(self):
         """添加事件 - 调用事件管理器"""
         self.event_manager.on_add_event()
