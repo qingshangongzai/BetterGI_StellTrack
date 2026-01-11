@@ -8,7 +8,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 # 导入共享模块
 from styles import ChineseMessageBox, UnifiedStyleHelper, FadeInWindowMixin, StyledDialog, get_global_font_manager, DialogFactory
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_user_data_dir
+from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_script_default_dir
 from debug_tools import get_global_debug_logger
 
 # =============================================================================
@@ -594,9 +594,9 @@ class ScriptManager:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
             default_filename = f"BetterGI_GCM_{timestamp}.json"
             
-            # 获取用户数据目录作为默认保存路径
-            user_data_dir = get_user_data_dir()
-            default_path = os.path.join(user_data_dir, default_filename)
+            # 获取脚本默认目录作为默认保存路径
+            script_default_dir = get_script_default_dir()
+            default_path = os.path.join(script_default_dir, default_filename)
             
             filename, _ = QFileDialog.getSaveFileName(
                 self.main_window,
@@ -636,13 +636,13 @@ class ScriptManager:
                 return
             
             # 打开文件对话框选择要导入的脚本文件
-            # 获取用户数据目录作为默认导入路径
-            user_data_dir = get_user_data_dir()
+            # 获取脚本默认目录作为默认导入路径
+            script_default_dir = get_script_default_dir()
             
             filename, _ = QFileDialog.getOpenFileName(
                 self.main_window,
                 "导入脚本",
-                user_data_dir,
+                script_default_dir,
                 "JSON文件 (*.json);;所有文件 (*.*)"
             )
             
@@ -675,7 +675,7 @@ class ScriptManager:
             event_manager.on_reset_search_filter()
             
             # 保存当前状态到撤销栈
-            self.main_window.save_state_to_undo_stack()
+            self.main_window.state_manager.save_state_to_undo_stack()
             
             # 开始批量操作
             self.main_window._batch_operation = True
@@ -693,15 +693,12 @@ class ScriptManager:
                 # 更新统计信息
                 event_manager.update_stats()
                 
-                # 标记状态变更
-                self.main_window.mark_state_dirty()
-                
                 self.main_window.status_bar.showMessage("✅ 脚本导入成功")
                 self.debug_logger.log_info(f"脚本导入成功: {len(imported_events)} 个事件")
                 ChineseMessageBox.show_info(self.main_window, "成功", f"脚本导入成功！\n包含 {len(imported_events)} 个事件")
                 
                 # 立即更新预计总时间
-                self.main_window.on_calculate_total_time()
+                self.main_window.settings_panel.on_calculate_total_time()
             finally:
                 # 结束批量操作
                 self.main_window._batch_operation = False

@@ -323,10 +323,6 @@ def update_app_state(main_window, event_manager=None):
     Returns:
         None
     """
-    # 标记状态变更
-    if hasattr(main_window, 'mark_state_dirty'):
-        main_window.mark_state_dirty()
-    
     # 更新统计信息
     if event_manager and hasattr(event_manager, 'update_stats'):
         event_manager.update_stats()
@@ -334,8 +330,8 @@ def update_app_state(main_window, event_manager=None):
         main_window.stats_panel.update_stats()
     
     # 立即更新预计总时间
-    if hasattr(main_window, 'on_calculate_total_time'):
-        main_window.on_calculate_total_time()
+    if hasattr(main_window, 'settings_panel'):
+        main_window.settings_panel.on_calculate_total_time()
 
 # =============================================================================
 # Windows 任务栏图标修复相关函数
@@ -503,6 +499,19 @@ def get_user_data_dir():
         os.makedirs(data_dir, exist_ok=True)
     
     return data_dir
+
+def get_script_default_dir():
+    r"""获取脚本默认目录，用于打开和保存脚本文件
+    
+    返回: C:\Program Files\BetterGI\User\KeyMouseScript
+    """
+    script_dir = r"C:\Program Files\BetterGI\User\KeyMouseScript"
+    
+    # 确保目录存在
+    if not os.path.exists(script_dir):
+        os.makedirs(script_dir, exist_ok=True)
+    
+    return script_dir
 
 def get_system_theme_mode():
     """获取系统主题模式（"light" 或 "dark"）"""
