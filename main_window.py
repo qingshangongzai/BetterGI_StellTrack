@@ -58,6 +58,8 @@ from widgets import ModernTableWidget, HeaderWidget
 
 from time_analysis import EventTimeAnalyzerDialog
 
+from menu_manager import MenuManager
+
 
 
 class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
@@ -128,6 +130,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.event_manager = EventManager(self)
         self.script_manager = ScriptManager(self)
         
+        # 初始化菜单管理器
+        self.menu_manager = MenuManager(self)
+        
         # 初始化自动保存定时器
         self.auto_save_timer = QTimer()
         self.auto_save_timer.setInterval(30000)  # 30秒自动保存一次
@@ -191,7 +196,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 创建界面
 
-            self.create_menu_bar()
+            self.menu_manager.create_menu_bar()
 
             self.create_header(main_layout)
 
@@ -208,8 +213,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             
 
             # 加载时间逻辑设置
-
-            self.load_time_logic_settings()
+            self.menu_manager.load_time_logic_settings()
 
             
 
@@ -251,528 +255,25 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     
 
-    def create_menu_bar(self):
-        """创建应用程序菜单栏
-        
-        构建包含文件、编辑、工具、设置和帮助等菜单的菜单栏，
-        并为每个菜单项连接相应的操作。
-        
-        使用 ModernMenuBar 以修复 Windows 系统下菜单圆角显示问题。
-        """
 
-        # 创建现代化菜单栏，自动为所有菜单应用无边框样式
-        menubar = ModernMenuBar(self)
-        self.setMenuBar(menubar)
-
-        
-
-        # 文件菜单
-
-        file_menu = menubar.addMenu('文件')
-
-        
-
-        # 新建
-
-        new_action = QAction('新建', self)
-
-        new_action.setShortcut('Ctrl+N')
-
-        new_action.triggered.connect(self.on_new_file)
-
-        file_menu.addAction(new_action)
-
-        
-
-        # 打开
-
-        open_action = QAction('打开', self)
-
-        open_action.setShortcut('Ctrl+O')
-
-        open_action.triggered.connect(self.script_manager.on_import_script)
-
-        file_menu.addAction(open_action)
-
-        
-
-        # 保存
-
-        save_action = QAction('保存', self)
-
-        save_action.setShortcut('Ctrl+S')
-
-        save_action.triggered.connect(self.script_manager.on_save_script)
-
-        file_menu.addAction(save_action)
-
-        
-
-        file_menu.addSeparator()
-
-        
-
-        # 退出
-
-        exit_action = QAction('退出', self)
-
-        exit_action.setShortcut('Ctrl+Q')
-
-        exit_action.triggered.connect(self.close)
-
-        file_menu.addAction(exit_action)
-
-        
-
-        # 编辑菜单
-
-        edit_menu = menubar.addMenu('编辑')
-
-        
-
-        # 撤销
-
-        undo_action = QAction('撤销', self)
-
-        undo_action.setShortcut('Ctrl+Z')
-
-        undo_action.triggered.connect(self.on_undo)
-
-        edit_menu.addAction(undo_action)
-
-        
-
-        # 重做
-
-        redo_action = QAction('重做', self)
-
-        redo_action.setShortcut('Ctrl+Y')
-
-        redo_action.triggered.connect(self.on_redo)
-
-        edit_menu.addAction(redo_action)
-
-        
-
-        edit_menu.addSeparator()
-
-        
-
-        # 添加事件
-
-        add_action = QAction('添加事件', self)
-
-        add_action.setShortcut('Ctrl+I')
-
-        add_action.triggered.connect(self.event_manager.on_add_event)
-
-        edit_menu.addAction(add_action)
-        
-        # 编辑事件
-
-        edit_action = QAction('编辑事件', self)
-
-        edit_action.setShortcut('Ctrl+E')
-
-        edit_action.triggered.connect(self.event_manager.on_edit_event)
-
-        edit_menu.addAction(edit_action)
-        
-        edit_menu.addSeparator()
-        
-        # 剪切
-
-        cut_action = QAction('剪切', self)
-
-        cut_action.setShortcut('Ctrl+X')
-
-        cut_action.triggered.connect(self.event_manager.on_cut_event)
-
-        edit_menu.addAction(cut_action)
-
-        
-
-        # 复制
-
-        copy_action = QAction('复制', self)
-
-        copy_action.setShortcut('Ctrl+C')
-
-        copy_action.triggered.connect(self.event_manager.on_copy_event)
-
-        edit_menu.addAction(copy_action)
-
-        
-
-        # 粘贴
-
-        paste_action = QAction('粘贴', self)
-
-        paste_action.setShortcut('Ctrl+V')
-
-        paste_action.triggered.connect(self.event_manager.on_paste_event)
-
-        edit_menu.addAction(paste_action)
-
-        
-
-        edit_menu.addSeparator()
-
-        
-
-        # 删除
-
-        delete_action = QAction('删除', self)
-
-        delete_action.setShortcut('Delete')
-
-        delete_action.triggered.connect(self.event_manager.on_delete_event)
-
-        edit_menu.addAction(delete_action)
-
-        
-
-        # 全选
-
-        select_all_action = QAction('全选', self)
-
-        select_all_action.setShortcut('Ctrl+A')
-
-        select_all_action.triggered.connect(self.event_manager.on_select_all_events)
-
-        edit_menu.addAction(select_all_action)
-        
-        # 批量编辑
-
-        batch_edit_action = QAction('批量编辑', self)
-
-        batch_edit_action.setShortcut('Ctrl+B')
-
-        batch_edit_action.triggered.connect(self.event_manager.on_batch_edit)
-
-        edit_menu.addAction(batch_edit_action)
-
-        
-
-        # 新增：时间逻辑菜单
-
-        time_logic_menu = menubar.addMenu('时间逻辑')
-
-        
-
-        # 删除事件逻辑子菜单
-
-        delete_logic_menu = time_logic_menu.addMenu('删除事件逻辑')
-
-        
-
-        # 删除事件逻辑选项
-
-        delete_prompt_action = QAction('每次弹出提示选择', self)
-
-        delete_prompt_action.setCheckable(True)
-
-        delete_prompt_action.triggered.connect(lambda: self.set_delete_logic('prompt'))
-
-        delete_logic_menu.addAction(delete_prompt_action)
-
-        
-
-        delete_current_action = QAction('默认：仅修改当前事件时间', self)
-
-        delete_current_action.setCheckable(True)
-
-        delete_current_action.triggered.connect(lambda: self.set_delete_logic('current'))
-
-        delete_logic_menu.addAction(delete_current_action)
-
-        
-
-        delete_recalculate_action = QAction('默认：重新计算后续事件时间', self)
-
-        delete_recalculate_action.setCheckable(True)
-
-        delete_recalculate_action.triggered.connect(lambda: self.set_delete_logic('recalculate'))
-
-        delete_logic_menu.addAction(delete_recalculate_action)
-
-        
-
-        # 粘贴事件逻辑子菜单
-
-        paste_logic_menu = time_logic_menu.addMenu('粘贴事件逻辑')
-
-        
-
-        # 粘贴事件逻辑选项
-
-        paste_prompt_action = QAction('每次弹出提示选择', self)
-
-        paste_prompt_action.setCheckable(True)
-
-        paste_prompt_action.triggered.connect(lambda: self.set_paste_logic('prompt'))
-
-        paste_logic_menu.addAction(paste_prompt_action)
-
-        
-
-        paste_current_action = QAction('默认：仅修改当前事件时间', self)
-
-        paste_current_action.setCheckable(True)
-
-        paste_current_action.triggered.connect(lambda: self.set_paste_logic('current'))
-
-        paste_logic_menu.addAction(paste_current_action)
-
-        
-
-        paste_recalculate_action = QAction('默认：重新计算后续事件时间', self)
-
-        paste_recalculate_action.setCheckable(True)
-
-        paste_recalculate_action.triggered.connect(lambda: self.set_paste_logic('recalculate'))
-
-        paste_logic_menu.addAction(paste_recalculate_action)
-        
-        # 编辑事件逻辑子菜单
-        edit_logic_menu = time_logic_menu.addMenu('编辑事件逻辑')
-        
-        # 编辑事件逻辑选项
-        edit_current_action = QAction('默认：仅修改当前事件时间', self)
-        edit_current_action.setCheckable(True)
-        edit_current_action.triggered.connect(lambda: self.set_edit_logic('current'))
-        edit_logic_menu.addAction(edit_current_action)
-        
-        edit_recalculate_action = QAction('默认：重新计算后续事件时间', self)
-        edit_recalculate_action.setCheckable(True)
-        edit_recalculate_action.triggered.connect(lambda: self.set_edit_logic('recalculate'))
-        edit_logic_menu.addAction(edit_recalculate_action)
-        
-        # 末尾事件操作跳过弹窗开关
-        skip_end_events_action = QAction('末尾事件操作跳过弹窗', self)
-        skip_end_events_action.setCheckable(True)
-        skip_end_events_action.setChecked(True)  # 默认开启
-        skip_end_events_action.triggered.connect(self.set_skip_end_events_prompt)
-        time_logic_menu.addAction(skip_end_events_action)
-        
-        # 保存末尾事件开关的引用
-        self.skip_end_events_action = skip_end_events_action
-
-        
-
-        # 保存菜单项引用，用于更新选中状态
-
-        self.delete_logic_actions = {
-
-            'prompt': delete_prompt_action,
-
-            'current': delete_current_action,
-
-            'recalculate': delete_recalculate_action
-
-        }
-
-        
-
-        self.paste_logic_actions = {
-            'prompt': paste_prompt_action,
-            'current': paste_current_action,
-            'recalculate': paste_recalculate_action
-        }
-        
-        self.edit_logic_actions = {
-            'current': edit_current_action,
-            'recalculate': edit_recalculate_action
-        }
-        
-        # 分析菜单
-
-        # 工具菜单
-
-        # 主题菜单
-        theme_menu = menubar.addMenu('主题')
-
-        # 主题模式动作组（互斥）
-        self.theme_action_group = QActionGroup(self)
-        self.theme_action_group.setExclusive(True)
-
-        # 浅色主题
-        self.theme_light_action = QAction('浅色主题', self)
-        self.theme_light_action.setCheckable(True)
-        self.theme_light_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('light'))
-        self.theme_action_group.addAction(self.theme_light_action)
-        theme_menu.addAction(self.theme_light_action)
-
-        # 深色主题
-        self.theme_dark_action = QAction('深色主题', self)
-        self.theme_dark_action.setCheckable(True)
-        self.theme_dark_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('dark'))
-        self.theme_action_group.addAction(self.theme_dark_action)
-        theme_menu.addAction(self.theme_dark_action)
-
-        # 跟随系统
-        self.theme_system_action = QAction('跟随系统', self)
-        self.theme_system_action.setCheckable(True)
-        self.theme_system_action.triggered.connect(lambda checked=False: self._on_theme_mode_selected('system'))
-        self.theme_action_group.addAction(self.theme_system_action)
-        theme_menu.addAction(self.theme_system_action)
-
-        # 根据当前主题模式初始化选中状态
-        self._initialize_theme_menu_state()
-
-        tools_menu = menubar.addMenu('工具')
-
-        
-
-        # 事件时间分析工具
-
-        time_analysis_action = QAction('事件时间分析', self)
-
-        time_analysis_action.setShortcut('Ctrl+T')
-
-        time_analysis_action.triggered.connect(self.on_event_time_analysis)
-
-        tools_menu.addAction(time_analysis_action)
-
-        
-
-        # 添加分隔线
-
-        tools_menu.addSeparator()
-
-        
-
-        # 调试工具
-
-        debug_action = QAction('调试工具', self)
-
-        debug_action.setShortcut('Ctrl+D')
-
-        debug_action.triggered.connect(self.on_open_debug_tool)
-
-        tools_menu.addAction(debug_action)
-
-        
-
-        # 帮助菜单 - 增加链接
-
-        help_menu = menubar.addMenu('帮助')
-
-        
-
-        # 个人主页
-
-        homepage_action = QAction('个人主页', self)
-
-        homepage_action.triggered.connect(lambda: self.open_url("https://b23.tv/KO3m8zU"))
-
-        help_menu.addAction(homepage_action)
-
-        
-
-        # 项目地址
-
-        project_action = QAction('项目地址', self)
-
-        project_action.triggered.connect(lambda: self.open_url("https://gitee.com/qingshangongzai/BetterGI_StellTrack"))
-
-        help_menu.addAction(project_action)
-
-        
-
-        # 使用说明
-
-        manual_action = QAction('使用说明', self)
-
-        manual_action.triggered.connect(self.open_manual)
-
-        help_menu.addAction(manual_action)
-
-        
-
-        help_menu.addSeparator()
-
-        
-
-        # 检查更新
-
-        check_update_action = QAction('检查更新', self)
-
-        check_update_action.triggered.connect(self.on_check_update)
-
-        help_menu.addAction(check_update_action)
-
-        
-
-        help_menu.addSeparator()
-
-        
-
-        # 关于
-
-        about_action = QAction('关于', self)
-
-        about_action.triggered.connect(self.on_about)
-
-        help_menu.addAction(about_action)
-
-        
-
-        # 用户协议
-
-        agreement_action = QAction('用户协议', self)
-
-        agreement_action.triggered.connect(self.on_user_agreement)
-
-        help_menu.addAction(agreement_action)
-
-        
-
-        # 初始化菜单状态
-
-        self.update_time_logic_menu_state()
-
-    
 
     def set_delete_logic(self, logic):
-
         """设置删除事件逻辑"""
-
-        self.delete_logic = logic
-
-        self.update_time_logic_menu_state()
-
-        self.save_time_logic_settings()
-
-        self.status_bar.showMessage(f"✅ 删除事件逻辑已设置为: {self.get_delete_logic_display_name(logic)}")
-
-        self.debug_logger.log_info(f"删除事件逻辑设置为: {logic}")
+        self.menu_manager.set_delete_logic(logic)
 
 
 
     def set_paste_logic(self, logic):
         """设置粘贴事件逻辑"""
-        self.paste_logic = logic
-        self.update_time_logic_menu_state()
-        self.save_time_logic_settings()
-        self.status_bar.showMessage(f"✅ 粘贴事件逻辑已设置为: {self.get_paste_logic_display_name(logic)}")
-        self.debug_logger.log_info(f"粘贴事件逻辑设置为: {logic}")
+        self.menu_manager.set_paste_logic(logic)
 
     def set_edit_logic(self, logic):
         """设置编辑事件逻辑"""
-        self.edit_logic = logic
-        self.update_time_logic_menu_state()
-        self.save_time_logic_settings()
-        self.status_bar.showMessage(f"✅ 编辑事件逻辑已设置为: {self.get_edit_logic_display_name(logic)}")
-        self.debug_logger.log_info(f"编辑事件逻辑设置为: {logic}")
+        self.menu_manager.set_edit_logic(logic)
 
     def set_skip_end_events_prompt(self, checked):
         """设置末尾事件操作是否跳过弹窗"""
-        self.skip_end_events_prompt = checked
-        self.save_time_logic_settings()
-        status = "开启" if checked else "关闭"
-        self.status_bar.showMessage(f"✅ 末尾事件操作跳过弹窗已{status}")
-        self.debug_logger.log_info(f"末尾事件操作跳过弹窗已设置为: {checked}")
+        self.menu_manager.set_skip_end_events_prompt(checked)
 
     def get_skip_end_events_prompt(self):
         """获取末尾事件操作是否跳过弹窗的设置"""
@@ -780,200 +281,47 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     def update_time_logic_menu_state(self):
         """更新时间逻辑菜单的选中状态"""
-        # 更新删除逻辑菜单状态
-        if hasattr(self, 'delete_logic_actions'):
-            for logic, action in self.delete_logic_actions.items():
-                action.setChecked(getattr(self, 'delete_logic', 'prompt') == logic)
-        
-        # 更新粘贴逻辑菜单状态
-        if hasattr(self, 'paste_logic_actions'):
-            for logic, action in self.paste_logic_actions.items():
-                action.setChecked(getattr(self, 'paste_logic', 'prompt') == logic)
-        
-        # 更新编辑逻辑菜单状态
-        if hasattr(self, 'edit_logic_actions'):
-            for logic, action in self.edit_logic_actions.items():
-                action.setChecked(getattr(self, 'edit_logic', 'current') == logic)
-        
-        # 更新末尾事件操作跳过弹窗开关状态
-        if hasattr(self, 'skip_end_events_action'):
-            self.skip_end_events_action.setChecked(self.get_skip_end_events_prompt())
+        self.menu_manager.update_time_logic_menu_state()
 
     def get_delete_logic_display_name(self, logic):
-
         """获取删除逻辑的显示名称"""
-
-        names = {
-
-            'prompt': '每次弹出提示选择',
-
-            'current': '仅修改当前事件时间',
-
-            'recalculate': '重新计算后续事件时间'
-
-        }
-
-        return names.get(logic, '每次弹出提示选择')
+        return self.menu_manager.get_delete_logic_display_name(logic)
 
 
 
     def get_paste_logic_display_name(self, logic):
         """获取粘贴逻辑的显示名称"""
-        names = {
-            'prompt': '每次弹出提示选择',
-            'current': '仅修改当前事件时间',
-            'recalculate': '重新计算后续事件时间'
-        }
-        return names.get(logic, '每次弹出提示选择')
+        return self.menu_manager.get_paste_logic_display_name(logic)
 
     def get_edit_logic_display_name(self, logic):
         """获取编辑逻辑的显示名称"""
-        names = {
-            'current': '仅修改当前事件时间',
-            'recalculate': '重新计算后续事件时间'
-        }
-        return names.get(logic, '仅修改当前事件时间')
+        return self.menu_manager.get_edit_logic_display_name(logic)
 
     def get_edit_logic(self):
         """获取当前编辑事件逻辑"""
-        return getattr(self, 'edit_logic', 'current')
+        return self.menu_manager.get_edit_logic()
 
     def get_delete_logic(self):
-
         """获取当前删除事件逻辑"""
-
-        return getattr(self, 'delete_logic', 'prompt')
+        return self.menu_manager.get_delete_logic()
 
 
 
     def get_paste_logic(self):
-
         """获取当前粘贴事件逻辑"""
-
-        return getattr(self, 'paste_logic', 'prompt')
+        return self.menu_manager.get_paste_logic()
 
 
 
     def save_time_logic_settings(self):
-
         """保存时间逻辑设置"""
-
-        try:
-
-            # 获取程序所在目录
-
-            if getattr(sys, 'frozen', False):
-
-                app_dir = os.path.dirname(sys.executable)
-
-            else:
-
-                app_dir = os.path.dirname(os.path.abspath(__file__))
-
-            
-
-            # 设置文件路径
-
-            settings_file = os.path.join(app_dir, "BetterGI_StellTrack_settings.json")
-
-            
-
-            # 读取现有设置
-
-            settings = {}
-
-            if os.path.exists(settings_file):
-
-                try:
-
-                    with open(settings_file, 'r', encoding='utf-8') as f:
-
-                        settings = json.load(f)
-
-                except:
-
-                    settings = {}
-
-            
-
-            # 更新时间逻辑设置
-            settings['delete_logic'] = self.get_delete_logic()
-            settings['paste_logic'] = self.get_paste_logic()
-            settings['edit_logic'] = self.get_edit_logic()
-            settings['skip_end_events_prompt'] = self.get_skip_end_events_prompt()
-            
-            # 保存设置
-            with open(settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=2)
-            
-            self.debug_logger.log_info(f"时间逻辑设置已保存: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 编辑={self.edit_logic}")
-
-        except Exception as e:
-
-            self.debug_logger.log_error(f"保存时间逻辑设置失败: {e}")
+        self.menu_manager.save_time_logic_settings()
 
 
 
     def load_time_logic_settings(self):
-
         """加载时间逻辑设置"""
-
-        try:
-
-            # 获取程序所在目录
-
-            if getattr(sys, 'frozen', False):
-
-                app_dir = os.path.dirname(sys.executable)
-
-            else:
-
-                app_dir = os.path.dirname(os.path.abspath(__file__))
-
-            
-
-            # 设置文件路径
-
-            settings_file = os.path.join(app_dir, "BetterGI_StellTrack_settings.json")
-
-            
-
-            if os.path.exists(settings_file):
-
-                with open(settings_file, 'r', encoding='utf-8') as f:
-
-                    settings = json.load(f)
-
-                
-
-                # 加载时间逻辑设置
-                self.delete_logic = settings.get('delete_logic', 'prompt')
-                self.paste_logic = settings.get('paste_logic', 'prompt')
-                self.edit_logic = settings.get('edit_logic', 'current')
-                self.skip_end_events_prompt = settings.get('skip_end_events_prompt', True)
-                
-                # 更新菜单状态
-                self.update_time_logic_menu_state()
-                
-                self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={self.delete_logic}, 粘贴={self.paste_logic}, 编辑={self.edit_logic}, 跳过末尾事件弹窗={self.skip_end_events_prompt}")
-                return True
-            else:
-                # 设置默认值
-                self.delete_logic = 'prompt'
-                self.paste_logic = 'prompt'
-                self.edit_logic = 'current'
-                self.skip_end_events_prompt = True
-                self.debug_logger.log_info("使用默认时间逻辑设置")
-                return True
-            
-        except Exception as e:
-            self.debug_logger.log_error(f"加载时间逻辑设置失败: {e}")
-            # 设置默认值
-            self.delete_logic = 'prompt'
-            self.paste_logic = 'prompt'
-            self.edit_logic = 'current'
-            self.skip_end_events_prompt = True
-            return False
+        self.menu_manager.load_time_logic_settings()
 
     def open_url(self, url):
 
@@ -1112,37 +460,15 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     def _initialize_theme_menu_state(self):
         """根据当前主题模式初始化菜单选中状态"""
-        from styles import UnifiedStyleHelper
-        helper = UnifiedStyleHelper.get_instance()
-        current_mode = getattr(helper, "theme_mode", "system")
-        if current_mode not in ("light", "dark", "system"):
-            current_mode = "system"
-        self._update_theme_action_state(current_mode)
+        self.menu_manager._initialize_theme_menu_state()
 
     def _update_theme_action_state(self, mode: str):
         """更新主题菜单中各选项的选中状态"""
-        if hasattr(self, "theme_light_action"):
-            self.theme_light_action.setChecked(mode == "light")
-        if hasattr(self, "theme_dark_action"):
-            self.theme_dark_action.setChecked(mode == "dark")
-        if hasattr(self, "theme_system_action"):
-            self.theme_system_action.setChecked(mode == "system")
+        self.menu_manager._update_theme_action_state(mode)
 
     def _on_theme_mode_selected(self, mode: str):
         """主题模式菜单项被选中时的处理"""
-        # 避免重复应用相同模式
-        from styles import UnifiedStyleHelper
-        helper = UnifiedStyleHelper.get_instance()
-        current_mode = getattr(helper, "theme_mode", "system")
-        if mode == current_mode:
-            self._update_theme_action_state(mode)
-            return
-        
-        # 直接应用新主题（无动画）
-        helper.setup_global_style(theme_mode=mode, persist=True)
-        self._refresh_theme_styles()
-        self._update_theme_action_state(mode)
-        self.theme_mode_changed.emit(mode)
+        self.menu_manager._on_theme_mode_selected(mode)
 
     def _refresh_theme_styles(self):
         """刷新主窗口及主要面板的样式以应用当前主题"""
