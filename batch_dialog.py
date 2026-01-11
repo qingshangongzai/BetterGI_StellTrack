@@ -13,9 +13,10 @@ from PyQt6.QtGui import QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen,
 
 # 导入共享模块
 from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledDialog, DialogFactory
+from styles.widgets import FadeInWindowMixin
 
 
-class BatchEditDialog(StyledDialog):
+class BatchEditDialog(FadeInWindowMixin, StyledDialog):
     """批量编辑对话框"""
     
     def __init__(self, parent=None, selected_rows=None, events_table=None):
