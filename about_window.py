@@ -376,7 +376,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 · 开发：青山公仔
 · 代码：Deepseek、智谱清言、Trae、Qoder、CodeBuddy、通义千问
 · logo 绘制：青山公仔
-· 联系邮箱：qingshangongzai@163.com
+· 联系邮箱：hxiao_studio@163.com
 
 
 【开源项目使用说明】
