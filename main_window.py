@@ -40,27 +40,25 @@ from update_dialog import UpdateDialog
 
 # 导入事件对话框模块
 
-
-from event_dialogs import EventEditDialog, PasteOptionsDialog, SimpleCoordinateCapture, DeleteOptionsDialog
+from dialogs import EventEditDialog, PasteOptionsDialog, SimpleCoordinateCapture, DeleteOptionsDialog
 
 # 导入调试工具模块
 from debug_tools import PasswordDialog, DebugWindow, get_global_debug_logger
-from debug_dialog import CustomInputDialog
+from dialogs import CustomInputDialog
 
 # 导入新拆分的模块
 
+from ui import SettingsPanel, OperationsPanel, StatsPanel
+from managers import EventManager
+from managers import ScriptManager
 
-from panels import SettingsPanel, OperationsPanel, StatsPanel
-from event_manager import EventManager
-from script_manager import ScriptManager
-
-from widgets import ModernTableWidget, HeaderWidget
+from ui import ModernTableWidget, HeaderWidget
 
 from time_analysis import EventTimeAnalyzerDialog
 
-from menu_manager import MenuManager
+from managers import MenuManager
 
-from state_manager import StateManager
+from managers import StateManager
 
 
 
