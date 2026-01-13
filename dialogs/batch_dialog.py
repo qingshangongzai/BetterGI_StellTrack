@@ -107,6 +107,27 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 基本事件类型（移除了"按键按下"和"按键释放"）
         base_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
+        # 提取选定事件的事件类型
+        selected_event_types = set()
+        selected_key_events = set()
+        
+        if self.selected_rows and self.events_table:
+            for row_index in self.selected_rows:
+                row = row_index.row()
+                if row < self.events_table.rowCount():
+                    event_type_item = self.events_table.item(row, 2)
+                    event_name_item = self.events_table.item(row, 1)
+                    
+                    if event_type_item:
+                        event_type = event_type_item.text()
+                        # 添加基本事件类型
+                        if event_type in base_event_types:
+                            selected_event_types.add(event_type)
+                        # 添加按键事件类型
+                        elif event_type in ["按键按下", "按键释放"] and event_name_item:
+                            event_name = event_name_item.text()
+                            selected_key_events.add(event_name)
+        
         # 创建事件类型替换标签
         type_replace_label = QLabel("事件类型替换:")
         type_replace_label.setFixedWidth(120)
@@ -119,9 +140,11 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 确保old_type_combo宽度一致
         self.old_type_combo = ModernComboBox(width=input_width)
         self.old_type_combo.addItem("不替换类型")
-        self.old_type_combo.addItems(base_event_types)
-        # 添加具体按键事件到old_type_combo,只显示事件名称
-        for event_name in sorted(self.key_events.keys()):
+        # 只添加选定事件中的基本事件类型
+        for event_type in sorted(selected_event_types):
+            self.old_type_combo.addItem(event_type)
+        # 只添加选定事件中的按键事件
+        for event_name in sorted(selected_key_events):
             self.old_type_combo.addItem(event_name)
         
         type_arrow_label = QLabel("→")
