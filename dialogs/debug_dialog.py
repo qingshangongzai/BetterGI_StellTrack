@@ -154,7 +154,8 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
         
         # 检查彩蛋文字
         easter_eggs = {
-            "当你的天空突然下起了大雨": "https://www.bilibili.com/video/BV18X4y1N7Yh?vd_source=8eb122854e92913741ace2b5024fe442"
+            "当你的天空突然下起了大雨": "https://www.bilibili.com/video/BV18X4y1N7Yh?vd_source=8eb122854e92913741ace2b5024fe442",
+            "我们终将重逢": "https://www.bilibili.com/video/BV18i421m75v?vd_source=8eb122854e92913741ace2b5024fe442"
         }
         
         if text in easter_eggs:
