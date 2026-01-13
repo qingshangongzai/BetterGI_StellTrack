@@ -65,7 +65,8 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.offset_input.setMaximum(999999)
         self.offset_input.setValue(0)
         self.offset_input.setDecimals(0)
-        self.offset_input.setSingleStep(100)
+        # 初始设置为ms单位，步长为100
+        self.offset_input.update_step_based_on_unit("ms")
 
         self.offset_time_unit_combo = ModernComboBox()
         self.offset_time_unit_combo.addItems(["ms", "s", "min"])
@@ -73,6 +74,10 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.offset_time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
         # 使用统一的居中组合框样式
         self.offset_time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        # 连接信号，当时间单位改变时更新步长
+        self.offset_time_unit_combo.currentTextChanged.connect(
+            lambda unit: self.offset_input.update_step_based_on_unit(unit)
+        )
         
         offset_time_layout.addWidget(self.offset_input)
         offset_time_layout.addWidget(self.offset_time_unit_combo)
@@ -94,7 +99,8 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.rel_time_input.setMaximum(999999)
         self.rel_time_input.setValue(0)
         self.rel_time_input.setDecimals(0)
-        self.rel_time_input.setSingleStep(100)
+        # 初始设置为ms单位，步长为100
+        self.rel_time_input.update_step_based_on_unit("ms")
 
         self.rel_time_unit_combo = ModernComboBox()
         self.rel_time_unit_combo.addItems(["ms", "s", "min"])
@@ -102,6 +108,10 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.rel_time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
         # 使用统一的居中组合框样式
         self.rel_time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        # 连接信号，当时间单位改变时更新步长
+        self.rel_time_unit_combo.currentTextChanged.connect(
+            lambda unit: self.rel_time_input.update_step_based_on_unit(unit)
+        )
         
         rel_time_layout.addWidget(self.rel_time_input)
         rel_time_layout.addWidget(self.rel_time_unit_combo)

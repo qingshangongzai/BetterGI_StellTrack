@@ -580,15 +580,27 @@ class ModernSpinBox(QSpinBox):
 
 
 class ModernDoubleSpinBox(QDoubleSpinBox):
-    """现代化的浮点数输入框，带上下按钮，内容居中显示"""
+    """现代化的浮点数输入框，带上下按钮，内容居中显示，根据时间单位动态调整步长"""
     def __init__(self, parent=None, width=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.PlusMinus)
         if width:
             self.setFixedWidth(width)
+        self.setSingleStep(1.0)  # 默认步长为1.0
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_spin_box_style())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+    
+    def update_step_based_on_unit(self, time_unit):
+        """根据时间单位更新步长
+        
+        Args:
+            time_unit (str): 时间单位，可以是 'ms', 's', 'min'
+        """
+        if time_unit == "ms":
+            self.setSingleStep(100.0)  # 毫秒单位时，步长为100
+        else:
+            self.setSingleStep(1.0)    # 秒或分钟单位时，步长为1
 
 
 class CenteredComboBox(QComboBox):
@@ -644,14 +656,14 @@ class CenteredLineEdit(QLineEdit):
 
 
 class TimeOffsetSpinBox(QSpinBox):
-    """时间偏移输入框，带上下调节按钮，步长为100ms"""
+    """时间偏移输入框，带上下调节按钮，根据时间单位动态调整步长"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setButtonSymbols(QSpinBox.ButtonSymbols.PlusMinus)
         self.setMinimum(0)
         self.setMaximum(999999)
-        self.setSingleStep(100)
+        self.setSingleStep(100)  # 默认步长为100（毫秒单位）
         self.setValue(0)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
@@ -663,6 +675,17 @@ class TimeOffsetSpinBox(QSpinBox):
             }
         """
         self.setStyleSheet(enhanced_style)
+    
+    def update_step_based_on_unit(self, time_unit):
+        """根据时间单位更新步长
+        
+        Args:
+            time_unit (str): 时间单位，可以是 'ms', 's', 'min'
+        """
+        if time_unit == "ms":
+            self.setSingleStep(100)  # 毫秒单位时，步长为100
+        else:
+            self.setSingleStep(1)    # 秒或分钟单位时，步长为1
 
 
 class AnimatedButton(QPushButton):

@@ -376,10 +376,12 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         time_input_layout = QHBoxLayout()
         time_input_layout.setSpacing(5)
         
-        # 使用TimeOffsetSpinBox控件，支持上下调节按钮，步长为100ms
+        # 使用TimeOffsetSpinBox控件，支持上下调节按钮，根据时间单位动态调整步长
         self.time_edit = TimeOffsetSpinBox()
         self.time_edit.setMaximumWidth(100)
         self.time_edit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        # 初始设置为ms单位，步长为100
+        self.time_edit.update_step_based_on_unit("ms")
         time_input_layout.addWidget(self.time_edit)
         
         self.time_unit_combo = CenteredComboBox()
@@ -391,6 +393,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 应用默认时间单位设置（如果不是系统自动匹配）
         if self.default_time_unit != 'auto':
             self.time_unit_combo.setCurrentText(self.default_time_unit)
+            # 根据默认时间单位更新步长
+            self.time_edit.update_step_based_on_unit(self.default_time_unit)
         
         # 添加伸缩空间，将绝对偏移时间组件推到右侧
         time_input_layout.addStretch()
@@ -532,6 +536,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 时间相关变化 - 新增
         self.time_edit.valueChanged.connect(self.update_absolute_time)
         self.time_unit_combo.currentTextChanged.connect(self.update_absolute_time)
+        # 当时间单位改变时，更新步长
+        self.time_unit_combo.currentTextChanged.connect(self.time_edit.update_step_based_on_unit)
 
     def toggle_key_capture(self):
         """切换按键捕获状态"""

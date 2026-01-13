@@ -106,7 +106,8 @@ class SettingsPanel(QWidget):
         self.interval_input.setMaximum(999999)  # 最大值
         self.interval_input.setValue(3)  # 默认值为3
         self.interval_input.setDecimals(2)  # 支持2位小数
-        self.interval_input.setSingleStep(1)  # 步长为1
+        # 初始设置为s单位，步长为1
+        self.interval_input.update_step_based_on_unit("s")
         self.interval_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         self.time_unit_combo = ModernComboBox()
@@ -115,6 +116,10 @@ class SettingsPanel(QWidget):
         self.time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
         # 使用统一的居中组合框样式
         self.time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        # 连接信号，当时间单位改变时更新步长
+        self.time_unit_combo.currentTextChanged.connect(
+            lambda unit: self.interval_input.update_step_based_on_unit(unit)
+        )
         
         time_layout.addWidget(self.interval_input)
         time_layout.addWidget(self.time_unit_combo)
