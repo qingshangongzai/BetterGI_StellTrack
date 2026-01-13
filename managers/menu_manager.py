@@ -382,7 +382,7 @@ class MenuManager:
         
         # 个人主页
         homepage_action = QAction('个人主页', self.parent_window)
-        homepage_action.triggered.connect(lambda: self.parent_window.open_url("https://b23.tv/KO3m8zU"))
+        homepage_action.triggered.connect(lambda: self.parent_window.open_url("https://space.bilibili.com/1232406878"))
         help_menu.addAction(homepage_action)
         
         # 项目地址
