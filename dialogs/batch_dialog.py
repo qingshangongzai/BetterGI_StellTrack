@@ -54,6 +54,12 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         # 1. 增减偏移时间
         offset_label = QLabel("增减绝对时间:")
         offset_label.setFixedWidth(120)
+        
+        # 创建水平布局来容纳时间输入框和单位选择框
+        offset_time_layout = QHBoxLayout()
+        offset_time_layout.setContentsMargins(0, 0, 0, 0)
+        offset_time_layout.setSpacing(8)
+        
         self.offset_input = ModernDoubleSpinBox(width=input_width)
         self.offset_input.setMinimum(-999999)
         self.offset_input.setMaximum(999999)
@@ -61,17 +67,28 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.offset_input.setDecimals(0)
         self.offset_input.setSingleStep(100)
 
-        offset_label_unit = QLabel("ms")
-        offset_label_unit.setFixedWidth(20)
-        offset_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
+        self.offset_time_unit_combo = ModernComboBox()
+        self.offset_time_unit_combo.addItems(["ms", "s", "min"])
+        self.offset_time_unit_combo.setCurrentText("ms")
+        self.offset_time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
+        # 使用统一的居中组合框样式
+        self.offset_time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        
+        offset_time_layout.addWidget(self.offset_input)
+        offset_time_layout.addWidget(self.offset_time_unit_combo)
 
         operation_layout.addWidget(offset_label, 0, 0)
-        operation_layout.addWidget(self.offset_input, 0, 1)
-        operation_layout.addWidget(offset_label_unit, 0, 2)
+        operation_layout.addLayout(offset_time_layout, 0, 1, 1, 2)
 
         # 2. 统一相对时间
         rel_time_label = QLabel("统一相对时间:")
         rel_time_label.setFixedWidth(120)
+        
+        # 创建水平布局来容纳时间输入框和单位选择框
+        rel_time_layout = QHBoxLayout()
+        rel_time_layout.setContentsMargins(0, 0, 0, 0)
+        rel_time_layout.setSpacing(8)
+        
         self.rel_time_input = ModernDoubleSpinBox(width=input_width)
         self.rel_time_input.setMinimum(0)
         self.rel_time_input.setMaximum(999999)
@@ -79,13 +96,18 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.rel_time_input.setDecimals(0)
         self.rel_time_input.setSingleStep(100)
 
-        rel_time_label_unit = QLabel("ms")
-        rel_time_label_unit.setFixedWidth(20)
-        rel_time_label_unit.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
+        self.rel_time_unit_combo = ModernComboBox()
+        self.rel_time_unit_combo.addItems(["ms", "s", "min"])
+        self.rel_time_unit_combo.setCurrentText("ms")
+        self.rel_time_unit_combo.setFixedWidth(60)  # 设置固定宽度为60px
+        # 使用统一的居中组合框样式
+        self.rel_time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
+        
+        rel_time_layout.addWidget(self.rel_time_input)
+        rel_time_layout.addWidget(self.rel_time_unit_combo)
 
         operation_layout.addWidget(rel_time_label, 1, 0)
-        operation_layout.addWidget(self.rel_time_input, 1, 1)
-        operation_layout.addWidget(rel_time_label_unit, 1, 2)
+        operation_layout.addLayout(rel_time_layout, 1, 1, 1, 2)
 
         
         # 3. 事件类型替换
@@ -242,12 +264,34 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.setLayout(layout)
     
     def get_offset_adjustment(self):
-        """获取偏移调整值"""
-        return int(self.offset_input.value())
+        """获取偏移调整值（转换为毫秒）"""
+        offset = self.offset_input.value()
+        time_unit = self.offset_time_unit_combo.currentText()
+        
+        # 根据时间单位转换为毫秒
+        if time_unit == "s":
+            offset_ms = offset * 1000
+        elif time_unit == "min":
+            offset_ms = offset * 60000
+        else:  # ms
+            offset_ms = offset
+            
+        return int(offset_ms)
     
     def get_unified_rel_time(self):
-        """获取统一相对时间值"""
-        return int(self.rel_time_input.value())
+        """获取统一相对时间值（转换为毫秒）"""
+        rel_time = self.rel_time_input.value()
+        time_unit = self.rel_time_unit_combo.currentText()
+        
+        # 根据时间单位转换为毫秒
+        if time_unit == "s":
+            rel_time_ms = rel_time * 1000
+        elif time_unit == "min":
+            rel_time_ms = rel_time * 60000
+        else:  # ms
+            rel_time_ms = rel_time
+            
+        return int(rel_time_ms)
     
     def get_type_replacement(self):
         """获取类型替换信息"""
