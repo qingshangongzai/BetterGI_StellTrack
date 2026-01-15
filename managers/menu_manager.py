@@ -36,6 +36,9 @@ class MenuManager:
         
         # 末尾事件操作跳过弹窗开关
         self.skip_end_events_action = None
+        
+        # 时间单位设置动作组
+        self.time_unit_actions = {}
     
     def create_menu_bar(self):
         """创建应用程序菜单栏
@@ -60,6 +63,9 @@ class MenuManager:
         
         # 时间逻辑菜单
         self._create_time_logic_menu(menubar)
+        
+        # 时间单位菜单
+        self._create_time_unit_menu(menubar)
         
         # 工具菜单
         self._create_tools_menu(menubar)
@@ -292,6 +298,52 @@ class MenuManager:
         debug_action.triggered.connect(self.parent_window.on_open_debug_tool)
         tools_menu.addAction(debug_action)
     
+    def _create_time_unit_menu(self, menubar):
+        """创建时间单位菜单"""
+        time_unit_menu = menubar.addMenu('时间单位')
+        
+        # 编辑事件时间单位子菜单
+        edit_time_unit_menu = time_unit_menu.addMenu('编辑事件时间单位')
+        
+        # 时间单位选项 - 创建动作组确保互斥
+        time_unit_group = QActionGroup(self.parent_window)
+        
+        # 系统自动匹配
+        auto_unit_action = QAction('系统自动匹配', self.parent_window)
+        auto_unit_action.setCheckable(True)
+        auto_unit_action.triggered.connect(lambda: self.set_time_unit('auto'))
+        time_unit_group.addAction(auto_unit_action)
+        edit_time_unit_menu.addAction(auto_unit_action)
+        
+        # 毫秒
+        ms_unit_action = QAction('毫秒（ms）', self.parent_window)
+        ms_unit_action.setCheckable(True)
+        ms_unit_action.triggered.connect(lambda: self.set_time_unit('ms'))
+        time_unit_group.addAction(ms_unit_action)
+        edit_time_unit_menu.addAction(ms_unit_action)
+        
+        # 秒
+        s_unit_action = QAction('秒（s）', self.parent_window)
+        s_unit_action.setCheckable(True)
+        s_unit_action.triggered.connect(lambda: self.set_time_unit('s'))
+        time_unit_group.addAction(s_unit_action)
+        edit_time_unit_menu.addAction(s_unit_action)
+        
+        # 分钟
+        min_unit_action = QAction('分钟（min）', self.parent_window)
+        min_unit_action.setCheckable(True)
+        min_unit_action.triggered.connect(lambda: self.set_time_unit('min'))
+        time_unit_group.addAction(min_unit_action)
+        edit_time_unit_menu.addAction(min_unit_action)
+        
+        # 保存菜单项引用，用于更新选中状态
+        self.time_unit_actions = {
+            'auto': auto_unit_action,
+            'ms': ms_unit_action,
+            's': s_unit_action,
+            'min': min_unit_action
+        }
+    
     def _create_theme_menu(self, menubar):
         """创建主题菜单"""
         theme_menu = menubar.addMenu('主题')
@@ -330,7 +382,7 @@ class MenuManager:
         
         # 个人主页
         homepage_action = QAction('个人主页', self.parent_window)
-        homepage_action.triggered.connect(lambda: self.parent_window.open_url("https://b23.tv/KO3m8zU"))
+        homepage_action.triggered.connect(lambda: self.parent_window.open_url("https://space.bilibili.com/1232406878"))
         help_menu.addAction(homepage_action)
         
         # 项目地址
@@ -397,6 +449,28 @@ class MenuManager:
             self.parent_window.status_bar.showMessage("⚠️ 已关闭末尾事件操作跳过弹窗")
             self.debug_logger.log_info("已关闭末尾事件操作跳过弹窗")
     
+    def set_time_unit(self, unit):
+        """设置默认时间单位"""
+        self.parent_window.default_time_unit = unit
+        self.update_time_logic_menu_state()
+        self.save_time_logic_settings()
+        self.parent_window.status_bar.showMessage(f"✅ 默认时间单位已设置为: {self.get_time_unit_display_name(unit)}")
+        self.debug_logger.log_info(f"默认时间单位设置为: {unit}")
+    
+    def get_time_unit(self):
+        """获取当前默认时间单位"""
+        return getattr(self.parent_window, 'default_time_unit', 'auto')
+    
+    def get_time_unit_display_name(self, unit):
+        """获取时间单位的显示名称"""
+        display_names = {
+            'auto': '系统自动匹配',
+            'ms': '毫秒（ms）',
+            's': '秒（s）',
+            'min': '分钟（min）'
+        }
+        return display_names.get(unit, unit)
+    
     def update_time_logic_menu_state(self):
         """更新时间逻辑菜单的选中状态"""
         # 更新删除逻辑菜单状态
@@ -420,6 +494,12 @@ class MenuManager:
         # 更新末尾事件跳过弹窗状态
         if hasattr(self.parent_window, 'skip_end_events_prompt') and self.skip_end_events_action:
             self.skip_end_events_action.setChecked(self.parent_window.skip_end_events_prompt)
+        
+        # 更新时间单位菜单状态
+        if hasattr(self.parent_window, 'default_time_unit'):
+            time_unit = self.parent_window.default_time_unit
+            if time_unit in self.time_unit_actions:
+                self.time_unit_actions[time_unit].setChecked(True)
     
     def get_delete_logic_display_name(self, logic):
         """获取删除逻辑的显示名称"""
@@ -466,6 +546,7 @@ class MenuManager:
         settings.setValue("paste_logic", self.get_paste_logic())
         settings.setValue("edit_logic", self.get_edit_logic())
         settings.setValue("skip_end_events_prompt", getattr(self.parent_window, 'skip_end_events_prompt', True))
+        settings.setValue("default_time_unit", self.get_time_unit())
         self.debug_logger.log_info("时间逻辑设置已保存")
     
     def load_time_logic_settings(self):
@@ -488,10 +569,14 @@ class MenuManager:
         skip_end_events_prompt = settings.value("skip_end_events_prompt", True, type=bool)
         self.parent_window.skip_end_events_prompt = skip_end_events_prompt
         
+        # 加载默认时间单位设置
+        default_time_unit = settings.value("default_time_unit", "auto")
+        self.parent_window.default_time_unit = default_time_unit
+        
         # 更新菜单项的选中状态
         self.update_time_logic_menu_state()
         
-        self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}")
+        self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}, 默认时间单位={default_time_unit}")
     
     def _initialize_theme_menu_state(self):
         """初始化主题菜单状态"""

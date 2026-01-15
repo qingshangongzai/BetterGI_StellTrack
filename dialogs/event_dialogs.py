@@ -169,7 +169,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
     - edit_logic: 编辑事件逻辑（'current' 或 'recalculate'），默认为 'current'
     """
     
-    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None, edit_logic='current'):
+    def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None, edit_logic='current', default_time_unit='auto'):
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
@@ -182,6 +182,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.prev_absolute_time = prev_absolute_time
         self.current_row = current_row
         self.edit_logic = edit_logic
+        self.default_time_unit = default_time_unit
         self.key_capture_active = False
         
         try:
@@ -375,10 +376,12 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         time_input_layout = QHBoxLayout()
         time_input_layout.setSpacing(5)
         
-        # 使用TimeOffsetSpinBox控件，支持上下调节按钮，步长为100ms
+        # 使用TimeOffsetSpinBox控件，支持上下调节按钮，根据时间单位动态调整步长
         self.time_edit = TimeOffsetSpinBox()
         self.time_edit.setMaximumWidth(100)
         self.time_edit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        # 初始设置为ms单位，步长为100
+        self.time_edit.update_step_based_on_unit("ms")
         time_input_layout.addWidget(self.time_edit)
         
         self.time_unit_combo = CenteredComboBox()
@@ -386,6 +389,12 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.time_unit_combo.setMinimumWidth(80)
         self.time_unit_combo.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         time_input_layout.addWidget(self.time_unit_combo)
+        
+        # 应用默认时间单位设置（如果不是系统自动匹配）
+        if self.default_time_unit != 'auto':
+            self.time_unit_combo.setCurrentText(self.default_time_unit)
+            # 根据默认时间单位更新步长
+            self.time_edit.update_step_based_on_unit(self.default_time_unit)
         
         # 添加伸缩空间，将绝对偏移时间组件推到右侧
         time_input_layout.addStretch()
@@ -527,6 +536,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         # 时间相关变化 - 新增
         self.time_edit.valueChanged.connect(self.update_absolute_time)
         self.time_unit_combo.currentTextChanged.connect(self.update_absolute_time)
+        # 当时间单位改变时，更新步长
+        self.time_unit_combo.currentTextChanged.connect(self.time_edit.update_step_based_on_unit)
 
     def toggle_key_capture(self):
         """切换按键捕获状态"""
@@ -580,18 +591,35 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 # 处理时间数据
                 try:
                     relative_time_ms = int(relative_time)
-                    if relative_time_ms >= 60000:
-                        # 大于1分钟，显示为分钟
-                        self.time_edit.setValue(relative_time_ms // 60000)
-                        self.time_unit_combo.setCurrentText("min")
-                    elif relative_time_ms >= 1000:
-                        # 大于1秒，显示为秒
-                        self.time_edit.setValue(relative_time_ms // 1000)
-                        self.time_unit_combo.setCurrentText("s")
+                    
+                    # 如果不是系统自动匹配，使用默认时间单位
+                    if self.default_time_unit != 'auto':
+                        if self.default_time_unit == 'min':
+                            # 显示为分钟
+                            self.time_edit.setValue(relative_time_ms // 60000)
+                            self.time_unit_combo.setCurrentText("min")
+                        elif self.default_time_unit == 's':
+                            # 显示为秒
+                            self.time_edit.setValue(relative_time_ms // 1000)
+                            self.time_unit_combo.setCurrentText("s")
+                        else:  # 'ms'
+                            # 显示为毫秒
+                            self.time_edit.setValue(relative_time_ms)
+                            self.time_unit_combo.setCurrentText("ms")
                     else:
-                        # 小于1秒，显示为毫秒
-                        self.time_edit.setValue(relative_time_ms)
-                        self.time_unit_combo.setCurrentText("ms")
+                        # 系统自动匹配（原有逻辑）
+                        if relative_time_ms >= 60000:
+                            # 大于1分钟，显示为分钟
+                            self.time_edit.setValue(relative_time_ms // 60000)
+                            self.time_unit_combo.setCurrentText("min")
+                        elif relative_time_ms >= 1000:
+                            # 大于1秒，显示为秒
+                            self.time_edit.setValue(relative_time_ms // 1000)
+                            self.time_unit_combo.setCurrentText("s")
+                        else:
+                            # 小于1秒，显示为毫秒
+                            self.time_edit.setValue(relative_time_ms)
+                            self.time_unit_combo.setCurrentText("ms")
                 except ValueError:
                     # 如果转换失败，默认显示100ms
                     self.time_edit.setValue(100)

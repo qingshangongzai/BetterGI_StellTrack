@@ -228,7 +228,7 @@ class UnifiedStyleHelper:
                 selection-background-color: {self.COLORS['primary']}; 
                 selection-color: white; 
                 font-size: 11px; 
-                padding: 4px;
+                padding: 0px;
                 {self.SHADOWS['small']} 
             }}
             QComboBox:hover {{ 
@@ -602,7 +602,7 @@ class UnifiedStyleHelper:
                 selection-background-color: {self.COLORS['primary']};
                 selection-color: white;
                 font-size: 11px;
-                padding: 4px;
+                padding: 0px;
                 {self.SHADOWS['small']}
             }}
         """
@@ -686,7 +686,7 @@ class UnifiedStyleHelper:
                 selection-background-color: %s; 
                 selection-color: white; 
                 font-size: 11px; 
-                padding: 4px;
+                padding: 0px;
                 %s 
             }}
             QComboBox:hover {{ 
@@ -813,7 +813,7 @@ class UnifiedStyleHelper:
                 show-decoration-selected: 0;
             }}
             QListView::item {{ 
-                padding: 8px;
+                padding: 4px 8px;
                 text-align: center;
                 border: none;
             }}

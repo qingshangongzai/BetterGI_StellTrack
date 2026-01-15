@@ -217,7 +217,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     def setup_connections(self):
         """设置信号连接"""
         # 按钮连接
-        self.dev_button.clicked.connect(lambda: self.open_url("https://b23.tv/KO3m8zU"))
+        self.dev_button.clicked.connect(lambda: self.open_url("https://space.bilibili.com/1232406878"))
         self.project_button.clicked.connect(lambda: self.open_url("https://gitee.com/qingshangongzai/BetterGI_StellTrack"))
         self.agreement_button.clicked.connect(self.show_user_agreement)
         self.manual_button.clicked.connect(self.open_manual)
