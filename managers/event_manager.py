@@ -1191,7 +1191,8 @@ class EventManager:
                     insert_position=insert_position,
                     insert_after_item=insert_after_item,
                     prev_absolute_time=prev_absolute_time,
-                    edit_logic=self.main_window.get_edit_logic()
+                    edit_logic=self.main_window.get_edit_logic(),
+                    default_time_unit=self.main_window.menu_manager.get_time_unit()
                 )
                 
                 # 更新插入位置信息
@@ -1284,7 +1285,8 @@ class EventManager:
                     is_edit_mode=True,
                     prev_absolute_time=prev_absolute_time,
                     current_row=row,
-                    edit_logic=self.main_window.get_edit_logic()
+                    edit_logic=self.main_window.get_edit_logic(),
+                    default_time_unit=self.main_window.menu_manager.get_time_unit()
                 )
                 if dialog.exec() == QDialog.DialogCode.Accepted:
                     new_event_data = dialog.get_event_data()
@@ -1768,7 +1770,8 @@ class EventManager:
                     insert_position=insert_position,
                     insert_after_item=insert_after_item,
                     prev_absolute_time=prev_absolute_time,
-                    edit_logic=self.main_window.get_edit_logic()
+                    edit_logic=self.main_window.get_edit_logic(),
+                    default_time_unit=self.main_window.menu_manager.get_time_unit()
                 )
                 
                 # 更新插入位置信息
