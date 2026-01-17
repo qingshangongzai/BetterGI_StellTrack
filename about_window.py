@@ -363,7 +363,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     
     def set_info_content(self):
         """设置信息内容 - 使用纯文本格式，仅开头段落首行缩进"""
-        content = """　　BetterGI StellTrack（BetterGI 星轨）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的“留影机”赋予生命的工具。
+        content = """　　BetterGI 星轨（BetterGI StellTrack）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的“留影机”赋予生命的工具。
 
 
 【注意事项】
