@@ -177,6 +177,24 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         self.start_event_combo.addItems(sorted_event_names)
         self.end_event_combo.addItems(sorted_event_names)
     
+    def format_time_display(self, total_ms):
+        """格式化时间显示，与循环设置的显示逻辑保持一致
+        
+        Args:
+            total_ms: 总时间（毫秒）
+            
+        Returns:
+            str: 格式化后的时间字符串
+        """
+        if total_ms < 1000:
+            return f"{int(total_ms)} ms"
+        elif total_ms < 60000:
+            seconds = total_ms / 1000
+            return f"{seconds:.1f} s"
+        else:
+            minutes = total_ms / 60000
+            return f"{minutes:.1f} min"
+    
     def on_analyze(self):
         """开始分析事件时间"""
         if not self.events_table:
@@ -224,7 +242,7 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
             repeat_count = len(time_pairs)
             
             # 更新结果显示
-            self.total_time_label.setText(f"{total_time} ms")
+            self.total_time_label.setText(self.format_time_display(total_time))
             self.avg_time_label.setText(f"{int(avg_time)} ms")
             self.repeat_count_label.setText(f"{repeat_count}")
             
