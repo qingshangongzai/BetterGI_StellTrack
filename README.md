@@ -207,12 +207,12 @@ BetterGI 星轨的核心架构由以下主要模块组成：
 业务逻辑层
 ├── 事件管理 (managers/event_manager.py)
 ├── 脚本管理 (managers/script_manager.py)
-└── 时间分析 (time_analysis.py)
+└── 时间分析 (dialogs/time_analysis.py)
 
 基础服务层
 ├── 样式管理 (styles/)
 ├── 工具函数 (utils.py)
-└── 调试工具 (debug_tools.py)
+└── 调试工具 (dialogs/debug_tools.py)
 
 系统层
 ├── 版本管理 (version.py)
@@ -391,7 +391,12 @@ BetterGI_StellTrack/
 │   ├── __init__.py        # 统一导出接口
 │   ├── batch_dialog.py    # 批量编辑对话框模块，包含批量编辑事件功能
 │   ├── debug_dialog.py     # 调试对话框模块，包含调试工具入口和彩蛋确认对话框
-│   └── event_dialogs.py   # 事件对话框模块，包含各种事件编辑对话框
+│   ├── event_dialogs.py   # 事件对话框模块，包含各种事件编辑对话框
+│   ├── update_dialog.py   # 更新检查对话框模块，负责版本更新检查和云端数据同步
+│   ├── time_analysis.py   # 时间分析对话框模块，提供事件时间分析功能
+│   ├── debug_tools.py     # 调试工具对话框模块，包含调试相关功能
+│   ├── user_agreement.py  # 用户协议对话框模块，包含用户协议确认和显示功能
+│   └── about_window.py    # 关于窗口对话框模块，包含应用程序信息和相关链接
 ├── managers/              # 管理器模块目录，包含各类管理器
 │   ├── __init__.py        # 统一导出接口
 │   ├── menu_manager.py    # 菜单管理器模块，负责菜单栏创建和菜单状态管理
@@ -405,11 +410,6 @@ BetterGI_StellTrack/
 │   ├── widgets.py         # 控件和混入模块
 │   └── dialogs.py         # 对话框和消息框模块
 ├── utils.py                # 工具函数模块，提供各种辅助功能
-├── time_analysis.py        # 时间分析模块，提供事件时间分析功能
-├── debug_tools.py          # 调试工具模块，包含调试相关功能
-├── update_dialog.py        # 更新检查模块，负责版本更新检查和云端数据同步
-├── about_window.py         # 关于窗口模块
-├── user_agreement.py       # 用户协议模块
 ├── requirements.txt        # 项目依赖列表
 ├── version_info.txt        # 版本信息文本文件
 ├── README.md               # 项目说明文档

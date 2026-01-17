@@ -527,7 +527,7 @@ class BetterGIApplication:
         """
         print("[DEBUG] 初始化全局日志记录")
         try:
-            from debug_tools import initialize_global_logging
+            from dialogs.debug_tools import initialize_global_logging
             self.debug_logger = initialize_global_logging()
             print("[DEBUG] 全局日志记录初始化成功")
             return True
@@ -632,7 +632,7 @@ class BetterGIApplication:
             print("[DEBUG] 开始检查用户协议")
             
             # 导入协议检查模块
-            from user_agreement import check_user_agreement
+            from dialogs.user_agreement import check_user_agreement
             
             # 执行协议检查
             if not check_user_agreement():

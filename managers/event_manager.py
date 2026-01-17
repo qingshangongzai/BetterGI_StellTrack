@@ -16,7 +16,7 @@ from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, Modern
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, generate_key_event_name, SORT_TIP_TEXT, get_event_data_from_table
 from dialogs import EventEditDialog, PasteOptionsDialog, DeleteOptionsDialog
 from dialogs import BatchEditDialog
-from debug_tools import get_global_debug_logger
+from dialogs.debug_tools import get_global_debug_logger
 
 # =============================================================================
 # 常量定义

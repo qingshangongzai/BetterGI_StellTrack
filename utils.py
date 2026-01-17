@@ -412,7 +412,7 @@ def fix_windows_taskbar_icon_for_window(window):
             if not pixmap.isNull():
                 h_icon = pixmap.toImage().bits()
             else:
-                from debug_tools import get_global_debug_logger
+                from dialogs.debug_tools import get_global_debug_logger
                 debug_logger = get_global_debug_logger()
                 debug_logger.log_debug("无法加载PNG图标文件")
                 return False
@@ -425,7 +425,7 @@ def fix_windows_taskbar_icon_for_window(window):
             # 强制刷新任务栏
             user32.UpdateWindow(hwnd)
             
-            from debug_tools import get_global_debug_logger
+            from dialogs.debug_tools import get_global_debug_logger
             debug_logger = get_global_debug_logger()
             debug_logger.log_debug(f"任务栏图标修复成功: {icon_path}")
             
@@ -433,13 +433,13 @@ def fix_windows_taskbar_icon_for_window(window):
             _TASKBAR_ICON_FIXED_WINDOWS[window_id] = True
             return True
         
-        from debug_tools import get_global_debug_logger
+        from dialogs.debug_tools import get_global_debug_logger
         debug_logger = get_global_debug_logger()
         debug_logger.log_debug("图标句柄创建失败")
         return False
         
     except Exception as e:
-        from debug_tools import get_global_debug_logger
+        from dialogs.debug_tools import get_global_debug_logger
         debug_logger = get_global_debug_logger()
         debug_logger.log_error(f"修复任务栏图标失败: {e}")
         return False

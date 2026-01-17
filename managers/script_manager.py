@@ -9,7 +9,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 # 导入共享模块
 from styles import ChineseMessageBox, UnifiedStyleHelper, FadeInWindowMixin, StyledDialog, get_global_font_manager, DialogFactory
 from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_script_default_dir
-from debug_tools import get_global_debug_logger
+from dialogs.debug_tools import get_global_debug_logger
 
 # =============================================================================
 # 脚本生成进度对话框

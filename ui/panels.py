@@ -11,7 +11,7 @@ from PyQt6.QtGui import QIntValidator
 
 from styles import UnifiedStyleHelper
 from styles import ModernGroupBox, ModernLineEdit, ModernComboBox, ModernSpinBox, ModernDoubleSpinBox, ChineseMessageBox, DialogFactory, AnimatedDialog
-from debug_tools import get_global_debug_logger
+from dialogs.debug_tools import get_global_debug_logger
 
 # =============================================================================
 # 设置面板 - 循环设置和窗口设置

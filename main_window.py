@@ -31,19 +31,19 @@ from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_ty
 # 导入关于窗口模块
 
 
-from about_window import AboutWindowQt
+from dialogs.about_window import AboutWindowQt
 
 # 导入更新对话框模块
 
 
-from update_dialog import UpdateDialog
+from dialogs.update_dialog import UpdateDialog
 
 # 导入事件对话框模块
 
 from dialogs import EventEditDialog, PasteOptionsDialog, SimpleCoordinateCapture, DeleteOptionsDialog
 
 # 导入调试工具模块
-from debug_tools import PasswordDialog, DebugWindow, get_global_debug_logger
+from dialogs.debug_tools import PasswordDialog, DebugWindow, get_global_debug_logger
 from dialogs import CustomInputDialog
 
 # 导入新拆分的模块
@@ -54,7 +54,7 @@ from managers import ScriptManager
 
 from ui import ModernTableWidget, HeaderWidget
 
-from time_analysis import EventTimeAnalyzerDialog
+from dialogs.time_analysis import EventTimeAnalyzerDialog
 
 from managers import MenuManager
 
@@ -829,7 +829,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         """用户协议"""
         self.debug_logger.log_info("打开用户协议窗口")
         
-        from about_window import UserAgreementWindow
+        from dialogs.about_window import UserAgreementWindow
         
         agreement_window = UserAgreementWindow(self)
         
