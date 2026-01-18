@@ -1,48 +1,23 @@
 # user_agreement.py
-import sys
 import os
-import ctypes
+import sys
 import hashlib
 from datetime import datetime
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QLineEdit, QComboBox, QPushButton, QTableWidget, 
-                            QTableWidgetItem, QTextEdit, QFrame, QGroupBox, QGridLayout,
-                            QHeaderView, QScrollArea, QSizePolicy, QSplitter,
-                            QMessageBox, QStatusBar, QFileDialog, QTextBrowser,
-                            QListView, QDialogButtonBox, QCheckBox, QSpinBox, QDoubleSpinBox)
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
-from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor, 
-                        QKeyEvent, QStandardItemModel, QStandardItem, QDesktopServices, QFontDatabase)
 
-# 导入版本管理器
+from PyQt6.QtWidgets import (QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                            QCheckBox, QTextBrowser, QFrame)
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QFont, QPixmap, QDesktopServices
+
 from version import version_manager
 
-# 导入共享模块
-from styles import DialogFactory, UnifiedStyleHelper, FadeInWindowMixin
+from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, 
+                   get_global_font_manager, FadeInWindowMixin, 
+                   WindowIconMixin, ChineseMessageBox, DialogFactory)
 
-# =============================================================================
-# 从styles模块导入样式和字体管理相关组件
-# =============================================================================
-from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, get_global_font_manager, 
-                   ModernGroupBox, ModernLineEdit, ModernComboBox, ModernSpinBox, 
-                   ModernDoubleSpinBox, ChineseMessageBox)
-# 从utils模块导入通用功能
-from utils import (VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
-                  convert_event_type_num_to_str_with_button, generate_key_event_name,
-                  set_app_user_model_id, fix_windows_taskbar_icon_for_window, load_icon_universal, load_logo,
-                  get_base_path, find_resource_file, get_resource_path, get_current_version, get_current_app_info,
-                  get_user_data_dir)
-
-# 导入窗口图标混入类
-from styles import WindowIconMixin
-
-# =============================================================================
-# 单文件 EXE 图标加载修复
-# =============================================================================
-
-def load_icon_exe_safe():
-    """兼容性函数，指向统一的图标加载函数"""
-    return load_icon_universal()
+from utils import (load_icon_universal, load_logo, get_base_path, 
+                  find_resource_file, get_current_app_info, get_user_data_dir,
+                  set_app_user_model_id)
 
 # =============================================================================
 # 用户协议HTML文件加载函数

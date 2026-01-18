@@ -1,18 +1,47 @@
-# time_analysis.py - 事件时间分析插件
-import sys
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-                            QGroupBox, QGridLayout, QComboBox, QFrame, QMessageBox)
+# 标准库模块导入
+# 无标准库模块导入
+
+# 第三方模块导入
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QGroupBox, QGridLayout, QComboBox, QFrame, QMessageBox
+)
 
-# 导入共享模块
-from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, CenteredComboBox, StyledDialog, get_global_font_manager, FadeInWindowMixin
+# 项目模块导入
+from styles import (
+    UnifiedStyleHelper,
+    ChineseMessageBox,
+    ModernGroupBox,
+    CenteredComboBox,
+    StyledDialog,
+    get_global_font_manager,
+    FadeInWindowMixin
+)
 
 
 class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
-    """事件时间分析对话框"""
+    """事件时间分析对话框，用于分析事件之间的时间间隔
+    
+    提供以下功能：
+    - 选择起始事件和结束事件
+    - 计算事件之间的总时间、平均时间和重复次数
+    - 格式化时间显示（毫秒、秒、分钟）
+    - 排除指针移动和平行移动事件
+    
+    Args:
+        parent: 父窗口组件
+        events_table: 事件表格控件
+    """
     
     def __init__(self, parent=None, events_table=None):
+        """初始化事件时间分析对话框
+        
+        Args:
+            parent: 父窗口组件
+            events_table: 事件表格控件
+        """
         super().__init__(parent)
         self.events_table = events_table
         self.setWindowTitle("事件时间分析")
@@ -25,7 +54,15 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         self.setup_ui()
     
     def setup_ui(self):
-        """设置UI界面"""
+        """设置UI界面
+        
+        创建对话框的用户界面，包括：
+        - 标题区域
+        - 事件选择区域（起始事件和结束事件）
+        - 分析按钮
+        - 结果显示区域（总时间、平均时间、重复次数）
+        - 重置按钮
+        """
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(25, 20, 25, 20)
@@ -144,7 +181,11 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         main_layout.addLayout(reset_layout)
     
     def populate_event_combos(self):
-        """从事件表格中填充事件列表到下拉框，只严格排除指针移动和平行移动事件"""
+        """从事件表格中填充事件列表到下拉框，只严格排除指针移动和平行移动事件
+        
+        遍历事件表格，提取所有非指针移动和平行移动事件的名称，
+        填充到起始事件和结束事件的下拉框中。
+        """
         if not self.events_table:
             return
         
@@ -196,7 +237,15 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
             return f"{minutes:.1f} min"
     
     def on_analyze(self):
-        """开始分析事件时间"""
+        """开始分析事件时间
+        
+        根据用户选择的起始事件和结束事件，计算：
+        - 总时间：所有时间对的总和
+        - 平均时间：所有时间对的平均值
+        - 重复次数：找到的时间对数量
+        
+        分析完成后更新结果显示区域，并弹出提示框。
+        """
         if not self.events_table:
             ChineseMessageBox.show_error(self, "错误", "未找到事件表格数据")
             return
@@ -253,13 +302,23 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_info(self, "分析结果", "未找到匹配的事件时间对")
     
     def reset_results(self):
-        """重置分析结果"""
+        """重置分析结果
+        
+        将结果显示区域的所有标签重置为初始值（0）。
+        """
         self.total_time_label.setText("0 ms")
         self.avg_time_label.setText("0 ms")
         self.repeat_count_label.setText("0")
     
     def get_results(self):
-        """获取分析结果"""
+        """获取分析结果
+        
+        Returns:
+            dict: 包含分析结果的字典，键为：
+                - total_time: 总时间（毫秒）
+                - avg_time: 平均时间（毫秒）
+                - repeat_count: 重复次数
+        """
         return {
             "total_time": int(self.total_time_label.text().replace(" ms", "")),
             "avg_time": int(self.avg_time_label.text().replace(" ms", "")),

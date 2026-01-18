@@ -1,27 +1,42 @@
 # debug_tools.py
-import sys
-import os
+# 标准库模块导入
 import json
-import traceback
 import logging
+import os
+import queue
+import sys
 import threading
 import time
-import queue
+import traceback
 from datetime import datetime
-from PyQt6.QtWidgets import (QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QLineEdit, QPushButton, QTextEdit, QGroupBox, 
-                            QGridLayout, QFileDialog, QMessageBox, QTextBrowser,
-                            QProgressBar, QTabWidget, QTreeWidget, QTreeWidgetItem,
-                            QSplitter, QCheckBox)
-from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal, QThread
-from PyQt6.QtGui import QDesktopServices, QTextCursor, QFont, QColor, QFontDatabase
 
-# 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, StyledDialog, DialogFactory, FadeInWindowMixin, ModernGroupBox
-from styles import ChineseMessageBox
-# 导入资源管理器（已从resource_manager合并到styles）
-from utils import get_base_path, find_resource_file, get_current_version, get_current_app_info, get_user_data_dir
-# 导入版本管理器
+# 第三方模块导入
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QUrl
+from PyQt6.QtGui import QFont, QDesktopServices, QTextCursor
+from PyQt6.QtWidgets import (
+    QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QLineEdit, QPushButton, QTextEdit, QGroupBox, QGridLayout, 
+    QFileDialog, QMessageBox, QTextBrowser, QProgressBar, QTabWidget, 
+    QTreeWidget, QTreeWidgetItem, QSplitter, QCheckBox
+)
+
+# 项目模块导入
+from styles import (
+    UnifiedStyleHelper,
+    get_global_font_manager,
+    StyledDialog,
+    DialogFactory,
+    FadeInWindowMixin,
+    ModernGroupBox,
+    ChineseMessageBox
+)
+from utils import (
+    get_base_path,
+    find_resource_file,
+    get_current_version,
+    get_current_app_info,
+    get_user_data_dir
+)
 from version import version_manager
 
 # =============================================================================
@@ -33,14 +48,16 @@ class SafeOutputCapture:
     
     用于捕获标准输出和标准错误，并将其重定向到日志文件，同时避免递归调用问题。
     提供线程安全的缓冲区管理和写入机制。
-    
-    参数：
-    - original_stream: 原始流对象（stdout或stderr）
-    - logger: 日志记录器实例
-    - stream_name: 流名称（"STDOUT"或"STDERR"）
     """
     
     def __init__(self, original_stream, logger, stream_name):
+        """初始化输出捕获类
+        
+        Args:
+            original_stream: 原始流对象（stdout或stderr）
+            logger: 日志记录器实例
+            stream_name: 流名称（"STDOUT"或"STDERR"）
+        """
         self.original_stream = original_stream
         self.logger = logger
         self.stream_name = stream_name
@@ -49,7 +66,11 @@ class SafeOutputCapture:
         self._is_recursing = False
 
     def write(self, text):
-        """写入文本到日志，不输出到控制台"""
+        """写入文本到日志，不输出到控制台
+        
+        Args:
+            text: 要写入的文本内容
+        """
         if self._is_recursing:
             return
             
@@ -80,7 +101,11 @@ class SafeOutputCapture:
         pass
     
     def get_buffer(self):
-        """获取缓冲区内容"""
+        """获取缓冲区内容
+        
+        Returns:
+            list: 缓冲区内容的副本
+        """
         with self.buffer_lock:
             return self.buffer.copy()
     
@@ -94,17 +119,23 @@ class SafeOutputCapture:
 # =============================================================================
 
 class SafeDebugLogger:
-    """安全的调试日志记录器，避免递归问题"""
+    """安全的调试日志记录器，避免递归问题
+    
+    单例模式，确保全局只有一个日志记录器实例。
+    提供线程安全的日志记录功能，支持日志文件管理、性能统计等。
+    """
     
     _instance = None
     _initialized = False
     
     def __new__(cls):
+        """创建单例实例"""
         if cls._instance is None:
             cls._instance = super(SafeDebugLogger, cls).__new__(cls)
         return cls._instance
     
     def __init__(self):
+        """初始化调试日志记录器"""
         if SafeDebugLogger._initialized:
             return
             
@@ -125,7 +156,11 @@ class SafeDebugLogger:
         self.setup_output_capture()
     
     def get_log_file_path(self):
-        """获取日志文件路径"""
+        """获取日志文件路径
+        
+        Returns:
+            str: 日志文件的完整路径
+        """
         try:
             # 使用用户数据目录作为日志目录
             logs_dir = os.path.join(get_user_data_dir(), "logs")
@@ -144,7 +179,10 @@ class SafeDebugLogger:
             return "debug.log"
     
     def setup_logging(self):
-        """设置日志记录"""
+        """设置日志记录
+        
+        配置日志记录器，创建文件处理器，设置日志格式。
+        """
         try:
             # 直接使用version_manager获取应用信息
             app_info = version_manager.get_app_info()
@@ -174,7 +212,10 @@ class SafeDebugLogger:
             print(f"设置日志记录失败: {e}")
     
     def setup_output_capture(self):
-        """设置输出捕获"""
+        """设置输出捕获
+        
+        重定向标准输出和标准错误到日志文件。
+        """
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
         
@@ -212,7 +253,11 @@ class SafeDebugLogger:
             print(f"恢复输出流失败: {e}")
     
     def log_info(self, message):
-        """记录信息日志"""
+        """记录信息日志
+        
+        Args:
+            message: 要记录的信息内容
+        """
         try:
             if hasattr(self, 'logger') and self.logger:
                 self.logger.info(message)
@@ -221,7 +266,12 @@ class SafeDebugLogger:
             print(f"记录信息日志失败: {e}")
     
     def log_error(self, message, exc_info=None):
-        """记录错误日志"""
+        """记录错误日志
+        
+        Args:
+            message: 要记录的错误信息
+            exc_info: 异常信息，用于记录完整的异常堆栈
+        """
         try:
             if hasattr(self, 'logger') and self.logger:
                 self.logger.error(message, exc_info=exc_info)
@@ -230,7 +280,11 @@ class SafeDebugLogger:
             print(f"记录错误日志失败: {e}")
     
     def log_warning(self, message):
-        """记录警告日志"""
+        """记录警告日志
+        
+        Args:
+            message: 要记录的警告信息
+        """
         try:
             if hasattr(self, 'logger') and self.logger:
                 self.logger.warning(message)
@@ -239,7 +293,11 @@ class SafeDebugLogger:
             print(f"记录警告日志失败: {e}")
     
     def log_debug(self, message):
-        """记录调试日志"""
+        """记录调试日志
+        
+        Args:
+            message: 要记录的调试信息
+        """
         try:
             if hasattr(self, 'logger') and self.logger:
                 self.logger.debug(message)
@@ -247,7 +305,10 @@ class SafeDebugLogger:
             print(f"记录调试日志失败: {e}")
     
     def log_system_info(self):
-        """记录系统信息"""
+        """记录系统信息
+        
+        记录应用程序和系统的详细信息，包括版本、操作系统、硬件等。
+        """
         try:
             import platform
             
@@ -290,7 +351,11 @@ class SafeDebugLogger:
             self.log_error(f"记录系统信息失败: {e}")
     
     def get_log_content(self):
-        """获取日志文件内容"""
+        """获取日志文件内容
+        
+        Returns:
+            str: 日志文件的内容，如果文件不存在则返回提示信息
+        """
         try:
             if os.path.exists(self.log_file):
                 with open(self.log_file, 'r', encoding='utf-8') as f:
@@ -301,7 +366,11 @@ class SafeDebugLogger:
             return f"读取日志文件失败: {str(e)}"
     
     def get_console_output(self):
-        """获取控制台输出"""
+        """获取控制台输出
+        
+        Returns:
+            list: 控制台输出内容的列表，包含stdout和stderr
+        """
         try:
             stdout_buffer = self.stdout_capture.get_buffer() if hasattr(self, 'stdout_capture') else []
             stderr_buffer = self.stderr_capture.get_buffer() if hasattr(self, 'stderr_capture') else []
@@ -310,7 +379,11 @@ class SafeDebugLogger:
             return [f"获取控制台输出失败: {str(e)}"]
     
     def clear_log(self):
-        """清空日志文件"""
+        """清空日志文件
+        
+        Returns:
+            bool: 清空成功返回True，失败返回False
+        """
         try:
             if os.path.exists(self.log_file):
                 with open(self.log_file, 'w', encoding='utf-8') as f:
@@ -322,7 +395,11 @@ class SafeDebugLogger:
             return False
     
     def clear_console_buffer(self):
-        """清空控制台缓冲区"""
+        """清空控制台缓冲区
+        
+        Returns:
+            bool: 清空成功返回True，失败返回False
+        """
         try:
             if hasattr(self, 'stdout_capture'):
                 self.stdout_capture.clear_buffer()
@@ -334,7 +411,11 @@ class SafeDebugLogger:
             return False
     
     def get_log_file_info(self):
-        """获取日志文件信息"""
+        """获取日志文件信息
+        
+        Returns:
+            dict: 包含日志文件信息的字典，包括path、size、modified、exists等字段
+        """
         try:
             if os.path.exists(self.log_file):
                 file_size = os.path.getsize(self.log_file)
@@ -361,7 +442,11 @@ class SafeDebugLogger:
             }
     
     def get_performance_stats(self):
-        """获取性能统计"""
+        """获取性能统计
+        
+        Returns:
+            dict: 包含性能统计信息的字典，包括运行时间、错误数、警告数、信息数等
+        """
         try:
             uptime = time.time() - self.performance_data['start_time']
             hours, remainder = divmod(uptime, 3600)
@@ -393,7 +478,9 @@ class SafeDebugLogger:
 class SafeLogMonitorThread(QThread):
     """安全的日志监控线程，用于实时监控日志文件和控制台输出变化
     
-    信号:
+    在后台线程中定期检查日志文件变化，并通过信号通知主窗口更新显示。
+    
+    Signals:
         log_updated (str): 当日志文件内容更新时发出
     """
     
@@ -402,7 +489,7 @@ class SafeLogMonitorThread(QThread):
     def __init__(self, debug_logger):
         """初始化监控线程
         
-        参数:
+        Args:
             debug_logger: SafeDebugLogger实例，用于获取日志信息
         """
         super().__init__()
@@ -411,7 +498,10 @@ class SafeLogMonitorThread(QThread):
         self.last_size = 0
     
     def run(self):
-        """运行监控线程，定期检查日志文件变化"""
+        """运行监控线程，定期检查日志文件变化
+        
+        在后台循环中定期检查日志文件大小变化，如果发现变化则读取新内容并发送信号。
+        """
         while self.running:
             try:
                 # 检查日志文件是否存在并读取更新
@@ -455,7 +545,7 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
     def __init__(self, parent=None):
         """初始化密码验证对话框
         
-        参数:
+        Args:
             parent: 父窗口组件
         """
         # 使用基类初始化方法设置窗口属性
@@ -562,7 +652,7 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
     def __init__(self, parent=None):
         """初始化调试窗口
         
-        参数:
+        Args:
             parent: 父窗口组件
         """
         try:
@@ -879,7 +969,13 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             traceback.print_exc()
     
     def create_test_functions(self, parent_layout):
-        """创建测试功能区域"""
+        """创建测试功能区域
+        
+        创建测试功能按钮区域，用于验证调试系统的正常运行。
+        
+        Args:
+            parent_layout: 父布局组件，测试功能区域将被添加到此布局中
+        """
         test_group = ModernGroupBox("🧪 测试功能")
         test_layout = QVBoxLayout(test_group)
         test_layout.setSpacing(8)
@@ -972,7 +1068,11 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             self.log_display.setPlainText(error_msg)
     
     def append_log_content(self, new_content):
-        """追加日志内容"""
+        """追加日志内容
+        
+        Args:
+            new_content: 要追加的新日志内容
+        """
         if not new_content or not self._is_initialized:
             return
             
@@ -988,7 +1088,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
 
     
     def clear_log(self):
-        """清空日志"""
+        """清空日志文件
+        
+        清空当前日志文件的内容，并刷新显示。
+        """
         try:
             if self.debug_logger.clear_log():
                 self.refresh_log_display()
@@ -1001,7 +1104,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def export_log(self):
-        """导出日志"""
+        """导出日志
+        
+        将当前日志文件导出为本地文本文件。
+        """
         try:
             # 使用版本管理器获取应用信息
             app_info = get_current_app_info()
@@ -1030,7 +1136,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def open_logs_directory(self):
-        """打开日志目录"""
+        """打开日志目录
+        
+        在文件管理器中打开日志文件所在的目录。
+        """
         try:
             log_file_path = self.debug_logger.log_file
             logs_directory = os.path.dirname(log_file_path)
@@ -1046,7 +1155,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def test_logging(self):
-        """测试日志记录功能"""
+        """测试日志记录功能
+        
+        测试各种日志级别的记录功能，包括信息、警告、调试日志。
+        """
         try:
             # 使用版本管理器获取应用信息
             app_info = get_current_app_info()
@@ -1070,7 +1182,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def test_exception(self):
-        """测试异常捕获功能"""
+        """测试异常捕获功能
+        
+        测试日志系统的异常捕获功能，包括除零错误和空对象方法调用。
+        """
         try:
             self.debug_logger.log_info("开始测试异常捕获...")
             
@@ -1093,7 +1208,10 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def show_system_info(self):
-        """显示系统信息"""
+        """显示系统信息
+        
+        记录系统信息到日志文件，包括应用程序版本、操作系统、硬件等信息。
+        """
         try:
             self.debug_logger.log_system_info()
             self.refresh_log_display()
@@ -1104,7 +1222,11 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             ChineseMessageBox.show_error(self, "错误", error_msg)
     
     def closeEvent(self, event):
-        """关闭事件 - 优化关闭响应速度"""
+        """关闭事件 - 优化关闭响应速度
+        
+        Args:
+            event: 关闭事件对象
+        """
         # 立即接受关闭事件，避免延迟
         event.accept()
         
@@ -1126,9 +1248,18 @@ DebugWindow = SafeDebugWindow
 # =============================================================================
 
 def setup_global_exception_handler():
-    """设置全局异常处理器"""
+    """设置全局异常处理器
+    
+    捕获未处理的异常，记录到日志文件，并显示错误消息框。
+    """
     def global_exception_handler(exc_type, exc_value, exc_traceback):
-        """全局异常处理函数"""
+        """全局异常处理函数
+        
+        Args:
+            exc_type: 异常类型
+            exc_value: 异常值
+            exc_traceback: 异常追踪信息
+        """
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
@@ -1160,14 +1291,24 @@ def setup_global_exception_handler():
 _global_debug_logger = None
 
 def get_global_debug_logger():
-    """获取全局调试记录器"""
+    """获取全局调试记录器
+    
+    Returns:
+        SafeDebugLogger: 全局调试记录器实例
+    """
     global _global_debug_logger
     if _global_debug_logger is None:
         _global_debug_logger = SafeDebugLogger()
     return _global_debug_logger
 
 def initialize_global_logging():
-    """初始化全局日志记录"""
+    """初始化全局日志记录
+    
+    创建并初始化全局调试记录器实例。
+    
+    Returns:
+        SafeDebugLogger: 全局调试记录器实例
+    """
     global _global_debug_logger
     _global_debug_logger = SafeDebugLogger()
     return _global_debug_logger

@@ -1,15 +1,12 @@
 # debug_dialog.py
 
-from PyQt6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QDialog
-)
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
 
-from styles import (
-    UnifiedStyleHelper, ModernLineEdit, StyledDialog, 
-    FadeInWindowMixin, DialogFactory, ChineseMessageBox
-)
+from styles import (UnifiedStyleHelper, ModernLineEdit, StyledDialog, 
+                   FadeInWindowMixin, DialogFactory, ChineseMessageBox)
+
 from utils import load_icon_universal
 
 

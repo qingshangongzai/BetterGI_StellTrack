@@ -1,8 +1,12 @@
+# 标准库模块导入
 import weakref
+
+# 第三方模块导入
 from PyQt6.QtCore import Qt, QTimer, QSettings
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QFont
 
+# 项目模块导入
 from .fonts import get_global_font_manager
 from utils import get_system_theme_mode
 
@@ -55,17 +59,41 @@ SHADOWS = {
 
 
 class UnifiedStyleHelper:
-    """统一样式助手类，使用单例模式管理所有控件样式"""
+    """统一样式助手类，使用单例模式管理所有控件样式
+
+    提供统一的样式管理功能，支持浅色和深色主题切换。
+    所有控件样式都通过此类获取，确保样式的一致性和主题切换的便捷性。
+
+    主要功能：
+    - 单例模式，全局唯一实例
+    - 主题管理（浅色/深色/系统主题）
+    - 提供各种控件的样式方法
+    - 标题栏主题回调管理
+    - 样式表缓存机制
+
+    Attributes:
+        COLORS (dict): 当前主题的颜色字典
+        SHADOWS (dict): 阴影样式字典
+        theme_mode (str): 当前主题模式（"light"、"dark"或"system"）
+    """
     _instance = None
 
     @classmethod
     def get_instance(cls):
+        """获取单例实例
+
+        Returns:
+            UnifiedStyleHelper: 样式助手类的单例实例
+        """
         if not cls._instance:
             cls._instance = UnifiedStyleHelper()
         return cls._instance
 
     def __init__(self):
-        """初始化样式助手"""
+        """初始化样式助手
+
+        初始化颜色、阴影、主题模式等属性。
+        """
         self.COLORS = COLORS
         self.SHADOWS = SHADOWS
         self.theme_mode = "light"
@@ -74,20 +102,36 @@ class UnifiedStyleHelper:
         self._dark_stylesheet = None
 
     def register_title_bar_theme_callback(self, window):
-        """注册标题栏主题更新回调"""
+        """注册标题栏主题更新回调
+
+        将窗口添加到标题栏主题更新回调列表中，当主题切换时会自动通知该窗口。
+
+        Args:
+            window: 需要注册的窗口对象
+        """
         window_ref = weakref.ref(window)
         if window_ref not in self._title_bar_theme_windows:
             self._title_bar_theme_windows.append(window_ref)
 
     def unregister_title_bar_theme_callback(self, window):
-        """注销标题栏主题更新回调"""
+        """注销标题栏主题更新回调
+
+        从标题栏主题更新回调列表中移除指定的窗口。
+
+        Args:
+            window: 需要注销的窗口对象
+        """
         for window_ref in self._title_bar_theme_windows:
             if window_ref() is window:
                 self._title_bar_theme_windows.remove(window_ref)
                 break
 
     def _notify_title_bar_theme_changed(self):
-        """通知所有注册的回调函数标题栏主题已变更（批量优化）"""
+        """通知所有注册的回调函数标题栏主题已变更（批量优化）
+
+        使用 QTimer.singleShot 批量更新所有注册窗口的标题栏主题，
+        避免频繁调用导致的性能问题。
+        """
         def batch_update_title_bars():
             from utils import set_window_title_bar_theme
             helper = UnifiedStyleHelper.get_instance()
@@ -110,13 +154,21 @@ class UnifiedStyleHelper:
                 if window is not None:
                     try:
                         set_window_title_bar_theme(window, is_dark)
-                    except Exception as e:
+                    except (OSError, ValueError) as e:
                         print(f"[DEBUG] 更新窗口标题栏失败: {e}")
 
         QTimer.singleShot(0, batch_update_title_bars)
 
     def get_button_style(self, accent=False, disabled=False):
-        """获取按钮样式"""
+        """获取按钮样式
+
+        Args:
+            accent (bool): 是否使用强调色（主色调），默认为False
+            disabled (bool): 是否为禁用状态，默认为False
+
+        Returns:
+            str: 按钮的样式表字符串
+        """
         if disabled:
             return f"""
                 QPushButton {{
@@ -175,7 +227,11 @@ class UnifiedStyleHelper:
             """
 
     def get_line_edit_style(self):
-        """获取输入框样式"""
+        """获取输入框样式
+
+        Returns:
+            str: 输入框的样式表字符串
+        """
         return f"""
             QLineEdit {{ 
                 border: 1px solid {self.COLORS['border']};
@@ -198,7 +254,11 @@ class UnifiedStyleHelper:
         """
 
     def get_combo_box_style(self):
-        """获取下拉框样式"""
+        """获取下拉框样式
+
+        Returns:
+            str: 下拉框的样式表字符串
+        """
         return f"""
             QComboBox {{ 
                 border: 1px solid {self.COLORS['border']};
@@ -240,7 +300,11 @@ class UnifiedStyleHelper:
         """
 
     def get_table_style(self):
-        """获取表格样式"""
+        """获取表格样式
+
+        Returns:
+            str: 表格的样式表字符串
+        """
         return f"""
             QTableWidget {{ 
                 border: none;
@@ -287,7 +351,11 @@ class UnifiedStyleHelper:
         """
 
     def get_group_box_style(self):
-        """获取分组框样式 - 已去掉灰色底纹"""
+        """获取分组框样式 - 已去掉灰色底纹
+
+        Returns:
+            str: 分组框的样式表字符串
+        """
         return f"""
             QGroupBox {{ 
                 font-size: 12px;
@@ -472,7 +540,11 @@ class UnifiedStyleHelper:
         """
 
     def get_spin_box_style(self):
-        """获取整数和浮点数输入框样式"""
+        """获取整数和浮点数输入框样式
+
+        Returns:
+            str: 整数和浮点数输入框的样式表字符串
+        """
         return f"""
             QSpinBox, QDoubleSpinBox {{
                 border: 1px solid {self.COLORS['border']};
@@ -824,7 +896,11 @@ class UnifiedStyleHelper:
         """
 
     def get_absolute_time_edit_style(self):
-        """获取绝对偏移时间显示框样式"""
+        """获取绝对偏移时间显示框样式
+
+        Returns:
+            str: 绝对偏移时间显示框的样式表字符串
+        """
         return f"""
             QLineEdit {{ 
                 border: 1px solid {self.COLORS['border']}; 
@@ -840,7 +916,13 @@ class UnifiedStyleHelper:
         """
 
     def set_smiley_font(self, widget, size=12, weight=QFont.Weight.Normal):
-        """为组件设置得意黑字体"""
+        """为组件设置得意黑字体
+
+        Args:
+            widget: 需要设置字体的组件
+            size (int): 字体大小，默认为12
+            weight: 字体粗细，默认为QFont.Weight.Normal
+        """
         font_manager = get_global_font_manager()
         if font_manager.is_smiley_font_available():
             widget.setFont(font_manager.get_smiley_font(size, weight))
@@ -848,12 +930,22 @@ class UnifiedStyleHelper:
             widget.setFont(QFont("sans-serif", size, weight))
 
     def set_source_han_font(self, widget, size=12, weight=QFont.Weight.Normal):
-        """为组件设置思源宋体字体"""
+        """为组件设置思源宋体字体
+
+        Args:
+            widget: 需要设置字体的组件
+            size (int): 字体大小，默认为12
+            weight: 字体粗细，默认为QFont.Weight.Normal
+        """
         font_manager = get_global_font_manager()
         widget.setFont(font_manager.get_source_han_font(size, weight))
 
     def get_time_offset_spin_box_style(self):
-        """获取时间偏移输入框样式"""
+        """获取时间偏移输入框样式
+
+        Returns:
+            str: 时间偏移输入框的样式表字符串
+        """
         return f"""
             QSpinBox {{
                 border: 1px solid {self.COLORS['border']};
@@ -919,7 +1011,11 @@ class UnifiedStyleHelper:
         """
 
     def get_explanation_text_edit_style(self):
-        """获取说明文本编辑器样式"""
+        """获取说明文本编辑器样式
+
+        Returns:
+            str: 说明文本编辑器的样式表字符串
+        """
         return f"""
             QTextEdit {{
                 background-color: {self.COLORS['card_bg']};
@@ -932,7 +1028,11 @@ class UnifiedStyleHelper:
         """
 
     def get_event_dialog_style(self):
-        """获取事件对话框样式"""
+        """获取事件对话框样式
+
+        Returns:
+            str: 事件对话框的样式表字符串
+        """
         return f"""
             QDialog {{ 
                 background-color: {self.COLORS['bg']}; 
@@ -940,11 +1040,22 @@ class UnifiedStyleHelper:
         """
 
     def get_absolute_time_info_style(self):
-        """获取绝对时间信息标签样式"""
+        """获取绝对时间信息标签样式
+
+        Returns:
+            str: 绝对时间信息标签的样式表字符串
+        """
         return f"color: {self.COLORS['text_secondary']}; font-size: 9px;"
 
     def get_capture_status_style(self, status="inactive"):
-        """获取捕获状态样式"""
+        """获取捕获状态样式
+
+        Args:
+            status (str): 状态类型，可选值为 "active"、"inactive" 或 "bold"，默认为 "inactive"
+
+        Returns:
+            str: 捕获状态的样式表字符串
+        """
         if status == "active":
             return f"color: {self.COLORS['primary']};"
         elif status == "inactive":
@@ -954,7 +1065,11 @@ class UnifiedStyleHelper:
         return f"color: {self.COLORS['text_secondary']};"
 
     def get_checkbox_style(self):
-        """获取复选框样式"""
+        """获取复选框样式
+
+        Returns:
+            str: 复选框的样式表字符串
+        """
         return f"""
             QCheckBox {{
                 color: {self.COLORS['text']};
@@ -968,7 +1083,13 @@ class UnifiedStyleHelper:
         """
 
     def setup_global_style(self, app=None, theme_mode=None, persist=False):
-        """设置全局样式"""
+        """设置全局样式
+
+        Args:
+            app: 应用程序实例，默认为None
+            theme_mode (str): 主题模式，可选值为 "light"、"dark" 或 "system"，默认为None
+            persist (bool): 是否持久化保存主题设置，默认为False
+        """
         settings = QSettings()
         if theme_mode is None:
             theme_mode = settings.value("ui/theme_mode", "system")
@@ -981,7 +1102,7 @@ class UnifiedStyleHelper:
         if theme_mode == "system":
             try:
                 effective_mode = get_system_theme_mode()
-            except Exception:
+            except (OSError, ValueError):
                 effective_mode = "light"
 
         if effective_mode == "dark":
@@ -1093,7 +1214,16 @@ class UnifiedStyleHelper:
 
 
 class DarkStyleHelper(UnifiedStyleHelper):
-    """深色主题样式助手，继承自UnifiedStyleHelper"""
+    """深色主题样式助手，继承自UnifiedStyleHelper
+
+    专门用于深色主题的样式管理，继承自 UnifiedStyleHelper。
+    提供深色主题的默认样式配置。
+
+    主要功能：
+    - 继承 UnifiedStyleHelper 的所有功能
+    - 默认使用深色主题颜色
+    - 单例模式，全局唯一实例
+    """
     _instance = None
 
     @classmethod

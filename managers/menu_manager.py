@@ -1,10 +1,15 @@
 # menu_manager.py
 
-from PyQt6.QtWidgets import QMenu
-from PyQt6.QtGui import QAction, QActionGroup
-from PyQt6.QtCore import QSettings
+# 标准库模块导入
+# 无标准库模块导入
 
-from styles import ModernMenuBar
+# 第三方模块导入
+from PyQt6.QtCore import QSettings
+from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtWidgets import QMenu
+
+# 项目模块导入
+from styles import ModernMenuBar, UnifiedStyleHelper
 
 
 class MenuManager:
@@ -82,7 +87,13 @@ class MenuManager:
         return menubar
     
     def _create_file_menu(self, menubar):
-        """创建文件菜单"""
+        """创建文件菜单
+        
+        创建包含新建、打开、保存和退出等操作的文件菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加文件菜单
+        """
         file_menu = menubar.addMenu('文件')
         
         # 新建
@@ -112,7 +123,13 @@ class MenuManager:
         file_menu.addAction(exit_action)
     
     def _create_edit_menu(self, menubar):
-        """创建编辑菜单"""
+        """创建编辑菜单
+        
+        创建包含撤销、重做、添加事件、编辑事件、剪切、复制、粘贴、删除、全选和批量编辑等操作的编辑菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加编辑菜单
+        """
         edit_menu = menubar.addMenu('编辑')
         
         # 撤销
@@ -182,7 +199,13 @@ class MenuManager:
         edit_menu.addAction(batch_edit_action)
     
     def _create_time_logic_menu(self, menubar):
-        """创建时间逻辑菜单"""
+        """创建时间逻辑菜单
+        
+        创建包含删除事件逻辑、粘贴事件逻辑、编辑事件逻辑和末尾事件操作跳过弹窗等设置的时间逻辑菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加时间逻辑菜单
+        """
         time_logic_menu = menubar.addMenu('时间逻辑')
         
         # 删除事件逻辑子菜单
@@ -280,7 +303,13 @@ class MenuManager:
         }
     
     def _create_tools_menu(self, menubar):
-        """创建工具菜单"""
+        """创建工具菜单
+        
+        创建包含事件时间分析和调试工具等操作的菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加工具菜单
+        """
         tools_menu = menubar.addMenu('工具')
         
         # 事件时间分析工具
@@ -299,7 +328,13 @@ class MenuManager:
         tools_menu.addAction(debug_action)
     
     def _create_time_unit_menu(self, menubar):
-        """创建时间单位菜单"""
+        """创建时间单位菜单
+        
+        创建包含编辑事件时间单位设置的时间单位菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加时间单位菜单
+        """
         time_unit_menu = menubar.addMenu('时间单位')
         
         # 编辑事件时间单位子菜单
@@ -345,7 +380,13 @@ class MenuManager:
         }
     
     def _create_theme_menu(self, menubar):
-        """创建主题菜单"""
+        """创建主题菜单
+        
+        创建包含浅色主题、深色主题和跟随系统等选项的主题菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加主题菜单
+        """
         theme_menu = menubar.addMenu('主题')
         
         # 主题模式动作组（互斥）
@@ -377,7 +418,13 @@ class MenuManager:
         self._initialize_theme_menu_state()
     
     def _create_help_menu(self, menubar):
-        """创建帮助菜单"""
+        """创建帮助菜单
+        
+        创建包含个人主页、项目地址、使用说明、检查更新、关于和用户协议等操作的菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加帮助菜单
+        """
         help_menu = menubar.addMenu('帮助')
         
         # 个人主页
@@ -415,7 +462,13 @@ class MenuManager:
         help_menu.addAction(agreement_action)
     
     def set_delete_logic(self, logic):
-        """设置删除事件逻辑"""
+        """设置删除事件逻辑
+        
+        设置删除事件时的处理逻辑，并更新菜单状态和保存设置。
+        
+        Args:
+            logic (str): 删除逻辑，可选值为 'prompt'、'current' 或 'recalculate'
+        """
         self.parent_window.delete_logic = logic
         self.update_time_logic_menu_state()
         self.save_time_logic_settings()
@@ -423,7 +476,13 @@ class MenuManager:
         self.debug_logger.log_info(f"删除事件逻辑设置为: {logic}")
     
     def set_paste_logic(self, logic):
-        """设置粘贴事件逻辑"""
+        """设置粘贴事件逻辑
+        
+        设置粘贴事件时的处理逻辑，并更新菜单状态和保存设置。
+        
+        Args:
+            logic (str): 粘贴逻辑，可选值为 'prompt'、'current' 或 'recalculate'
+        """
         self.parent_window.paste_logic = logic
         self.update_time_logic_menu_state()
         self.save_time_logic_settings()
@@ -431,7 +490,13 @@ class MenuManager:
         self.debug_logger.log_info(f"粘贴事件逻辑设置为: {logic}")
     
     def set_edit_logic(self, logic):
-        """设置编辑事件逻辑"""
+        """设置编辑事件逻辑
+        
+        设置编辑事件时的处理逻辑，并更新菜单状态和保存设置。
+        
+        Args:
+            logic (str): 编辑逻辑，可选值为 'current' 或 'recalculate'
+        """
         self.parent_window.edit_logic = logic
         self.update_time_logic_menu_state()
         self.save_time_logic_settings()
@@ -439,7 +504,13 @@ class MenuManager:
         self.debug_logger.log_info(f"编辑事件逻辑设置为: {logic}")
     
     def set_skip_end_events_prompt(self, checked):
-        """设置是否跳过末尾事件操作弹窗"""
+        """设置是否跳过末尾事件操作弹窗
+        
+        设置在操作末尾事件时是否跳过弹窗提示，并保存设置。
+        
+        Args:
+            checked (bool): 是否跳过弹窗，True 表示跳过，False 表示显示弹窗
+        """
         self.parent_window.skip_end_events_prompt = checked
         self.save_time_logic_settings()
         if checked:
@@ -450,7 +521,13 @@ class MenuManager:
             self.debug_logger.log_info("已关闭末尾事件操作跳过弹窗")
     
     def set_time_unit(self, unit):
-        """设置默认时间单位"""
+        """设置默认时间单位
+        
+        设置编辑事件时使用的默认时间单位，并更新菜单状态和保存设置。
+        
+        Args:
+            unit (str): 时间单位，可选值为 'auto'、'ms'、's' 或 'min'
+        """
         self.parent_window.default_time_unit = unit
         self.update_time_logic_menu_state()
         self.save_time_logic_settings()
@@ -458,11 +535,22 @@ class MenuManager:
         self.debug_logger.log_info(f"默认时间单位设置为: {unit}")
     
     def get_time_unit(self):
-        """获取当前默认时间单位"""
+        """获取当前默认时间单位
+        
+        Returns:
+            str: 当前默认时间单位，默认为 'auto'
+        """
         return getattr(self.parent_window, 'default_time_unit', 'auto')
     
     def get_time_unit_display_name(self, unit):
-        """获取时间单位的显示名称"""
+        """获取时间单位的显示名称
+        
+        Args:
+            unit (str): 时间单位代码
+            
+        Returns:
+            str: 时间单位的显示名称
+        """
         display_names = {
             'auto': '系统自动匹配',
             'ms': '毫秒（ms）',
@@ -472,7 +560,15 @@ class MenuManager:
         return display_names.get(unit, unit)
     
     def update_time_logic_menu_state(self):
-        """更新时间逻辑菜单的选中状态"""
+        """更新时间逻辑菜单的选中状态
+        
+        根据当前设置更新时间逻辑菜单中各个菜单项的选中状态，包括：
+        - 删除逻辑菜单项
+        - 粘贴逻辑菜单项
+        - 编辑逻辑菜单项
+        - 末尾事件跳过弹窗开关
+        - 时间单位菜单项
+        """
         # 更新删除逻辑菜单状态
         if hasattr(self.parent_window, 'delete_logic'):
             delete_logic = self.parent_window.delete_logic
@@ -502,7 +598,14 @@ class MenuManager:
                 self.time_unit_actions[time_unit].setChecked(True)
     
     def get_delete_logic_display_name(self, logic):
-        """获取删除逻辑的显示名称"""
+        """获取删除逻辑的显示名称
+        
+        Args:
+            logic (str): 删除逻辑代码
+            
+        Returns:
+            str: 删除逻辑的显示名称
+        """
         display_names = {
             'prompt': '每次弹出提示选择',
             'current': '默认：仅修改当前事件时间',
@@ -511,7 +614,14 @@ class MenuManager:
         return display_names.get(logic, logic)
     
     def get_paste_logic_display_name(self, logic):
-        """获取粘贴逻辑的显示名称"""
+        """获取粘贴逻辑的显示名称
+        
+        Args:
+            logic (str): 粘贴逻辑代码
+            
+        Returns:
+            str: 粘贴逻辑的显示名称
+        """
         display_names = {
             'prompt': '每次弹出提示选择',
             'current': '默认：仅修改当前事件时间',
@@ -520,7 +630,14 @@ class MenuManager:
         return display_names.get(logic, logic)
     
     def get_edit_logic_display_name(self, logic):
-        """获取编辑逻辑的显示名称"""
+        """获取编辑逻辑的显示名称
+        
+        Args:
+            logic (str): 编辑逻辑代码
+            
+        Returns:
+            str: 编辑逻辑的显示名称
+        """
         display_names = {
             'current': '默认：仅修改当前事件时间',
             'recalculate': '默认：重新计算后续事件时间'
@@ -528,19 +645,39 @@ class MenuManager:
         return display_names.get(logic, logic)
     
     def get_edit_logic(self):
-        """获取当前编辑逻辑"""
+        """获取当前编辑逻辑
+        
+        Returns:
+            str: 当前编辑逻辑，默认为 'current'
+        """
         return getattr(self.parent_window, 'edit_logic', 'current')
     
     def get_delete_logic(self):
-        """获取当前删除逻辑"""
+        """获取当前删除逻辑
+        
+        Returns:
+            str: 当前删除逻辑，默认为 'prompt'
+        """
         return getattr(self.parent_window, 'delete_logic', 'prompt')
     
     def get_paste_logic(self):
-        """获取当前粘贴逻辑"""
+        """获取当前粘贴逻辑
+        
+        Returns:
+            str: 当前粘贴逻辑，默认为 'prompt'
+        """
         return getattr(self.parent_window, 'paste_logic', 'prompt')
     
     def save_time_logic_settings(self):
-        """保存时间逻辑设置到配置文件"""
+        """保存时间逻辑设置到配置文件
+        
+        将以下时间逻辑设置保存到 QSettings 配置文件：
+        - 删除事件逻辑
+        - 粘贴事件逻辑
+        - 编辑事件逻辑
+        - 末尾事件操作跳过弹窗开关
+        - 默认时间单位
+        """
         settings = QSettings("BetterGI", "StellTrack")
         settings.setValue("delete_logic", self.get_delete_logic())
         settings.setValue("paste_logic", self.get_paste_logic())
@@ -550,7 +687,17 @@ class MenuManager:
         self.debug_logger.log_info("时间逻辑设置已保存")
     
     def load_time_logic_settings(self):
-        """从配置文件加载时间逻辑设置"""
+        """从配置文件加载时间逻辑设置
+        
+        从 QSettings 配置文件中加载以下时间逻辑设置：
+        - 删除事件逻辑
+        - 粘贴事件逻辑
+        - 编辑事件逻辑
+        - 末尾事件操作跳过弹窗开关
+        - 默认时间单位
+        
+        加载完成后更新菜单项的选中状态。
+        """
         settings = QSettings("BetterGI", "StellTrack")
         
         # 加载删除逻辑
@@ -579,14 +726,22 @@ class MenuManager:
         self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}, 默认时间单位={default_time_unit}")
     
     def _initialize_theme_menu_state(self):
-        """初始化主题菜单状态"""
-        from styles import UnifiedStyleHelper
+        """初始化主题菜单状态
+        
+        根据当前主题模式初始化主题菜单中对应菜单项的选中状态。
+        """
         helper = UnifiedStyleHelper.get_instance()
         current_mode = helper.theme_mode
         self._update_theme_action_state(current_mode)
     
     def _update_theme_action_state(self, mode: str):
-        """更新主题动作状态"""
+        """更新主题动作状态
+        
+        根据指定的主题模式更新主题菜单中对应菜单项的选中状态。
+        
+        Args:
+            mode (str): 主题模式，可选值为 'light'、'dark' 或 'system'
+        """
         if mode == "light":
             self.theme_light_action.setChecked(True)
         elif mode == "dark":
@@ -595,8 +750,19 @@ class MenuManager:
             self.theme_system_action.setChecked(True)
     
     def _on_theme_mode_selected(self, mode: str):
-        """主题模式选择处理"""
-        from styles import UnifiedStyleHelper
+        """主题模式选择处理
+        
+        处理用户选择的主题模式，应用新主题并更新相关状态。
+        包括：
+        - 应用新主题样式
+        - 刷新所有控件样式
+        - 更新菜单状态
+        - 发出主题变更信号
+        - 显示状态栏提示
+        
+        Args:
+            mode (str): 主题模式，可选值为 'light'、'dark' 或 'system'
+        """
         helper = UnifiedStyleHelper.get_instance()
         
         # 避免重复应用相同模式
