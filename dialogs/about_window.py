@@ -1,87 +1,106 @@
-# about_window.py
-import sys
+# about_window.py - 关于窗口和用户协议模块
+"""
+关于窗口和用户协议模块，提供应用程序信息展示、
+用户协议显示和相关链接访问功能。
+"""
+
+# 标准库模块导入
 import os
-from PyQt6.QtWidgets import (QMainWindow, QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QPushButton, QTextEdit, QFrame, QGroupBox, QTextBrowser, QPlainTextEdit)
+import sys
+
+# 第三方模块导入
 from PyQt6.QtCore import Qt, pyqtSignal, QUrl
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QDesktopServices, QFontDatabase
+from PyQt6.QtGui import QFont, QDesktopServices
+from PyQt6.QtWidgets import (
+    QMainWindow, QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
+    QLabel, QPushButton, QTextEdit, QFrame, QGroupBox, 
+    QTextBrowser, QPlainTextEdit
+)
 
-# 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, FadeInWindowMixin
-from styles import ChineseMessageBox, DialogFactory
-from .user_agreement import load_user_agreement_html
-# 导入调试工具模块
-from .debug_tools import PasswordDialog, DebugWindow
-# 导入资源管理器和图标加载函数（从utils模块）
-from utils import get_resource_path, find_resource_file, load_icon_universal, load_logo, get_current_version, get_current_app_info
-from styles import WindowIconMixin
-# 导入版本管理器
+# 项目模块导入
 from version import version_manager
+from styles import (
+    UnifiedStyleHelper,
+    get_global_font_manager,
+    FadeInWindowMixin,
+    StyledMainWindow,
+    StyledDialog,
+    DialogFactory,
+    WindowIconMixin
+)
+from .user_agreement import load_user_agreement_html
+from .debug_tools import PasswordDialog, DebugWindow
+from utils import (
+    get_resource_path,
+    find_resource_file,
+    load_icon_universal,
+    load_logo,
+    get_current_version,
+    get_current_app_info
+)
 
-# =============================================================================
-# 用户协议窗口
-# =============================================================================
 
-from styles import StyledMainWindow
 class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
-    """用户协议窗口"""
+    """用户协议窗口
+    
+    显示用户服务协议与免责声明内容。
+    """
     
     def __init__(self, parent=None):
-        # 使用基类初始化方法设置窗口属性
-        super().__init__(parent,
-                       title="用户服务协议与免责声明",
-                       size=(800, 600),
-                       window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+        """初始化用户协议窗口
         
-        # 创建中央部件
+        Args:
+            parent: 父窗口对象
+        """
+        super().__init__(
+            parent,
+            title="用户服务协议与免责声明",
+            size=(800, 600),
+            window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
+        )
+        
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # 主布局
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(10)
         
-        # 创建头部区域
         self.create_header(main_layout)
         
-        # 创建分隔线
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         main_layout.addWidget(separator)
         
-        # 创建协议内容区域
         self.create_agreement_content(main_layout)
-        
-        # 创建按钮区域
         self.create_buttons(main_layout)
         
     def create_header(self, parent_layout):
-        """创建头部区域"""
+        """创建头部区域
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         header_layout = QHBoxLayout()
         
-        # Logo
         logo_label = QLabel()
         logo_pixmap = load_logo()
         if logo_pixmap:
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)
         header_layout.addWidget(logo_label)
         
-        # 标题区域
         title_layout = QVBoxLayout()
         
-        # 中文标题 - 使用得意黑字体
         title_label = QLabel("用户服务协议与免责声明")
-        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 14, QFont.Weight.Bold)
         title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']};")
         title_layout.addWidget(title_label)
         
-        # 副标题
         subtitle_label = QLabel("请仔细阅读以下协议内容")
         font_manager = get_global_font_manager()
         subtitle_label.setFont(font_manager.get_source_han_font(11))
@@ -94,32 +113,35 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
         parent_layout.addLayout(header_layout)
     
     def create_agreement_content(self, parent_layout):
-        """创建协议内容区域"""
-        # 创建文本浏览器（自带滚动条）
+        """创建协议内容区域
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         self.agreement_browser = QTextBrowser()
         self.agreement_browser.setOpenExternalLinks(True)
         self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
-        # 禁用右键菜单
         self.agreement_browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
-        # 设置协议内容
         self.set_agreement_content()
         
         parent_layout.addWidget(self.agreement_browser)
     
     def create_buttons(self, parent_layout):
-        """创建按钮区域"""
+        """创建按钮区域
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         font_manager = get_global_font_manager()
         
-        # 使用DialogFactory创建关闭按钮布局
         button_layout = DialogFactory.create_close_button(
             parent=self,
             on_close=self.close,
             text="关闭"
         )
         
-        # 获取按钮并设置字体
-        close_button = button_layout.itemAt(1).widget()  # itemAt(0)是stretch
+        close_button = button_layout.itemAt(1).widget()
         close_button.setFont(font_manager.get_source_han_font(10))
         
         parent_layout.addLayout(button_layout)
@@ -131,92 +153,79 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
     
     def refresh_theme_styles(self):
         """刷新主题样式，重新加载HTML内容以应用当前主题"""
-        print("[DEBUG] 刷新关于窗口中的用户协议主题样式")
         self.set_agreement_content()
         
-        # 同时更新窗口内其他组件的样式
         style_helper = UnifiedStyleHelper.get_instance()
         
-        # 更新分隔线样式
         if hasattr(self, '_separator') and self._separator is not None:
             self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
         
-        # 更新文本浏览器样式
         self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
 
 
-
-# =============================================================================
-# 关于窗口
-# =============================================================================
-
 class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
-    """基于PyQt6的关于窗口"""
+    """关于窗口
     
-    # 定义信号
+    显示应用程序信息、版本信息、开发团队信息
+    和相关链接。
+    """
+    
     manual_requested = pyqtSignal(str)
     
     def __init__(self, parent=None, version=None):
-        # 如果未提供版本号，则从全局版本管理器获取
-        self.version = version if version is not None else get_current_version()
-        # 使用基类初始化方法设置窗口属性
-        super().__init__(parent,
-                       title=f"关于 BetterGI 星轨",
-                       size=(600, 530),
-                       window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+        """初始化关于窗口
         
-        # 设置图标修复 - 在窗口显示后调用
+        Args:
+            parent: 父窗口对象
+            version: 版本号，如果为None则从版本管理器获取
+        """
+        self.version = version if version is not None else get_current_version()
+        super().__init__(
+            parent,
+            title=f"关于 BetterGI 星轨",
+            size=(600, 530),
+            window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
+        )
+        
         self.setup_icon_fixing()
         
-        # 创建中央部件
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # 主布局
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(8)  # 减少间距
+        main_layout.setSpacing(8)
         
-        # 创建头部区域
         self.create_header(main_layout)
         
-        # 创建分隔线
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         separator.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['border']};")
         main_layout.addWidget(separator)
         
-        # 创建信息区域
         self.create_info_area(main_layout)
-        
-        # 创建按钮区域 - 修改为单行居中排列
         self.create_buttons_area(main_layout)
-        
-        # 创建版权信息
         self.create_copyright(main_layout)
         
-        # 设置信号连接 - 确保在所有按钮创建完成后再调用
         self.setup_connections()
         
     def showEvent(self, event):
         """关于窗口显示事件 - 首次显示时居中并触发淡入动画"""
         if not hasattr(self, "_about_first_show_done"):
             self._about_first_show_done = True
-            # 首次显示前进行居中
             try:
                 self.center()
             except Exception:
                 pass
-            # 确保动画从完全透明开始
             try:
                 self.setWindowOpacity(0.0)
             except Exception:
                 pass
         super().showEvent(event)
+        
     def setup_connections(self):
         """设置信号连接"""
-        # 按钮连接
         self.dev_button.clicked.connect(lambda: self.open_url("https://space.bilibili.com/1232406878"))
         self.project_button.clicked.connect(lambda: self.open_url("https://gitee.com/qingshangongzai/BetterGI_StellTrack"))
         self.agreement_button.clicked.connect(self.show_user_agreement)
@@ -224,45 +233,43 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.license_button.clicked.connect(self.open_license)
         
     def create_header(self, parent_layout):
-        """创建头部区域"""
+        """创建头部区域
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         header_layout = QHBoxLayout()
         
-        # Logo
         logo_label = QLabel()
         logo_pixmap = self.load_logo()
         if logo_pixmap:
             logo_label.setPixmap(logo_pixmap)
         else:
             logo_label.setText("⚙️")
-            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)  # 使用UnifiedStyleHelper统一设置字体
+            UnifiedStyleHelper.get_instance().set_smiley_font(logo_label, 20)
         header_layout.addWidget(logo_label)
         
-        # 标题区域
         title_layout = QVBoxLayout()
-        title_layout.setSpacing(2) 
+        title_layout.setSpacing(2)
         
-        # 中文标题 - 使用得意黑字体
         title_label = QLabel("BetterGI 星轨")
-        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 24, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 24, QFont.Weight.Bold)
         title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 0px;")
         title_layout.addWidget(title_label)
         
-        # 英文标题 - 使用得意黑字体
         english_title = QLabel("BetterGI StellTrack")
-        UnifiedStyleHelper.get_instance().set_smiley_font(english_title, 12)  # 使用UnifiedStyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(english_title, 12)
         english_title.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-top: 0px; margin-bottom: 0px;")
         title_layout.addWidget(english_title)
         
-        # 版本信息 - 使用得意黑字体
         version_label = QLabel(f"版本 {self.version}")
-        UnifiedStyleHelper.get_instance().set_smiley_font(version_label, 10, QFont.Weight.Bold)  # 使用UnifiedStyleHelper统一设置字体
+        UnifiedStyleHelper.get_instance().set_smiley_font(version_label, 10, QFont.Weight.Bold)
         version_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text']}; margin-top: 0px;")
         title_layout.addWidget(version_label)
         
         header_layout.addLayout(title_layout)
         header_layout.addStretch()
         
-        # 添加标语 - 使用SourceHanSerifCN字体
         slogan_label = QLabel("风带来故事的种子，时间使之发芽")
         slogan_label.setStyleSheet(f"""
             QLabel {{
@@ -279,75 +286,81 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         parent_layout.addLayout(header_layout)
     
     def create_info_area(self, parent_layout):
-        """创建信息显示区域 - 使用QPlainTextEdit完全控制格式"""
-        # 创建纯文本编辑器
+        """创建信息显示区域
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         self.info_edit = QPlainTextEdit()
         self.info_edit.setReadOnly(True)
         self.info_edit.setStyleSheet(UnifiedStyleHelper.get_instance().get_info_edit_style())
-        # 设置思源宋体
         UnifiedStyleHelper.get_instance().set_source_han_font(self.info_edit, 12)
-        # 禁用右键菜单
         self.info_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         
-        # 设置信息内容
         self.set_info_content()
         
-        # 设置固定高度
         self.info_edit.setFixedHeight(300)
         
         parent_layout.addWidget(self.info_edit)
     
     def create_buttons_area(self, parent_layout):
-        """创建按钮区域 - 将所有按钮排成一行并居中"""
-        # 创建按钮布局容器
+        """创建按钮区域 - 将所有按钮排成一行并居中
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         buttons_container = QWidget()
         buttons_h_layout = QHBoxLayout(buttons_container)
         buttons_h_layout.setSpacing(8)
         buttons_h_layout.setContentsMargins(0, 0, 0, 0)
         
-        # 添加左侧弹性空间
         buttons_h_layout.addStretch()
         
-        # 个人主页按钮
         self.dev_button = self.create_action_button("个人主页")
         buttons_h_layout.addWidget(self.dev_button)
         
-        # 项目地址按钮
         self.project_button = self.create_action_button("项目地址")
         buttons_h_layout.addWidget(self.project_button)
         
-        # 使用说明按钮
         self.manual_button = self.create_action_button("使用说明")
         buttons_h_layout.addWidget(self.manual_button)
         
-        # 开源许可按钮
         self.license_button = self.create_action_button("开源许可")
         buttons_h_layout.addWidget(self.license_button)
         
-        # 用户协议按钮
         self.agreement_button = self.create_action_button("用户协议")
         buttons_h_layout.addWidget(self.agreement_button)
         
-        # 添加右侧弹性空间
         buttons_h_layout.addStretch()
         
         parent_layout.addWidget(buttons_container)
     
     def create_action_button(self, text):
-        """创建操作按钮"""
+        """创建操作按钮
+        
+        Args:
+            text (str): 按钮文本
+            
+        Returns:
+            QPushButton: 创建的按钮对象
+        """
         button = QPushButton(text)
         font_manager = get_global_font_manager()
         button.setFont(font_manager.get_source_han_font(9))
         button.setMinimumHeight(32)
-        button.setMinimumWidth(90)  # 设置最小宽度确保按钮大小一致
+        button.setMinimumWidth(90)
         button.setStyleSheet(UnifiedStyleHelper.get_instance().get_button_style(accent=True))
         return button
     
     def create_copyright(self, parent_layout):
-        """创建版权信息 - 减少顶部间距"""
+        """创建版权信息
+        
+        Args:
+            parent_layout: 父布局对象
+        """
         copyright_layout = QVBoxLayout()
-        copyright_layout.setSpacing(2)  # 减少间距
-        copyright_layout.setContentsMargins(0, 5, 0, 0)  # 减少顶部边距
+        copyright_layout.setSpacing(2)
+        copyright_layout.setContentsMargins(0, 5, 0, 0)
         
         copyright_text = QLabel(
             "版权所有 © 2025-2026 HXiaoStudio\n"
@@ -363,7 +376,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     
     def set_info_content(self):
         """设置信息内容 - 使用纯文本格式，仅开头段落首行缩进"""
-        content = """　　BetterGI 星轨（BetterGI StellTrack）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的“留影机”赋予生命的工具。
+        content = """　　BetterGI 星轨（BetterGI StellTrack）是一款专为 BetterGI（一款《原神》自动化辅助工具）打造的键鼠脚本生成与管理工具，致力于生成强大的键鼠自动化脚本。本工具基于 PyQt6 开发，提供了直观的可视化界面，允许用户创建复杂的自动化操作序列。其核心初衷是实现游戏内的延时摄影——通过自动控制图片的截取和保存，创作出如电影般壮丽的视觉诗篇，是一个为你手中的"留影机"赋予生命的工具。
 
 
 【注意事项】
@@ -420,15 +433,27 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.info_edit.setPlainText(content)
     
     def load_icon(self):
-        """加载窗口图标"""
+        """加载窗口图标
+        
+        Returns:
+            QIcon: 加载的图标对象
+        """
         return load_icon_universal()
     
     def load_logo(self):
-        """加载Logo图片"""
+        """加载Logo图片
+        
+        Returns:
+            QPixmap: 加载的Logo图片对象
+        """
         return load_logo()
     
     def open_url(self, url):
-        """打开URL链接"""
+        """打开URL链接
+        
+        Args:
+            url (str): 要打开的URL地址
+        """
         QDesktopServices.openUrl(QUrl(url))
     
     def show_user_agreement(self):
@@ -446,7 +471,6 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(manual_path))
                 return
         
-        # 如果没有找到文件，发射信号
         self.manual_requested.emit("使用说明.pdf")
     
     def open_license(self):
@@ -459,16 +483,11 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(license_path))
                 return
         
-        # 如果没有找到文件，发射信号
         self.manual_requested.emit("LICENSE.html")
     
     def center(self):
         """将窗口居中显示"""
-        # 获取屏幕几何
         screen_geometry = self.screen().geometry()
-        # 获取窗口几何
         window_geometry = self.frameGeometry()
-        # 计算中心位置
         window_geometry.moveCenter(screen_geometry.center())
-        # 移动窗口
         self.move(window_geometry.topLeft())

@@ -1,19 +1,16 @@
 # main.py
-# 导入必要的标准库模块
-import sys
+# 标准库模块导入
 import os
-import time
+import sys
 import threading
-import json
-import re
+import time
 
-# PyQt6 核心组件导入
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt, QTimer, QObject, pyqtSignal
+# 第三方模块导入
+from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication
 
-
-# 导入版本管理器
+# 项目模块导入
 from version import version_manager
 
 
@@ -23,11 +20,7 @@ if sys.platform == 'win32':
     from ctypes import wintypes
 
     class VS_FIXEDFILEINFO(ctypes.Structure):
-        """Windows版本信息结构
-        
-        用于获取和处理Windows可执行文件的版本信息。
-        对应Windows API中的VS_FIXEDFILEINFO结构。
-        """
+        """Windows版本信息结构，用于获取和处理Windows可执行文件的版本信息"""
         _fields_ = [
             ('dwSignature', wintypes.DWORD),
             ('dwStrucVersion', wintypes.DWORD),
@@ -45,12 +38,7 @@ if sys.platform == 'win32':
         ]
 
     def set_version_info():
-        """
-        设置Windows EXE文件的版本信息
-        
-        从版本管理器获取信息并构建版本信息结构，
-        为Windows平台上的应用程序提供完整的版本元数据。
-        """
+        """设置Windows EXE文件的版本信息，为Windows平台上的应用程序提供完整的版本元数据"""
         try:
             # 从版本管理器获取信息
             app_info = version_manager.get_app_info()
@@ -100,12 +88,8 @@ if sys.platform == 'win32':
 
 
 def setup_exe_environment():
-    """
-    配置执行环境路径
-    
-    处理不同执行环境下的路径问题，特别是PyInstaller单文件模式，
-    确保应用程序能够正确找到资源文件和模块，支持在各种环境中一致运行。
-    
+    """配置执行环境路径，处理不同执行环境下的路径问题，确保应用程序能够正确找到资源文件和模块
+
     Returns:
         str: 应用程序的基础路径
     """
@@ -138,12 +122,8 @@ def setup_exe_environment():
 base_path = setup_exe_environment()
 
 class ApplicationMonitor(QObject):
-    """
-    应用程序状态监控器
-    
-    负责定期监控应用程序的运行状态，收集系统资源使用情况，并通过信号通知UI更新。
-    主要功能包括监控内存使用、CPU使用率、运行时间等关键指标。
-    
+    """应用程序状态监控器，负责定期监控应用程序的运行状态，收集系统资源使用情况
+
     Signals:
         status_updated (dict): 当应用程序状态更新时发出，包含完整的状态信息
     """
@@ -151,11 +131,7 @@ class ApplicationMonitor(QObject):
     status_updated = pyqtSignal(dict)
     
     def __init__(self):
-        """
-        初始化应用程序监控器
-        
-        设置监控初始状态、计数器和启动时间
-        """
+        """初始化应用程序监控器，设置监控初始状态、计数器和启动时间"""
         super().__init__()
         
         # 监控控制标志
@@ -179,11 +155,7 @@ class ApplicationMonitor(QObject):
         self.monitor_thread = None
     
     def start_monitoring(self):
-        """
-        启动监控线程，开始定期收集应用程序状态信息
-        
-        如果监控线程不存在或未运行，则创建并启动新的监控线程
-        """
+        """启动监控线程，开始定期收集应用程序状态信息"""
         if not self.monitor_thread or not self.monitor_thread.is_alive():
             self.monitoring = True
             self.monitor_thread = threading.Thread(
@@ -195,11 +167,7 @@ class ApplicationMonitor(QObject):
             print("[DEBUG] 应用程序监控已启动")
     
     def stop_monitoring(self):
-        """
-        停止监控线程，不再收集状态信息
-        
-        设置监控标志为False并等待线程结束（最多等待2秒）
-        """
+        """停止监控线程，不再收集状态信息"""
         self.monitoring = False
         if self.monitor_thread and self.monitor_thread.is_alive():
             print("[DEBUG] 正在停止应用程序监控...")
@@ -208,12 +176,7 @@ class ApplicationMonitor(QObject):
             print("[DEBUG] 应用程序监控已停止")
     
     def _monitor_loop(self):
-        """
-        监控主循环，定期收集并发送状态信息
-        
-        在循环中获取应用程序状态并通过信号发送，
-        捕获并处理可能出现的异常，避免监控线程意外终止
-        """
+        """监控主循环，定期收集并发送状态信息"""
         while self.monitoring:
             try:
                 status = self.get_application_status()
@@ -224,11 +187,8 @@ class ApplicationMonitor(QObject):
                 time.sleep(10)  # 出错时增加等待时间以避免过度消耗资源
     
     def get_application_status(self):
-        """
-        获取应用程序当前状态信息
-        
-        计算运行时间，尝试获取系统资源使用情况，并整合为完整的状态信息
-        
+        """获取应用程序当前状态信息
+
         Returns:
             dict: 包含应用程序状态信息的字典
         """
@@ -288,21 +248,15 @@ class ApplicationMonitor(QObject):
         return base_status
     
     def increment_error_count(self):
-        """
-        增加错误计数器，用于追踪应用程序错误数量
-        """
+        """增加错误计数器，用于追踪应用程序错误数量"""
         self.error_count += 1
-    
+
     def increment_warning_count(self):
-        """
-        增加警告计数器，用于追踪应用程序警告数量
-        """
+        """增加警告计数器，用于追踪应用程序警告数量"""
         self.warning_count += 1
-    
+
     def increment_info_count(self):
-        """\
-        增加信息计数器，用于追踪应用程序信息日志数量
-        """
+        """增加信息计数器，用于追踪应用程序信息日志数量"""
         self.info_count += 1
 
     def record_theme_change(self, mode: str):
@@ -314,9 +268,8 @@ class ApplicationMonitor(QObject):
         self.theme_mode = mode
         try:
             self.last_theme_change_time = time.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
+        except (OSError, ValueError):
             self.last_theme_change_time = None
-        # 主题切换视为信息级事件
         self.increment_info_count()
 
 # =============================================================================
@@ -324,47 +277,21 @@ class ApplicationMonitor(QObject):
 # =============================================================================
 
 class BetterGIApplication:
-    """
-    BetterGI 应用程序主类
-    
-    负责管理应用程序的完整生命周期，包括初始化、配置加载、主窗口创建和资源管理。
-    作为应用程序的核心控制器，协调各组件间的交互并提供统一的错误处理机制。
-    
+    """BetterGI 应用程序主类，负责管理应用程序的完整生命周期
+
     主要职责：
-    1. 初始化应用程序环境和配置
-    2. 设置Qt应用程序和全局样式
-    3. 配置平台特定功能
-    4. 初始化日志系统
-    5. 检查用户协议
-    6. 创建和显示主窗口
-    7. 运行应用程序主循环
-    8. 管理应用程序资源的清理
-    
-    应用程序启动流程：
-    - 初始化应用程序环境
-    - 设置Qt应用程序
+    - 初始化应用程序环境和配置
+    - 设置Qt应用程序和全局样式
     - 配置平台特定功能
-    - 设置全局样式
     - 初始化日志系统
     - 检查用户协议
-    - 创建主窗口
-    - 显示主窗口
-    - 进入应用程序主循环
-    
-    应用程序退出流程：
-    - 退出主循环
-    - 清理应用程序资源
-    - 停止监控器
-    - 恢复输出流
+    - 创建和显示主窗口
+    - 运行应用程序主循环
+    - 管理应用程序资源的清理
     """
     
     def __init__(self):
-        """
-        初始化应用程序实例
-        
-        创建应用程序所需的核心组件引用和初始状态变量
-        记录应用程序启动时间点，用于后续计算启动耗时
-        """
+        """初始化应用程序实例，创建应用程序所需的核心组件引用和初始状态变量"""
         # 应用程序核心组件
         self.app = None             # PyQt应用程序实例
         self.main_window = None     # 主窗口实例
@@ -376,17 +303,8 @@ class BetterGIApplication:
         self.startup_time = time.time()
         
     def initialize(self):
-        """
-        初始化应用程序环境和核心组件
-        
-        按照预定顺序初始化应用程序的各个组件，包括：
-        - 配置高DPI显示支持
-        - 创建和配置QApplication实例
-        - 设置应用程序样式和字体
-        - 初始化日志系统和异常处理器
-        - 设置平台特定功能
-        - 初始化应用监控器
-        
+        """初始化应用程序环境和核心组件
+
         Returns:
             bool: 初始化成功返回True，失败返回False
         """
@@ -436,11 +354,8 @@ class BetterGIApplication:
             return False
             
     def _initialize_qt_application(self):
-        """
-        初始化Qt应用程序实例和基本配置
-        
-        设置高DPI支持、创建QApplication实例、配置应用程序信息和字体
-        
+        """初始化Qt应用程序实例和基本配置
+
         Returns:
             bool: 初始化成功返回True，失败返回False
         """
@@ -475,20 +390,12 @@ class BetterGIApplication:
             return False
             
     def _setup_platform_specific_features(self):
-        """
-        设置平台特定功能
-        
-        根据不同操作系统平台设置相应的功能，如Windows的AppUserModelID等
-        """
+        """设置平台特定功能，根据不同操作系统平台设置相应的功能"""
         if os.name == 'nt':
             self._setup_windows_specific_features()
     
     def _setup_global_style(self):
-        """
-        设置应用程序全局样式表和样式属性
-        
-        使用styles模块中的UnifiedStyleHelper来统一管理应用程序样式
-        """
+        """设置应用程序全局样式表和样式属性，使用styles模块中的UnifiedStyleHelper来统一管理应用程序样式"""
         try:
             # 使用全局样式管理器的setup_global_style方法
             from styles import UnifiedStyleHelper
@@ -501,11 +408,7 @@ class BetterGIApplication:
             traceback.print_exc()
     
     def _setup_windows_specific_features(self):
-        """
-        设置Windows平台特定功能
-        
-        包括AppUserModelID设置等Windows专属功能
-        """
+        """设置Windows平台特定功能，包括AppUserModelID设置等Windows专属功能"""
         if os.name == 'nt':
             print("[DEBUG] 设置AppUserModelID")
             try:
@@ -516,12 +419,8 @@ class BetterGIApplication:
                 print(f"[DEBUG] AppUserModelID设置失败: {e}")
     
     def _initialize_logging(self):
-        """
-        初始化应用程序全局日志记录系统
-        
-        导入debug_tools模块并调用initialize_global_logging函数设置日志系统，
-        确保应用程序能够记录运行时信息、警告和错误，方便调试和问题排查。
-        
+        """初始化应用程序全局日志记录系统，确保应用程序能够记录运行时信息、警告和错误
+
         Returns:
             bool: 初始化成功返回True，失败返回False
         """
@@ -543,12 +442,8 @@ class BetterGIApplication:
             return False
     
     def _setup_exception_handler(self):
-        """
-        设置全局异常处理器
-        
-        捕获未处理的异常并记录到日志中，防止应用程序因未捕获异常而意外崩溃
-        提供详细的错误信息记录，便于问题排查
-        
+        """设置全局异常处理器，捕获未处理的异常并记录到日志中
+
         Returns:
             bool: 设置成功返回True，失败返回False
         """
@@ -586,13 +481,7 @@ class BetterGIApplication:
             return False
     
     def _initialize_monitor(self):
-        """
-        初始化应用程序监控器
-        
-        创建并启动应用程序性能和状态监控器，用于收集和跟踪应用程序运行状态
-        监控器将在独立线程中运行，定期收集应用程序性能和使用情况数据
-        连接监控器的状态更新信号到应用程序的状态更新处理函数
-        """
+        """初始化应用程序监控器，创建并启动应用程序性能和状态监控器"""
         print("[DEBUG] 初始化应用程序监控器")
         try:
             # 创建并启动监控器实例
@@ -607,9 +496,8 @@ class BetterGIApplication:
             # 监控器初始化失败不影响主程序运行
     
     def _log_startup_info(self, version):
-        """
-        记录应用程序启动信息到日志系统
-        
+        """记录应用程序启动信息到日志系统
+
         Args:
             version (str): 应用程序版本号
         """
@@ -619,12 +507,8 @@ class BetterGIApplication:
             self.debug_logger.log_system_info()
     
     def check_user_agreement(self):
-        """
-        检查用户是否已同意软件使用协议
-        
-        验证用户是否已经接受了应用程序的许可协议，
-        调用外部模块检查用户协议状态，优化异常处理和日志记录
-        
+        """检查用户是否已同意软件使用协议
+
         Returns:
             bool: 用户同意协议返回True，拒绝或取消返回False；出现异常时默认返回True
         """
@@ -657,12 +541,8 @@ class BetterGIApplication:
             return True
     
     def create_main_window(self):
-        """
-        创建应用程序主窗口
-        
-        导入MainWindow类并创建其实例，这是应用程序用户界面的核心组件
-        确保在创建主窗口前所有必要的资源和配置都已准备就绪
-        
+        """创建应用程序主窗口
+
         Returns:
             bool: 创建成功返回True，失败返回False
         """
@@ -699,13 +579,8 @@ class BetterGIApplication:
             return False
     
     def show_main_window(self):
-        """
-        显示应用程序主窗口
-        
-        调用主窗口的show方法，将用户界面呈现给用户
-        计算并显示应用程序启动总耗时，用于性能监控和调试
-        修复任务栏图标问题并完善异常处理机制
-        
+        """显示应用程序主窗口
+
         Returns:
             bool: 显示成功返回True，失败返回False
         """
@@ -738,17 +613,8 @@ class BetterGIApplication:
             return False
     
     def run(self):
-        """
-        运行应用程序主流程
-        
-        按照预定顺序执行应用程序的各个阶段：
-        1. 初始化应用程序环境
-        2. 检查用户协议
-        3. 创建主窗口
-        4. 显示主窗口
-        5. 运行应用程序事件循环
-        6. 清理资源
-        
+        """运行应用程序主流程
+
         Returns:
             int: 应用程序退出代码，0表示正常退出，非0表示异常退出
         """
@@ -804,11 +670,8 @@ class BetterGIApplication:
             return 1
     
     def on_status_updated(self, status):
-        """
-        处理应用程序状态更新事件
-        
-        接收监控器发送的状态信息，可用于更新UI或执行其他操作
-        
+        """处理应用程序状态更新事件
+
         Args:
             status (dict): 包含应用程序状态信息的字典
         """
@@ -849,16 +712,7 @@ class BetterGIApplication:
             print(f"[DEBUG] 处理主题模式切换事件时出错: {e}")
     
     def cleanup(self):
-        """
-        清理应用程序资源
-        
-        释放应用程序运行过程中使用的所有资源，确保正确关闭：
-        1. 停止应用程序监控器
-        2. 恢复输出流并记录清理信息
-        3. 确保所有资源正确释放
-        
-        即使在发生异常的情况下也尝试进行资源清理，防止资源泄漏
-        """
+        """清理应用程序资源，释放应用程序运行过程中使用的所有资源"""
         try:
             print("[DEBUG] 开始清理应用程序资源")
             

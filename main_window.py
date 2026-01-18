@@ -1,5 +1,6 @@
 # main_window.py
 
+# 标准库模块导入
 import sys
 import os
 import json
@@ -7,58 +8,51 @@ import ctypes
 import time
 from datetime import datetime
 
+# PyQt6模块导入
 from PyQt6.QtWidgets import (
-                            QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QLineEdit, QComboBox, QPushButton, QTableWidget,
-                            QTableWidgetItem, QTextEdit, QFrame, QGroupBox, QGridLayout,
-                            QHeaderView, QScrollArea, QSizePolicy, QSplitter,
-                            QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar,
-                            QCheckBox)
-
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QLineEdit, QComboBox, QPushButton, QTableWidget,
+    QTableWidgetItem, QTextEdit, QFrame, QGroupBox, QGridLayout,
+    QHeaderView, QScrollArea, QSizePolicy, QSplitter,
+    QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar,
+    QCheckBox
+)
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
-
-from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
-                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QActionGroup, QFontDatabase)
-
+from PyQt6.QtGui import (
+    QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
+    QKeyEvent, QDesktopServices, QIntValidator, QAction, QActionGroup, QFontDatabase
+)
 
 # 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledMainWindow, StyledDialog, ModernMenuBar, FadeInWindowMixin
+from styles import (
+    UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox,
+    ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox,
+    StyledMainWindow, StyledDialog, ModernMenuBar, FadeInWindowMixin,
+    WindowIconMixin, DialogFactory
+)
 
-from styles import WindowIconMixin, DialogFactory
+from utils import (
+    VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
+    convert_event_type_num_to_str_with_button, generate_key_event_name,
+    load_icon_universal, load_logo, get_current_version,
+    get_current_app_info, get_user_data_dir
+)
 
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_num_to_str_with_button, generate_key_event_name, load_icon_universal, load_logo, get_current_version, get_current_app_info, get_user_data_dir
-
-# 导入关于窗口模块
-
-
+# 导入对话框模块
 from dialogs.about_window import AboutWindowQt
-
-# 导入更新对话框模块
-
-
 from dialogs.update_dialog import UpdateDialog
-
-# 导入事件对话框模块
-
-from dialogs import EventEditDialog, PasteOptionsDialog, SimpleCoordinateCapture, DeleteOptionsDialog
-
-# 导入调试工具模块
+from dialogs import (
+    EventEditDialog, PasteOptionsDialog, SimpleCoordinateCapture,
+    DeleteOptionsDialog, CustomInputDialog
+)
 from dialogs.debug_tools import PasswordDialog, DebugWindow, get_global_debug_logger
-from dialogs import CustomInputDialog
-
-# 导入新拆分的模块
-
-from ui import SettingsPanel, OperationsPanel, StatsPanel
-from managers import EventManager
-from managers import ScriptManager
-
-from ui import ModernTableWidget, HeaderWidget
-
 from dialogs.time_analysis import EventTimeAnalyzerDialog
 
-from managers import MenuManager
+# 导入UI模块
+from ui import SettingsPanel, OperationsPanel, StatsPanel, ModernTableWidget, HeaderWidget
 
-from managers import StateManager
+# 导入管理器模块
+from managers import EventManager, ScriptManager, MenuManager, StateManager
 
 
 
@@ -104,8 +98,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.edit_logic = 'current'  # 编辑事件逻辑
         self.skip_end_events_prompt = True  # 末尾事件操作跳过弹窗
 
-        
-
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()
         # 初始化事件管理器和脚本管理器
@@ -118,83 +110,45 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 初始化状态管理器
         self.state_manager = StateManager(self)
 
-        
-
         try:
-
             # 获取应用程序信息
-
             app_info = get_current_app_info()
-
             version = get_current_version()
 
-            
-
             # 设置窗口标志为标准主窗口样式，允许移动和调整大小
-
             self.setWindowFlags(Qt.WindowType.Window)
-
-            
 
             self.setWindowTitle(f"{app_info['name']} v{version}")
             # 设置主窗口大小
             self.setMinimumSize(1100, 500)
             self.resize(1200, 790)
 
-            
-
             # 设置窗口图标 - 在应用程序创建后立即设置
-
             self.set_window_icon()
 
-            
-
             # 设置应用程序样式 - 纯白色背景
-
             self.setup_application_style()
 
-            
-
             # 创建中央部件
-
             central_widget = QWidget()
-
             self.setCentralWidget(central_widget)
 
-            
-
             # 创建主布局
-
             main_layout = QVBoxLayout(central_widget)
-
             main_layout.setSpacing(8)
-
             main_layout.setContentsMargins(12, 12, 12, 12)
 
-            
-
             # 创建界面
-
             self.menu_manager.create_menu_bar()
-
             self.create_header(main_layout)
-
             self.create_content_area(main_layout)
-
             self.create_status_bar()
 
-            
-
             # 连接信号槽
-
             self.connect_signals()
-
-            
 
             # 加载时间逻辑设置
             self.menu_manager.load_time_logic_settings()
-
-            
 
             # 加载保存的状态
             loaded_state = self.state_manager.load_saved_state()
@@ -204,30 +158,21 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                 self.event_manager.add_sample_data()
                 self.debug_logger.log_info("未加载到事件数据，已添加示例数据")
 
-            
-
             # 立即设置任务栏图标，不使用延迟
             self.fix_taskbar_icon()
-            
+
             # 初始化统计信息和预计总时间
             self.stats_panel.update_stats()
             self.settings_panel.on_calculate_total_time()
-            
+
             # 记录窗口创建成功
             self.debug_logger.log_info("主窗口初始化完成")
 
-            
-
         except Exception as e:
-
             error_msg = f"主窗口初始化错误: {e}"
-
             self.debug_logger.log_error(error_msg, exc_info=True)
-
             print(error_msg)
-
             import traceback
-
             traceback.print_exc()
 
     
@@ -264,8 +209,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         """获取删除逻辑的显示名称"""
         return self.menu_manager.get_delete_logic_display_name(logic)
 
-
-
     def get_paste_logic_display_name(self, logic):
         """获取粘贴逻辑的显示名称"""
         return self.menu_manager.get_paste_logic_display_name(logic)
@@ -282,106 +225,60 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         """获取当前删除事件逻辑"""
         return self.menu_manager.get_delete_logic()
 
-
-
     def get_paste_logic(self):
         """获取当前粘贴事件逻辑"""
         return self.menu_manager.get_paste_logic()
 
-
-
     def save_time_logic_settings(self):
         """保存时间逻辑设置"""
         self.menu_manager.save_time_logic_settings()
-
-
 
     def load_time_logic_settings(self):
         """加载时间逻辑设置"""
         self.menu_manager.load_time_logic_settings()
 
     def open_url(self, url):
-
         """打开URL链接"""
-
         try:
-
             QDesktopServices.openUrl(QUrl(url))
-
             self.debug_logger.log_info(f"已打开链接: {url}")
-
         except Exception as e:
-
             error_msg = f"打开链接失败: {str(e)}"
-
             self.debug_logger.log_error(error_msg)
-
             ChineseMessageBox.show_error(self, "错误", f"无法打开链接:\n{url}")
 
-
-
     def open_manual(self):
-
         """打开使用说明"""
-
         try:
-
             # 使用资源管理器查找使用说明文件
-
             from utils import find_resource_file
-
             manual_files = ["使用说明.pdf"]
 
-            
-
             for manual_file in manual_files:
-
                 manual_path = find_resource_file(manual_file)
-
                 if manual_path and os.path.exists(manual_path):
-
                     QDesktopServices.openUrl(QUrl.fromLocalFile(manual_path))
-
                     self.debug_logger.log_info(f"已打开使用说明: {manual_path}")
-
                     return
 
-            
-
             # 如果没有找到本地文件，提示用户
-
             ChineseMessageBox.show_info(self, "提示", "未找到本地使用说明文件，请查看项目文档或联系开发者")
-
             self.debug_logger.log_warning("未找到使用说明文件")
 
-            
-
         except Exception as e:
-
             error_msg = f"打开使用说明失败: {str(e)}"
-
             self.debug_logger.log_error(error_msg)
-
             ChineseMessageBox.show_error(self, "错误", error_msg)
 
     def on_event_time_analysis(self):
-
         """打开事件时间分析对话框"""
-
         try:
-
             dialog = EventTimeAnalyzerDialog(self, self.event_manager.events_table)
-
             dialog.exec()
-
             self.debug_logger.log_info("事件时间分析对话框已打开")
-
         except Exception as e:
-
             error_msg = f"打开事件时间分析对话框失败: {str(e)}"
-
             self.debug_logger.log_error(error_msg)
-
             ChineseMessageBox.show_error(self, "错误", error_msg)
 
     def set_app_icon(self, icon):
@@ -430,9 +327,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         super().showEvent(event)
 
     def fix_taskbar_icon(self):
-
         """修复任务栏图标 - 在窗口显示后调用"""
-
         self._fix_icon_safe()
 
     def _initialize_theme_menu_state(self):
@@ -544,49 +439,31 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     def create_header(self, parent_layout):
         """创建窗口顶部标题和信息区域
-        
+
         在指定的父布局中创建应用程序的头部区域，
         包含应用名称、版本信息和操作按钮等。
-        
+
         Args:
             parent_layout: 父布局对象，用于放置头部组件
         """
-
         self.header_widget = HeaderWidget()
-
         parent_layout.addWidget(self.header_widget)
 
     def create_content_area(self, parent_layout):
-
         """创建内容区域"""
-
         # 创建水平分割器
-
         splitter = QSplitter(Qt.Orientation.Horizontal)
-
         splitter.setChildrenCollapsible(False)
-
         splitter.setHandleWidth(0)
-
         splitter.setStyleSheet(UnifiedStyleHelper.get_instance().get_splitter_style())
 
-        
-
         # 左侧设置面板
-
         left_panel = self.create_left_panel()
-
         splitter.addWidget(left_panel)
 
-        
-
         # 右侧区域（包含事件编辑和统计信息）
-
         right_panel = self.create_right_panel()
-
         splitter.addWidget(right_panel)
-
-        
 
         # 设置分割比例，使用相对比例而非固定数值
         # 总宽度会根据窗口大小自动调整
@@ -628,38 +505,22 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         return scroll_area
 
     def create_right_panel(self):
-
         """创建右侧面板（包含事件编辑和统计信息）"""
-
         container = QWidget()
-
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
         # 使用水平布局，左边是事件编辑，右边是统计信息
-
         layout = QHBoxLayout(container)
-
         layout.setSpacing(12)
-
         layout.setContentsMargins(8, 8, 8, 8)
 
-        
-
         # 事件编辑区域（占据大部分空间）
-
         event_editor = self.create_event_editor()
-
         layout.addWidget(event_editor, 4)  # 权重为4
 
-        
-
         # 统计信息面板（占据较小空间，放在最右边）
-
         self.stats_panel = StatsPanel(self)
-
         layout.addWidget(self.stats_panel, 1)  # 权重为1
-
-        
 
         return container
 
@@ -668,61 +529,33 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         return self.event_manager.create_event_editor(parent)
 
     def create_status_bar(self):
-
         """创建状态栏 - 修复灰白不一致问题"""
-
         self.status_bar = QStatusBar()
-
         self.setStatusBar(self.status_bar)
 
-        
-
         # 修复状态栏样式 - 纯白色背景
-
         self.status_bar.setStyleSheet(UnifiedStyleHelper.get_instance().get_status_bar_style())
-
-        
-
         self.status_bar.showMessage("✅ 就绪")
 
-        
-
         # 添加时间显示
-
         self.time_label = QLabel()
-
         self.time_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 10px; background-color: transparent;")
-
         self.status_bar.addPermanentWidget(self.time_label)
 
-        
-
         # 更新时间
-
         self.update_time()
-
         self.timer = QTimer()
-
         self.timer.timeout.connect(self.update_time)
-
         self.timer.start(1000)
 
-        
-
         # 更新快捷键提示，包含新的快捷键
-
         shortcuts_label = QLabel("快捷键: Ctrl+Z撤销 | Ctrl+Y重做 | Ctrl+I添加事件 | Ctrl+E编辑事件 | Ctrl+B批量编辑 | Ctrl+A全选 | Ctrl+X剪切 | Ctrl+C复制 | Ctrl+V粘贴 | Delete删除 | Ctrl+S保存")
-
         shortcuts_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['text_secondary']}; font-size: 9px; margin-right: 10px; background-color: transparent;")
-
         self.status_bar.addPermanentWidget(shortcuts_label)
 
     def update_time(self):
-
         """更新时间显示"""
-
         current_time = QDateTime.currentDateTime().toString("HH:mm:ss")
-
         self.time_label.setText(f"🕒 {current_time}")
 
     def connect_signals(self):
@@ -732,10 +565,10 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.operations_panel.save_btn.clicked.connect(self.script_manager.on_save_script)
         self.operations_panel.preview_btn.clicked.connect(self.operations_panel.on_preview_script)
         self.operations_panel.import_script_btn.clicked.connect(self.script_manager.on_import_script)
-        
+
         # 设置面板信号 - 修改为调用面板的方法
         self.settings_panel.detect_screen_btn.clicked.connect(self.settings_panel.on_detect_screen_info)
-        
+
         # 循环设置更改时同时更新设置面板的总时间和统计面板的信息
         self.settings_panel.loop_count_input.valueChanged.connect(self.on_loop_settings_changed)
         self.settings_panel.interval_input.valueChanged.connect(self.on_loop_settings_changed)
@@ -743,19 +576,17 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     def on_loop_settings_changed(self):
         """循环设置更改时的处理函数
-        
+
         当循环次数、间隔时间或时间单位更改时，同时更新：
         1. 设置面板中的预计总时间
         2. 统计面板中的统计信息
         """
         # 更新设置面板的总时间
         self.settings_panel.on_calculate_total_time()
-        
+
         # 更新统计面板的信息
         if hasattr(self, 'stats_panel'):
             self.stats_panel.update_stats()
-
-
 
     def on_new_file(self):
         """新建文件 - 调用状态管理器"""
@@ -828,11 +659,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
     def on_user_agreement(self):
         """用户协议"""
         self.debug_logger.log_info("打开用户协议窗口")
-        
         from dialogs.about_window import UserAgreementWindow
-        
         agreement_window = UserAgreementWindow(self)
-        
         agreement_window.show()
 
     def on_check_update(self):
@@ -872,7 +700,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 # 主程序入口
 
 # =============================================================================
-
 
 
 if __name__ == "__main__":
