@@ -59,31 +59,31 @@ class MenuManager:
         # 创建现代化菜单栏，自动为所有菜单应用无边框样式
         menubar = ModernMenuBar(self.parent_window)
         self.parent_window.setMenuBar(menubar)
-        
+
         # 文件菜单
         self._create_file_menu(menubar)
-        
-        # 编辑菜单
-        self._create_edit_menu(menubar)
-        
+
+        # 编辑菜单 - 仅设置快捷键，不显示在菜单栏中
+        self._setup_edit_shortcuts(menubar)
+
         # 时间逻辑菜单
         self._create_time_logic_menu(menubar)
-        
+
         # 时间单位菜单
         self._create_time_unit_menu(menubar)
-        
+
         # 工具菜单
         self._create_tools_menu(menubar)
-        
+
         # 主题菜单
         self._create_theme_menu(menubar)
-        
+
         # 帮助菜单
         self._create_help_menu(menubar)
-        
+
         # 初始化菜单状态
         self.update_time_logic_menu_state()
-        
+
         return menubar
     
     def _create_file_menu(self, menubar):
@@ -121,83 +121,76 @@ class MenuManager:
         exit_action.setShortcut('Ctrl+Q')
         exit_action.triggered.connect(self.parent_window.close)
         file_menu.addAction(exit_action)
-    
-    def _create_edit_menu(self, menubar):
-        """创建编辑菜单
-        
-        创建包含撤销、重做、添加事件、编辑事件、剪切、复制、粘贴、删除、全选和批量编辑等操作的编辑菜单。
-        
+
+    def _setup_edit_shortcuts(self, menubar):
+        """设置编辑快捷键，不显示在菜单栏中
+
+        创建所有编辑相关的QAction对象并设置快捷键，但不添加到菜单中，
+        直接添加到主窗口以确保快捷键功能正常工作。
+
         Args:
-            menubar: 菜单栏实例，用于添加编辑菜单
+            menubar: 菜单栏实例，用于获取主窗口
         """
-        edit_menu = menubar.addMenu('编辑')
-        
         # 撤销
         undo_action = QAction('撤销', self.parent_window)
         undo_action.setShortcut('Ctrl+Z')
         undo_action.triggered.connect(self.parent_window.on_undo)
-        edit_menu.addAction(undo_action)
-        
+        self.parent_window.addAction(undo_action)
+
         # 重做
         redo_action = QAction('重做', self.parent_window)
         redo_action.setShortcut('Ctrl+Y')
         redo_action.triggered.connect(self.parent_window.on_redo)
-        edit_menu.addAction(redo_action)
-        
-        edit_menu.addSeparator()
-        
+        self.parent_window.addAction(redo_action)
+
         # 添加事件
         add_action = QAction('添加事件', self.parent_window)
         add_action.setShortcut('Ctrl+I')
         add_action.triggered.connect(self.parent_window.event_manager.on_add_event)
-        edit_menu.addAction(add_action)
-        
+        self.parent_window.addAction(add_action)
+
         # 编辑事件
         edit_action = QAction('编辑事件', self.parent_window)
         edit_action.setShortcut('Ctrl+E')
         edit_action.triggered.connect(self.parent_window.event_manager.on_edit_event)
-        edit_menu.addAction(edit_action)
-        
-        edit_menu.addSeparator()
-        
+        self.parent_window.addAction(edit_action)
+
         # 剪切
         cut_action = QAction('剪切', self.parent_window)
         cut_action.setShortcut('Ctrl+X')
         cut_action.triggered.connect(self.parent_window.event_manager.on_cut_event)
-        edit_menu.addAction(cut_action)
-        
+        self.parent_window.addAction(cut_action)
+
         # 复制
         copy_action = QAction('复制', self.parent_window)
         copy_action.setShortcut('Ctrl+C')
         copy_action.triggered.connect(self.parent_window.event_manager.on_copy_event)
-        edit_menu.addAction(copy_action)
-        
+        self.parent_window.addAction(copy_action)
+
         # 粘贴
         paste_action = QAction('粘贴', self.parent_window)
         paste_action.setShortcut('Ctrl+V')
         paste_action.triggered.connect(self.parent_window.event_manager.on_paste_event)
-        edit_menu.addAction(paste_action)
-        
-        edit_menu.addSeparator()
-        
+        self.parent_window.addAction(paste_action)
+
         # 删除
         delete_action = QAction('删除', self.parent_window)
         delete_action.setShortcut('Delete')
         delete_action.triggered.connect(self.parent_window.event_manager.on_delete_event)
-        edit_menu.addAction(delete_action)
-        
+        self.parent_window.addAction(delete_action)
+
         # 全选
         select_all_action = QAction('全选', self.parent_window)
         select_all_action.setShortcut('Ctrl+A')
         select_all_action.triggered.connect(self.parent_window.event_manager.on_select_all_events)
-        edit_menu.addAction(select_all_action)
-        
+        self.parent_window.addAction(select_all_action)
+
         # 批量编辑
         batch_edit_action = QAction('批量编辑', self.parent_window)
         batch_edit_action.setShortcut('Ctrl+B')
         batch_edit_action.triggered.connect(self.parent_window.event_manager.on_batch_edit)
-        edit_menu.addAction(batch_edit_action)
-    
+        self.parent_window.addAction(batch_edit_action)
+
     def _create_time_logic_menu(self, menubar):
         """创建时间逻辑菜单
         
