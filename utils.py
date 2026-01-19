@@ -507,6 +507,7 @@ def load_icon_exe_safe():
 # 资源文件搜索路径缓存
 _search_paths_cache = None
 _base_path_cache = None
+_file_find_cache = {}
 
 def _build_search_paths(base_path):
     """构建资源文件搜索路径列表
@@ -655,20 +656,34 @@ def find_resource_file(filename):
         9. _MEIPASS/file
         10. _MEIPASS/logo
     """
-    global _search_paths_cache, _base_path_cache
+    global _search_paths_cache, _base_path_cache, _file_find_cache
+
+    # 检查缓存
+    if filename in _file_find_cache:
+        cached_path = _file_find_cache[filename]
+        if cached_path and os.path.exists(cached_path):
+            print(f"[DEBUG] 从缓存获取资源文件: {filename} -> {cached_path}")
+            return cached_path
+        else:
+            del _file_find_cache[filename]
+
     base_path = get_base_path()
-    
+
     # 只在基础路径变化时重新构建搜索路径
     if _base_path_cache != base_path:
         _base_path_cache = base_path
         _search_paths_cache = _build_search_paths(base_path)
-    
+        # 基础路径变化时清空文件缓存
+        _file_find_cache.clear()
+
     # 在所有路径中查找文件
     for path in _search_paths_cache:
         full_path = os.path.join(path, filename)
         if os.path.exists(full_path):
             # 调试日志：记录找到的资源文件路径
             print(f"[DEBUG] 找到资源文件: {filename} -> {full_path}")
+            # 缓存查找结果
+            _file_find_cache[filename] = full_path
             return full_path
 
     # 调试日志：记录未找到的资源文件
