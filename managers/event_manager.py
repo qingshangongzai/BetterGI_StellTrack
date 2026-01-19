@@ -1619,22 +1619,71 @@ class EventManager:
                     prev_absolute_time = int(prev_event[1]) if prev_event[1].isdigit() else 0
                 
                 if time_option == "仅修改当前事件时间":
-                    # 仅重新计算删除位置后一个事件的相对时间
-                    next_row_index = first_deleted_index
-                    if next_row_index < self.events_table.rowCount():
-                        # 获取删除位置后一个事件的原始绝对时间
-                        next_absolute_time = None
-                        for event in all_events_before_delete:
-                            if event[0].isdigit() and int(event[0]) > first_deleted_index + 1:  # 找到删除后的第一个事件
-                                next_absolute_time = int(event[1]) if event[1].isdigit() else 0
-                                break
+                    # 仅重新计算被删除事件后第一个未被删除事件的相对时间
+                    # 找出所有被删除的行号（删除前的行号，从1开始）
+                    deleted_row_nums = [row + 1 for row in selected_row_numbers]
+                    deleted_row_nums.sort()
                     
-                    if next_absolute_time is not None:
+                    # 获取删除前的事件数据，用于计算
+                    # 转换为 {行号: 绝对时间} 的映射，方便查找
+                    row_absolute_time_map = {}
+                    for event in all_events_before_delete:
+                        if event[0].isdigit():
+                            row_num = int(event[0])
+                            absolute_time = int(event[1]) if event[1].isdigit() else 0
+                            row_absolute_time_map[row_num] = absolute_time
+                    
+                    # 找出所有需要更新相对时间的行号
+                    # 这些行号是被删除事件后的第一个未被删除事件
+                    rows_to_update = []
+                    
+                    # 遍历所有被删除的行号
+                    for deleted_row_num in deleted_row_nums:
+                        # 从当前被删除行号开始向后查找，找到第一个未被删除的行
+                        next_row_num = None
+                        for row_num in range(deleted_row_num, len(all_events_before_delete) + 1):
+                            if row_num not in deleted_row_nums and row_num in row_absolute_time_map:
+                                next_row_num = row_num
+                                break
+                        
+                        # 如果找到了未被删除的行，并且不在待更新列表中，则添加到待更新列表
+                        if next_row_num is not None and next_row_num not in rows_to_update:
+                            rows_to_update.append(next_row_num)
+                    
+                    # 对需要更新的行号进行排序，确保按顺序处理
+                    rows_to_update.sort()
+                    
+                    # 更新每个需要更新的行的相对时间
+                    for next_row_num in rows_to_update:
+                        # 找出当前行之前的最后一个未被删除的行
+                        prev_row_num = None
+                        # 从当前行号开始向前查找，找到第一个未被删除的行
+                        for row_num in range(next_row_num - 1, 0, -1):
+                            if row_num not in deleted_row_nums and row_num in row_absolute_time_map:
+                                prev_row_num = row_num
+                                break
+                        
+                        # 获取前一个事件的绝对时间
+                        prev_absolute_time = 0
+                        if prev_row_num is not None:
+                            prev_absolute_time = row_absolute_time_map[prev_row_num]
+                        
+                        # 获取当前事件的绝对时间
+                        current_absolute_time = row_absolute_time_map[next_row_num]
+                        
                         # 计算新的相对时间
-                        new_relative_time = next_absolute_time - prev_absolute_time
-                        next_relative_item = QTableWidgetItem(str(new_relative_time))
-                        next_relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                        self.events_table.setItem(next_row_index, 6, next_relative_item)
+                        new_relative_time = current_absolute_time - prev_absolute_time
+                        
+                        # 计算当前行在表格中的行索引
+                        # 计算方法：当前行号 - 前面被删除的行数 - 1（因为行号从1开始，索引从0开始）
+                        deleted_rows_before = len([dr for dr in deleted_row_nums if dr < next_row_num])
+                        table_row_index = next_row_num - 1 - deleted_rows_before
+                        
+                        # 更新相对时间到表格中
+                        if table_row_index < self.events_table.rowCount():
+                            relative_item = QTableWidgetItem(str(new_relative_time))
+                            relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                            self.events_table.setItem(table_row_index, 6, relative_item)
                 else:
                     # 重新计算后续所有事件的绝对时间
                     self.recalculate_time_from_row(first_deleted_index)
