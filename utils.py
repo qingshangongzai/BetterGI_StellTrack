@@ -177,21 +177,17 @@ def generate_key_event_name(event_type_str, keycode):
     if event_type_str in ["按键按下", "按键释放"] and keycode:
         try:
             keycode_int = int(keycode)
-            # 使用虚拟键码映射获取按键名称
+            # 直接使用字典查找，避免函数调用开销
             key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-            # 转换为中文名称
             key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
             
             action = "按下" if event_type_str == "按键按下" else "释放"
             return f"{action}{key_name_cn}"
         except (ValueError, TypeError):
-            # 如果键码不是数字，返回默认名称
             return event_type_str
     elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"]:
-        # 鼠标事件，返回原名称
         return event_type_str
     else:
-        # 其他事件，返回原名称
         return event_type_str
 
 def get_key_chinese_name(keycode):
@@ -208,13 +204,9 @@ def get_key_chinese_name(keycode):
     
     try:
         keycode_int = int(keycode)
-        # 使用虚拟键码映射获取按键名称
-        key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-        # 转换为中文名称
-        key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-        return key_name_cn
+        # 直接使用字典查找，避免不必要的中间变量
+        return KEY_NAME_MAPPING.get(VK_MAPPING.get(keycode_int, f"键码:{keycode}"), keycode)
     except (ValueError, TypeError):
-        # 如果键码不是数字，返回原值
         return keycode
 
 def get_event_data_from_table(table, row, skip_row_number=True):
@@ -485,6 +477,36 @@ def load_icon_exe_safe():
 # 资源管理器 - 从styles.py迁移
 # =============================================================================
 
+# 资源文件搜索路径缓存
+_search_paths_cache = None
+_base_path_cache = None
+
+def _build_search_paths(base_path):
+    """构建资源文件搜索路径列表
+    
+    Args:
+        base_path: 基础路径
+        
+    Returns:
+        list: 搜索路径列表
+    """
+    search_paths = []
+    
+    # 添加基础路径及其子目录
+    search_paths.append(base_path)
+    for resource_dir in RESOURCE_DIRS:
+        search_paths.append(os.path.join(base_path, resource_dir))
+    
+    # 添加 _MEIPASS 路径及其子目录（如果存在）
+    if hasattr(sys, '_MEIPASS'):
+        meipass = sys._MEIPASS
+        if meipass not in search_paths:
+            search_paths.append(meipass)
+            for resource_dir in RESOURCE_DIRS:
+                search_paths.append(os.path.join(meipass, resource_dir))
+    
+    return search_paths
+
 def get_base_path():
     """获取程序基础路径，兼容开发环境和打包环境
 
@@ -606,26 +628,16 @@ def find_resource_file(filename):
         9. _MEIPASS/file
         10. _MEIPASS/logo
     """
+    global _search_paths_cache, _base_path_cache
     base_path = get_base_path()
-
-    # 构建搜索路径列表，简化逻辑，合并重复路径
-    search_paths = []
-
-    # 添加基础路径及其子目录
-    search_paths.append(base_path)
-    for resource_dir in RESOURCE_DIRS:
-        search_paths.append(os.path.join(base_path, resource_dir))
-
-    # 添加 _MEIPASS 路径及其子目录（如果存在）
-    if hasattr(sys, '_MEIPASS'):
-        meipass = sys._MEIPASS
-        if meipass not in search_paths:
-            search_paths.append(meipass)
-            for resource_dir in RESOURCE_DIRS:
-                search_paths.append(os.path.join(meipass, resource_dir))
-
+    
+    # 只在基础路径变化时重新构建搜索路径
+    if _base_path_cache != base_path:
+        _base_path_cache = base_path
+        _search_paths_cache = _build_search_paths(base_path)
+    
     # 在所有路径中查找文件
-    for path in search_paths:
+    for path in _search_paths_cache:
         full_path = os.path.join(path, filename)
         if os.path.exists(full_path):
             # 调试日志：记录找到的资源文件路径
@@ -634,7 +646,7 @@ def find_resource_file(filename):
 
     # 调试日志：记录未找到的资源文件
     print(f"[DEBUG] 未找到资源文件: {filename}")
-    print(f"[DEBUG] 搜索路径列表: {search_paths}")
+    print(f"[DEBUG] 搜索路径列表: {_search_paths_cache}")
     return None
 
 def get_resource_path(relative_path):
@@ -783,15 +795,25 @@ def check_event_pairing(events_table):
         # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
-                # 获取按键的中文名称
-                key_name_cn = get_key_chinese_name(keycode)
+                # 直接使用字典查找，避免函数调用开销
+                try:
+                    keycode_int = int(keycode)
+                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
+                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+                except (ValueError, TypeError):
+                    key_name_cn = keycode
                 issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
                 pressed_keys[keycode] = row + 1  # 记录按下的行号
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
-                # 获取按键的中文名称
-                key_name_cn = get_key_chinese_name(keycode)
+                # 直接使用字典查找，避免函数调用开销
+                try:
+                    keycode_int = int(keycode)
+                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
+                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+                except (ValueError, TypeError):
+                    key_name_cn = keycode
                 issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
                 del pressed_keys[keycode]
@@ -832,7 +854,13 @@ def check_event_pairing(events_table):
     
     # 检查未释放的按键
     for key, row_num in pressed_keys.items():
-        key_name_cn = get_key_chinese_name(key)
+        # 直接使用字典查找，避免函数调用开销
+        try:
+            keycode_int = int(key)
+            key_name = VK_MAPPING.get(keycode_int, f"键码:{key}")
+            key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
+        except (ValueError, TypeError):
+            key_name_cn = key
         issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
     for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
