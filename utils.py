@@ -73,6 +73,12 @@ KEY_NAME_MAPPING = {
     "/": "/", "`": "`", "[": "[", "\\": "\\", "]": "]", "'": "'"
 }
 
+# 合并的按键映射表: 虚拟键码 -> 中文名称
+_COMBINED_KEY_MAPPING = {
+    vk: KEY_NAME_MAPPING.get(name, name)
+    for vk, name in VK_MAPPING.items()
+}
+
 # 事件类型映射
 EVENT_TYPE_MAP = {
     "按键按下": 0,
@@ -166,21 +172,19 @@ def convert_event_type_str_to_num(type_str):
 
 def generate_key_event_name(event_type_str, keycode):
     """根据事件类型和键码生成事件名称
-    
+
     Args:
         event_type_str: 事件类型字符串
         keycode: 键码
-        
+
     Returns:
         str: 生成的事件名称
     """
     if event_type_str in ["按键按下", "按键释放"] and keycode:
         try:
             keycode_int = int(keycode)
-            # 直接使用字典查找，避免函数调用开销
-            key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-            key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-            
+            key_name_cn = _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
+
             action = "按下" if event_type_str == "按键按下" else "释放"
             return f"{action}{key_name_cn}"
         except (ValueError, TypeError):
@@ -192,20 +196,19 @@ def generate_key_event_name(event_type_str, keycode):
 
 def get_key_chinese_name(keycode):
     """获取按键的中文名称
-    
+
     Args:
         keycode: 键码
-        
+
     Returns:
         str: 按键的中文名称
     """
     if not keycode:
         return "未知"
-    
+
     try:
         keycode_int = int(keycode)
-        # 直接使用字典查找，避免不必要的中间变量
-        return KEY_NAME_MAPPING.get(VK_MAPPING.get(keycode_int, f"键码:{keycode}"), keycode)
+        return _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
     except (ValueError, TypeError):
         return keycode
 
@@ -759,6 +762,20 @@ def get_current_app_info():
     """
     return version_manager.get_app_info()
 
+def _get_key_display_name(keycode):
+    """获取按键显示名称的辅助函数
+
+    Args:
+        keycode: 键码
+
+    Returns:
+        str: 按键的中文名称
+    """
+    try:
+        keycode_int = int(keycode)
+        return _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
+    except (ValueError, TypeError):
+        return keycode
 
 def check_event_pairing(events_table):
     """检查事件成对性
@@ -795,25 +812,13 @@ def check_event_pairing(events_table):
         # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
-                # 直接使用字典查找，避免函数调用开销
-                try:
-                    keycode_int = int(keycode)
-                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-                except (ValueError, TypeError):
-                    key_name_cn = keycode
+                key_name_cn = _get_key_display_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
-                pressed_keys[keycode] = row + 1  # 记录按下的行号
+                pressed_keys[keycode] = row + 1
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
-                # 直接使用字典查找，避免函数调用开销
-                try:
-                    keycode_int = int(keycode)
-                    key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-                    key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-                except (ValueError, TypeError):
-                    key_name_cn = keycode
+                key_name_cn = _get_key_display_name(keycode)
                 issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
                 del pressed_keys[keycode]
@@ -823,44 +828,38 @@ def check_event_pairing(events_table):
             if "Left" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键重复按下")
             else:
-                pressed_mouse_buttons["Left"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Left"] = row + 1
         elif event_type == "左键释放":
             if "Left" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 左键未按下就释放")
             else:
                 del pressed_mouse_buttons["Left"]
-                
+
         elif event_type == "右键按下":
             if "Right" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键重复按下")
             else:
-                pressed_mouse_buttons["Right"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Right"] = row + 1
         elif event_type == "右键释放":
             if "Right" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 右键未按下就释放")
             else:
                 del pressed_mouse_buttons["Right"]
-                
+
         elif event_type == "中键按下":
             if "Middle" in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键重复按下")
             else:
-                pressed_mouse_buttons["Middle"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Middle"] = row + 1
         elif event_type == "中键释放":
             if "Middle" not in pressed_mouse_buttons:
                 issues.append(f"第{row+1}行: 中键未按下就释放")
             else:
                 del pressed_mouse_buttons["Middle"]
-    
+
     # 检查未释放的按键
     for key, row_num in pressed_keys.items():
-        # 直接使用字典查找，避免函数调用开销
-        try:
-            keycode_int = int(key)
-            key_name = VK_MAPPING.get(keycode_int, f"键码:{key}")
-            key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-        except (ValueError, TypeError):
-            key_name_cn = key
+        key_name_cn = _get_key_display_name(key)
         issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
     for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
