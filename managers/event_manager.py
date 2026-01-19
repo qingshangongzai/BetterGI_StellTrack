@@ -739,20 +739,16 @@ class EventManager:
             show_rows (list): 需要显示的行索引列表
             hide_rows (list): 需要隐藏的行索引列表
         """
-        # 批量更新优化：禁用中间重绘
+        show_rows_set = set(show_rows)
         self.events_table.setUpdatesEnabled(False)
         
         try:
-            # 遍历所有行，根据条件隐藏或显示
             for row in range(self.events_table.rowCount()):
-                # 根据匹配结果隐藏或显示行
-                should_show = row in show_rows
+                should_show = row in show_rows_set
                 self.events_table.setRowHidden(row, not should_show)
             
-            # 更新统计信息
             self.update_stats()
         finally:
-            # 确保重新启用重绘
             self.events_table.setUpdatesEnabled(True)
     
     def on_search_filter_failed(self, error_msg):
@@ -1158,27 +1154,32 @@ class EventManager:
         if self.events_table.rowCount() == 0:
             return
         
-        # 处理第一个事件：相对时间 = 绝对时间
-        first_abs_time_item = self.events_table.item(0, 7)
-        first_rel_time_item = self.events_table.item(0, 6)
-        if first_abs_time_item and first_rel_time_item:
-            first_abs_time = int(first_abs_time_item.text()) if first_abs_time_item.text().isdigit() else 0
-            first_rel_time_item.setText(str(first_abs_time))
+        self.events_table.setUpdatesEnabled(False)
         
-        # 从第二个事件开始，根据绝对时间计算相对时间
-        for i in range(1, self.events_table.rowCount()):
-            # 获取前一个事件的绝对时间
-            prev_abs_time_item = self.events_table.item(i-1, 7)
-            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+        try:
+            # 处理第一个事件：相对时间 = 绝对时间
+            first_abs_time_item = self.events_table.item(0, 7)
+            first_rel_time_item = self.events_table.item(0, 6)
+            if first_abs_time_item and first_rel_time_item:
+                first_abs_time = int(first_abs_time_item.text()) if first_abs_time_item.text().isdigit() else 0
+                first_rel_time_item.setText(str(first_abs_time))
             
-            # 获取当前事件的绝对时间
-            curr_abs_time_item = self.events_table.item(i, 7)
-            curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item and curr_abs_time_item.text().isdigit() else 0
-            
-            # 计算并更新相对时间
-            rel_time = curr_abs_time - prev_abs_time
-            rel_time_item = self.events_table.item(i, 6)
-            rel_time_item.setText(str(rel_time))
+            # 从第二个事件开始，根据绝对时间计算相对时间
+            for i in range(1, self.events_table.rowCount()):
+                # 获取前一个事件的绝对时间
+                prev_abs_time_item = self.events_table.item(i-1, 7)
+                prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+                
+                # 获取当前事件的绝对时间
+                curr_abs_time_item = self.events_table.item(i, 7)
+                curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item and curr_abs_time_item.text().isdigit() else 0
+                
+                # 计算并更新相对时间
+                rel_time = curr_abs_time - prev_abs_time
+                rel_time_item = self.events_table.item(i, 6)
+                rel_time_item.setText(str(rel_time))
+        finally:
+            self.events_table.setUpdatesEnabled(True)
     
     def recalculate_time_from_row(self, start_row):
         """从指定行开始重新计算时间
@@ -1252,14 +1253,19 @@ class EventManager:
     
     def update_row_numbers(self):
         """更新行号"""
-        for row in range(self.events_table.rowCount()):
-            item = self.events_table.item(row, 0)
-            if item:
-                item.setText(str(row + 1))
-            else:
-                item = QTableWidgetItem(str(row + 1))
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.events_table.setItem(row, 0, item)
+        self.events_table.setUpdatesEnabled(False)
+        
+        try:
+            for row in range(self.events_table.rowCount()):
+                item = self.events_table.item(row, 0)
+                if item:
+                    item.setText(str(row + 1))
+                else:
+                    item = QTableWidgetItem(str(row + 1))
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.events_table.setItem(row, 0, item)
+        finally:
+            self.events_table.setUpdatesEnabled(True)
     
     def get_prev_absolute_time(self, current_row):
         """获取当前行前一个事件的绝对时间

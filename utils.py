@@ -236,6 +236,30 @@ def get_event_data_from_table(table, row, skip_row_number=True):
     
     return event_data
 
+def get_multiple_event_data_from_table(table, rows, skip_row_number=True):
+    """批量获取多行事件数据
+    
+    Args:
+        table: 事件表格对象
+        rows: 行索引列表
+        skip_row_number: 是否跳过行号列（默认True）
+        
+    Returns:
+        list: 多行事件数据列表
+    """
+    start_col = 1 if skip_row_number else 0
+    end_col = 8
+    
+    all_data = []
+    for row in rows:
+        event_data = []
+        for col in range(start_col, end_col):
+            item = table.item(row, col)
+            event_data.append(item.text() if item else "")
+        all_data.append(event_data)
+    
+    return all_data
+
 def handle_errors(logger=None, error_title="错误", error_message="操作失败"):
     """错误处理装饰器，用于统一处理函数中的异常
 
