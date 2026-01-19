@@ -520,8 +520,8 @@ class ScriptManager:
         loop_count = self.main_window.settings_panel.get_safe_loop_count()
         total_events = event_count * loop_count
 
-        # 设置阈值：总事件数超过1000时显示进度条
-        PROGRESS_THRESHOLD = 1000
+        # 设置阈值：总事件数超过20000时显示进度条
+        PROGRESS_THRESHOLD = 20000
 
         # 如果事件数量过多，先弹出确认对话框
         if total_events > PROGRESS_THRESHOLD:

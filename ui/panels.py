@@ -573,9 +573,10 @@ class OperationsPanel(QWidget):
 
             event_count = self.parent_window.event_manager.events_table.rowCount()
             loop_count = self.parent_window.settings_panel.get_safe_loop_count()
+            total_events = event_count * loop_count
 
-            if event_count > 20000 and loop_count > 5:
-                self.debug_logger.log_warning(f"事件总数过多({event_count}个事件，{loop_count}次循环)，无法进行预览")
+            if total_events > 5000:
+                self.debug_logger.log_warning(f"事件总数过多({total_events}个事件)，无法进行预览")
                 ChineseMessageBox.show_warning(self, "警告", "事件总数过多，无法进行预览")
                 return
 
