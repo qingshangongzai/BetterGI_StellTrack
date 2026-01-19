@@ -11,8 +11,8 @@ class VersionManager:
         """初始化版本管理器"""
         # 版本号组件
         self.major = 3
-        self.minor = 16
-        self.patch = 2
+        self.minor = 17
+        self.patch = 0
         self.build = 0
         
         # 核心版本信息
