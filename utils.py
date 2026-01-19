@@ -833,77 +833,101 @@ def check_event_pairing(events_table):
         - 鼠标按钮未按下就释放
         - 按键被按下但未释放
         - 鼠标按钮被按下但未释放
+        - 同一时间存在多个事件
     """
     pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
     pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
-    issues = []
-    
+    pairing_issues = []  # 成对性问题列表
+    time_issues = []  # 时间问题列表
+
     for row in range(events_table.rowCount()):
         type_item = events_table.item(row, 2)  # 事件类型列
         keycode_item = events_table.item(row, 3)  # 键码列
-        
+
         if not type_item:
             continue
-            
+
         event_type = type_item.text()
         keycode = keycode_item.text() if keycode_item else ""
-        
+
         # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
                 key_name_cn = _get_key_display_name(keycode)
-                issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
+                pairing_issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
                 pressed_keys[keycode] = row + 1
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
                 key_name_cn = _get_key_display_name(keycode)
-                issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
                 del pressed_keys[keycode]
-        
+
         # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 左键重复按下")
+                pairing_issues.append(f"第{row+1}行: 左键重复按下")
             else:
                 pressed_mouse_buttons["Left"] = row + 1
         elif event_type == "左键释放":
             if "Left" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 左键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 左键未按下就释放")
             else:
                 del pressed_mouse_buttons["Left"]
 
         elif event_type == "右键按下":
             if "Right" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 右键重复按下")
+                pairing_issues.append(f"第{row+1}行: 右键重复按下")
             else:
                 pressed_mouse_buttons["Right"] = row + 1
         elif event_type == "右键释放":
             if "Right" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 右键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 右键未按下就释放")
             else:
                 del pressed_mouse_buttons["Right"]
 
         elif event_type == "中键按下":
             if "Middle" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 中键重复按下")
+                pairing_issues.append(f"第{row+1}行: 中键重复按下")
             else:
                 pressed_mouse_buttons["Middle"] = row + 1
         elif event_type == "中键释放":
             if "Middle" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 中键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 中键未按下就释放")
             else:
                 del pressed_mouse_buttons["Middle"]
 
     # 检查未释放的按键
     for key, row_num in pressed_keys.items():
         key_name_cn = _get_key_display_name(key)
-        issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
+        pairing_issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
     for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
-        issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
-    
+        pairing_issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
+
+    # 检查同一时间存在多个事件
+    absolute_time_events = {}
+    for row in range(events_table.rowCount()):
+        abs_time_item = events_table.item(row, 7)
+        if abs_time_item and abs_time_item.text():
+            abs_time = abs_time_item.text()
+            if abs_time not in absolute_time_events:
+                absolute_time_events[abs_time] = []
+            absolute_time_events[abs_time].append(row + 1)
+
+    # 检查存在多个事件的绝对时间
+    for abs_time, row_numbers in absolute_time_events.items():
+        if len(row_numbers) > 1:
+            row_str = "和".join([f"第{num}行" for num in row_numbers])
+            time_issues.append(f"在同一时间内{row_str}被同时执行")
+
+    # 合并问题列表，用空行分隔成对性问题和时间问题
+    issues = pairing_issues
+    if pairing_issues and time_issues:
+        issues.append("")  # 添加空行分隔
+    issues.extend(time_issues)
+
     return issues
 
 

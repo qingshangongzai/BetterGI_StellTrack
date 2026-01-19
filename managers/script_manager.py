@@ -485,26 +485,26 @@ class ScriptManager:
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_pairing_check_complete(self, is_passed, issues):
-        """事件成对性检查完成回调
-        
+        """事件检查完成回调
+
         根据检查结果决定是否继续生成脚本，如果有问题则询问用户是否继续。
-        
+
         Args:
             is_passed: 布尔值，表示检查是否通过
             issues: 字符串列表，包含检查出的问题
         """
         if not is_passed:
             # 显示详细的问题信息，并询问是否继续
-            message = "检测到以下事件成对性问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
-            self.debug_logger.log_warning(f"事件成对性问题: {issues}")
-            
-            if not ChineseMessageBox.show_question(self.main_window, "事件成对性检查", message):
-                self.debug_logger.log_warning("事件成对性检查失败，脚本生成取消")
+            message = "检测到以下事件问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
+            self.debug_logger.log_warning(f"事件问题: {issues}")
+
+            if not ChineseMessageBox.show_question(self.main_window, "事件检查", message):
+                self.debug_logger.log_warning("事件检查失败，脚本生成取消")
                 return
-        
-        self.debug_logger.log_info("事件成对性检查通过")
-        
-        # 成对性检查通过，开始生成脚本
+
+        self.debug_logger.log_info("事件检查通过")
+
+        # 事件检查通过，开始生成脚本
         self.start_generate_script_thread()
     
     def start_generate_script_thread(self):
@@ -611,14 +611,14 @@ class ScriptManager:
         """检查事件成对性"""
         event_manager = self.main_window.event_manager
         issues = check_event_pairing(event_manager.events_table)
-        
+
         if issues:
             # 显示详细的问题信息，并询问是否继续
-            message = "检测到以下事件成对性问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
-            self.debug_logger.log_warning(f"事件成对性问题: {issues}")
-            return ChineseMessageBox.show_question(self.main_window, "事件成对性检查", message)
-        
-        self.debug_logger.log_info("事件成对性检查通过")
+            message = "检测到以下事件问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
+            self.debug_logger.log_warning(f"事件问题: {issues}")
+            return ChineseMessageBox.show_question(self.main_window, "事件检查", message)
+
+        self.debug_logger.log_info("事件检查通过")
         return True
 
 
