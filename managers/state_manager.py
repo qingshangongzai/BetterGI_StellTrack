@@ -53,6 +53,27 @@ class StateManager:
         self.auto_save_timer.setInterval(30000)  # 30秒自动保存一次
         self.auto_save_timer.timeout.connect(self.save_saved_state)
         self.auto_save_timer.start()
+
+    def _collect_all_events_data(self):
+        """收集所有事件数据
+
+        从事件表格中逐行逐列收集所有事件数据,跳过行号列。
+
+        Returns:
+            list: 所有事件数据列表,每个元素是一个事件的数据列表
+        """
+        table = self.parent_window.event_manager.events_table
+        row_count = table.rowCount()
+
+        all_events = []
+        for row in range(row_count):
+            event_data = []
+            for col in range(1, 8):  # 跳过行号列
+                item = table.item(row, col)
+                event_data.append(item.text() if item else "")
+            all_events.append(event_data)
+
+        return all_events
     
     def save_state_to_undo_stack(self):
         """保存当前状态到撤销栈
@@ -66,16 +87,8 @@ class StateManager:
 
         # 添加到撤销栈
         state = {
-            'events': []
+            'events': self._collect_all_events_data()
         }
-
-        # 收集事件数据
-        for row in range(self.parent_window.event_manager.events_table.rowCount()):
-            event_data = []
-            for col in range(1, 8):  # 跳过行号列
-                item = self.parent_window.event_manager.events_table.item(row, col)
-                event_data.append(item.text() if item else "")
-            state['events'].append(event_data)
 
         # 限制撤销栈大小
         self.undo_stack.append(state)
@@ -121,14 +134,8 @@ class StateManager:
 
         # 保存当前状态到重做栈
         current_state = {
-            'events': []
+            'events': self._collect_all_events_data()
         }
-        for row in range(self.parent_window.event_manager.events_table.rowCount()):
-            event_data = []
-            for col in range(1, 8):  # 跳过行号列
-                item = self.parent_window.event_manager.events_table.item(row, col)
-                event_data.append(item.text() if item else "")
-            current_state['events'].append(event_data)
         self.redo_stack.append(current_state)
 
         # 恢复上一个状态
@@ -153,14 +160,8 @@ class StateManager:
 
         # 保存当前状态到撤销栈
         current_state = {
-            'events': []
+            'events': self._collect_all_events_data()
         }
-        for row in range(self.parent_window.event_manager.events_table.rowCount()):
-            event_data = []
-            for col in range(1, 8):  # 跳过行号列
-                item = self.parent_window.event_manager.events_table.item(row, col)
-                event_data.append(item.text() if item else "")
-            current_state['events'].append(event_data)
         self.undo_stack.append(current_state)
 
         # 恢复下一个状态
@@ -315,7 +316,7 @@ class StateManager:
 
             # 构建状态数据
             state = {
-                'events': [],
+                'events': self._collect_all_events_data(),
                 'settings': {
                     'loop_count': self.parent_window.settings_panel.loop_count_input.value(),
                     'interval': self.parent_window.settings_panel.interval_input.value(),
@@ -326,18 +327,8 @@ class StateManager:
                 }
             }
 
-            # 收集事件数据
-            table_row_count = self.parent_window.event_manager.events_table.rowCount()
-            self.debug_logger.log_info(f"开始收集 {table_row_count} 个事件的数据")
-
-            for row in range(table_row_count):
-                event_data = []
-                for col in range(1, 8):  # 跳过行号列
-                    item = self.parent_window.event_manager.events_table.item(row, col)
-                    event_data.append(item.text() if item else "")
-                state['events'].append(event_data)
-
             # 验证收集的数据
+            table_row_count = self.parent_window.event_manager.events_table.rowCount()
             collected_event_count = len(state['events'])
             if collected_event_count != table_row_count:
                 self.debug_logger.log_error(f"收集事件数据时出现不一致: 表格中有 {table_row_count} 行，但只收集到 {collected_event_count} 个事件")
