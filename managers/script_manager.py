@@ -27,6 +27,7 @@ from utils import (
     KEY_PRESS_EVENTS,
     MOUSE_EVENTS,
     check_event_pairing,
+    check_simultaneous_events,
     convert_event_type_num_to_str,
     convert_event_type_str_to_num,
     get_event_data_from_table,
@@ -342,14 +343,26 @@ class CheckEventPairingThread(QThread):
     # 信号定义
     pairing_check_complete = pyqtSignal(bool, list)  # 检查完成信号
     
-    def __init__(self, events_table):
+    def __init__(self, events_table, check_pairing=True, check_simultaneous=True):
         super().__init__()
         self.events_table = events_table
+        self.check_pairing = check_pairing
+        self.check_simultaneous = check_simultaneous
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
         """线程运行方法，执行事件成对性检查逻辑"""
-        issues = check_event_pairing(self.events_table)
+        issues = []
+        
+        if self.check_pairing:
+            pairing_issues = check_event_pairing(self.events_table)
+            issues.extend(pairing_issues)
+        
+        if self.check_simultaneous:
+            simultaneous_issues = check_simultaneous_events(self.events_table)
+            if issues and simultaneous_issues:
+                issues.append("")
+            issues.extend(simultaneous_issues)
         
         # 发送检查完成信号
         self.pairing_check_complete.emit(len(issues) == 0, issues)
@@ -461,17 +474,25 @@ class ScriptManager:
     def on_generate_script(self):
         """启动脚本生成流程
         
-        首先检查事件成对性，然后启动脚本生成线程。
+        首先检查事件成对性和同时执行，然后启动脚本生成线程。
         处理脚本生成过程中的异常并显示错误信息。
         """
         try:
             self.debug_logger.log_info("开始生成脚本...")
             
-            # 检查事件成对性
+            # 检查事件成对性和同时执行
             event_manager = self.main_window.event_manager
             
-            # 创建并启动事件成对性检查线程
-            self.check_pairing_thread = CheckEventPairingThread(event_manager.events_table)
+            # 获取事件检查设置
+            check_pairing = self.main_window.menu_manager.get_check_pairing()
+            check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+            
+            # 创建并启动事件检查线程
+            self.check_pairing_thread = CheckEventPairingThread(
+                event_manager.events_table,
+                check_pairing=check_pairing,
+                check_simultaneous=check_simultaneous
+            )
             self.check_pairing_thread.pairing_check_complete.connect(self.on_pairing_check_complete)
             self.check_pairing_thread.start()
             
@@ -604,9 +625,24 @@ class ScriptManager:
         ChineseMessageBox.show_warning(self.main_window, "警告", error_msg)
     
     def check_event_pairing(self):
-        """检查事件成对性"""
+        """检查事件成对性和同时执行"""
         event_manager = self.main_window.event_manager
-        issues = check_event_pairing(event_manager.events_table)
+        
+        # 获取事件检查设置
+        check_pairing = self.main_window.menu_manager.get_check_pairing()
+        check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+        
+        issues = []
+        
+        if check_pairing:
+            pairing_issues = check_event_pairing(event_manager.events_table)
+            issues.extend(pairing_issues)
+        
+        if check_simultaneous:
+            simultaneous_issues = check_simultaneous_events(event_manager.events_table)
+            if issues and simultaneous_issues:
+                issues.append("")
+            issues.extend(simultaneous_issues)
 
         if issues:
             # 显示详细的问题信息，并询问是否继续

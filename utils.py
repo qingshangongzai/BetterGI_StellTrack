@@ -877,16 +877,14 @@ def check_event_pairing(events_table):
         - 鼠标按钮未按下就释放
         - 按键被按下但未释放
         - 鼠标按钮被按下但未释放
-        - 同一时间存在多个事件
     """
-    pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
-    pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
-    pairing_issues = []  # 成对性问题列表
-    time_issues = []  # 时间问题列表
+    pressed_keys = {}
+    pressed_mouse_buttons = {}
+    pairing_issues = []
 
     for row in range(events_table.rowCount()):
-        type_item = events_table.item(row, 2)  # 事件类型列
-        keycode_item = events_table.item(row, 3)  # 键码列
+        type_item = events_table.item(row, 2)
+        keycode_item = events_table.item(row, 3)
 
         if not type_item:
             continue
@@ -894,7 +892,6 @@ def check_event_pairing(events_table):
         event_type = type_item.text()
         keycode = keycode_item.text() if keycode_item else ""
 
-        # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
                 key_name_cn = _get_key_display_name(keycode)
@@ -908,7 +905,6 @@ def check_event_pairing(events_table):
             else:
                 del pressed_keys[keycode]
 
-        # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
                 pairing_issues.append(f"第{row+1}行: 左键重复按下")
@@ -942,7 +938,6 @@ def check_event_pairing(events_table):
             else:
                 del pressed_mouse_buttons["Middle"]
 
-    # 检查未释放的按键
     for key, row_num in pressed_keys.items():
         key_name_cn = _get_key_display_name(key)
         pairing_issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
@@ -950,7 +945,22 @@ def check_event_pairing(events_table):
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
         pairing_issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
 
-    # 检查同一时间存在多个事件
+    return pairing_issues
+
+
+def check_simultaneous_events(events_table):
+    """检查同时执行事件
+
+    Args:
+        events_table: 事件表格对象
+
+    Returns:
+        list: 包含检查出的问题的列表
+
+    Note:
+        检查同一时间存在多个事件的问题
+    """
+    time_issues = []
     absolute_time_events = {}
     for row in range(events_table.rowCount()):
         abs_time_item = events_table.item(row, 7)
@@ -960,19 +970,12 @@ def check_event_pairing(events_table):
                 absolute_time_events[abs_time] = []
             absolute_time_events[abs_time].append(row + 1)
 
-    # 检查存在多个事件的绝对时间
     for abs_time, row_numbers in absolute_time_events.items():
         if len(row_numbers) > 1:
             row_str = "和".join([f"第{num}行" for num in row_numbers])
             time_issues.append(f"在同一时间内{row_str}被同时执行")
 
-    # 合并问题列表，用空行分隔成对性问题和时间问题
-    issues = pairing_issues
-    if pairing_issues and time_issues:
-        issues.append("")  # 添加空行分隔
-    issues.extend(time_issues)
-
-    return issues
+    return time_issues
 
 
 def set_window_title_bar_theme(window, is_dark=False):

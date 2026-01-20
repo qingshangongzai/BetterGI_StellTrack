@@ -98,6 +98,11 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.paste_logic = 'prompt'  # 粘贴事件逻辑
         self.edit_logic = 'current'  # 编辑事件逻辑
         self.skip_end_events_prompt = True  # 末尾事件操作跳过弹窗
+        self.default_time_unit = 'auto'  # 默认时间单位
+        
+        # 事件检查设置初始化
+        self.check_pairing = True  # 检查事件成对性
+        self.check_simultaneous = True  # 检查同时执行
 
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()

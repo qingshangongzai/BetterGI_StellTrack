@@ -44,6 +44,10 @@ class MenuManager:
         
         # 时间单位设置动作组
         self.time_unit_actions = {}
+        
+        # 事件检查设置动作
+        self.check_pairing_action = None
+        self.check_simultaneous_action = None
     
     def create_menu_bar(self):
         """创建应用程序菜单栏
@@ -68,6 +72,9 @@ class MenuManager:
 
         # 时间逻辑菜单
         self._create_time_logic_menu(menubar)
+
+        # 事件检查菜单
+        self._create_event_check_menu(menubar)
 
         # 时间单位菜单
         self._create_time_unit_menu(menubar)
@@ -371,6 +378,34 @@ class MenuManager:
             's': s_unit_action,
             'min': min_unit_action
         }
+    
+    def _create_event_check_menu(self, menubar):
+        """创建事件检查菜单
+        
+        创建包含事件成对性检查和同时执行检查设置的事件检查菜单。
+        
+        Args:
+            menubar: 菜单栏实例，用于添加事件检查菜单
+        """
+        event_check_menu = menubar.addMenu('事件检查')
+        
+        # 事件成对性检查开关
+        check_pairing_action = QAction('检查事件成对性', self.parent_window)
+        check_pairing_action.setCheckable(True)
+        check_pairing_action.setChecked(True)
+        check_pairing_action.triggered.connect(self.set_check_pairing)
+        event_check_menu.addAction(check_pairing_action)
+        
+        # 同时执行检查开关
+        check_simultaneous_action = QAction('检查同时执行', self.parent_window)
+        check_simultaneous_action.setCheckable(True)
+        check_simultaneous_action.setChecked(True)
+        check_simultaneous_action.triggered.connect(self.set_check_simultaneous)
+        event_check_menu.addAction(check_simultaneous_action)
+        
+        # 保存菜单项引用
+        self.check_pairing_action = check_pairing_action
+        self.check_simultaneous_action = check_simultaneous_action
     
     def _create_theme_menu(self, menubar):
         """创建主题菜单
@@ -677,6 +712,8 @@ class MenuManager:
         settings.setValue("edit_logic", self.get_edit_logic())
         settings.setValue("skip_end_events_prompt", getattr(self.parent_window, 'skip_end_events_prompt', True))
         settings.setValue("default_time_unit", self.get_time_unit())
+        settings.setValue("check_pairing", self.get_check_pairing())
+        settings.setValue("check_simultaneous", self.get_check_simultaneous())
         self.debug_logger.log_info("时间逻辑设置已保存")
     
     def load_time_logic_settings(self):
@@ -713,10 +750,18 @@ class MenuManager:
         default_time_unit = settings.value("default_time_unit", "auto")
         self.parent_window.default_time_unit = default_time_unit
         
+        # 加载事件检查设置
+        check_pairing = settings.value("check_pairing", True, type=bool)
+        self.parent_window.check_pairing = check_pairing
+        
+        check_simultaneous = settings.value("check_simultaneous", True, type=bool)
+        self.parent_window.check_simultaneous = check_simultaneous
+        
         # 更新菜单项的选中状态
         self.update_time_logic_menu_state()
+        self.update_event_check_menu_state()
         
-        self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}, 默认时间单位={default_time_unit}")
+        self.debug_logger.log_info(f"时间逻辑设置已加载: 删除={delete_logic}, 粘贴={paste_logic}, 编辑={edit_logic}, 跳过末尾事件={skip_end_events_prompt}, 默认时间单位={default_time_unit}, 检查成对性={check_pairing}, 检查同时执行={check_simultaneous}")
     
     def _initialize_theme_menu_state(self):
         """初始化主题菜单状态
@@ -777,3 +822,66 @@ class MenuManager:
         
         self.parent_window.status_bar.showMessage(f"✅ 主题已切换为: {helper.get_theme_display_name(mode)}")
         self.debug_logger.log_info(f"主题已切换为: {mode}")
+    
+    def set_check_pairing(self, checked):
+        """设置是否检查事件成对性
+        
+        设置生成脚本前是否进行事件成对性检查，并保存设置。
+        
+        Args:
+            checked (bool): 是否检查事件成对性，True 表示检查，False 表示不检查
+        """
+        self.parent_window.check_pairing = checked
+        self.save_time_logic_settings()
+        if checked:
+            self.parent_window.status_bar.showMessage("✅ 已开启事件成对性检查")
+            self.debug_logger.log_info("已开启事件成对性检查")
+        else:
+            self.parent_window.status_bar.showMessage("⚠️ 已关闭事件成对性检查")
+            self.debug_logger.log_info("已关闭事件成对性检查")
+    
+    def set_check_simultaneous(self, checked):
+        """设置是否检查同时执行
+        
+        设置生成脚本前是否进行同时执行检查，并保存设置。
+        
+        Args:
+            checked (bool): 是否检查同时执行，True 表示检查，False 表示不检查
+        """
+        self.parent_window.check_simultaneous = checked
+        self.save_time_logic_settings()
+        if checked:
+            self.parent_window.status_bar.showMessage("✅ 已开启同时执行检查")
+            self.debug_logger.log_info("已开启同时执行检查")
+        else:
+            self.parent_window.status_bar.showMessage("⚠️ 已关闭同时执行检查")
+            self.debug_logger.log_info("已关闭同时执行检查")
+    
+    def get_check_pairing(self):
+        """获取当前事件成对性检查设置
+        
+        Returns:
+            bool: 当前是否检查事件成对性，默认为 True
+        """
+        return getattr(self.parent_window, 'check_pairing', True)
+    
+    def get_check_simultaneous(self):
+        """获取当前同时执行检查设置
+        
+        Returns:
+            bool: 当前是否检查同时执行，默认为 True
+        """
+        return getattr(self.parent_window, 'check_simultaneous', True)
+    
+    def update_event_check_menu_state(self):
+        """更新事件检查菜单的选中状态
+        
+        根据当前设置更新事件检查菜单中各个菜单项的选中状态，包括：
+        - 事件成对性检查开关
+        - 同时执行检查开关
+        """
+        if hasattr(self.parent_window, 'check_pairing') and self.check_pairing_action:
+            self.check_pairing_action.setChecked(self.parent_window.check_pairing)
+        
+        if hasattr(self.parent_window, 'check_simultaneous') and self.check_simultaneous_action:
+            self.check_simultaneous_action.setChecked(self.parent_window.check_simultaneous)
