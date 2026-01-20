@@ -176,15 +176,15 @@ class ApplicationMonitor(QObject):
             print("[DEBUG] 应用程序监控已停止")
     
     def _monitor_loop(self):
-        """监控主循环，定期收集并发送状态信息"""
+        """监控主循环，定期收集并发送状态信息 - 优化版本"""
         while self.monitoring:
             try:
                 status = self.get_application_status()
                 self.status_updated.emit(status)
-                time.sleep(5)  # 每5秒更新一次
+                time.sleep(10)  # 优化: 增加到10秒更新一次，减少监控开销
             except Exception as e:
                 print(f"[DEBUG] 监控循环错误: {e}")
-                time.sleep(10)  # 出错时增加等待时间以避免过度消耗资源
+                time.sleep(15)  # 优化: 出错时增加到15秒，避免过度消耗资源
     
     def get_application_status(self):
         """获取应用程序当前状态信息
