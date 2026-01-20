@@ -23,6 +23,7 @@ from styles import (
     ChineseMessageBox
 )
 from styles.widgets import FadeInWindowMixin
+from utils import KEY_PRESS_EVENTS
 
 
 class BatchEditDialog(FadeInWindowMixin, StyledDialog):
@@ -167,10 +168,10 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
                     event_name = event_name_item.text()
                     event_type = event_type_item.text()
                     keycode = keycode_item.text()
-                    if event_type in ["按键按下", "按键释放"] and keycode:
+                    if event_type in KEY_PRESS_EVENTS and keycode:
                         # 只保存每个事件名称对应的事件类型和键码
                         self.key_events[event_name] = (event_type, keycode)
-        
+
         # 基本事件类型（移除了"按键按下"和"按键释放"）
         base_event_types = ["指针移动", "平行移动", "左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "鼠标滚轮"]
         
@@ -191,7 +192,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
                         if event_type in base_event_types:
                             selected_event_types.add(event_type)
                         # 添加按键事件类型
-                        elif event_type in ["按键按下", "按键释放"] and event_name_item:
+                        elif event_type in KEY_PRESS_EVENTS and event_name_item:
                             event_name = event_name_item.text()
                             selected_key_events.add(event_name)
         

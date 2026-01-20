@@ -27,7 +27,7 @@ from styles import (
     ChineseMessageBox,
     DialogFactory
 )
-from utils import VK_MAPPING, KEY_NAME_MAPPING, find_resource_file
+from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file
 
 # =============================================================================
 # 事件编辑对话框相关组件
@@ -793,7 +793,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             int(y_text) if y_text else 0
             
             # 如果是键盘事件，验证键码
-            if self.keycode_edit.text().strip() and self.type_combo.currentText() in ["按键按下", "按键释放"]:
+            if self.keycode_edit.text().strip() and self.type_combo.currentText() in KEY_PRESS_EVENTS:
                 int(self.keycode_edit.text())
         except ValueError:
             ChineseMessageBox.show_warning(self, "警告", "坐标和键码必须为数字")
@@ -838,7 +838,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         # 自动生成事件名称
         event_type = self.type_combo.currentText()
-        if event_type in ["按键按下", "按键释放"]:
+        if event_type in KEY_PRESS_EVENTS:
             action = "按下" if event_type == "按键按下" else "释放"
             self.name_edit.setText(f"{action}{key_name}")
 
@@ -908,7 +908,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 self.name_edit.setText(event_type)
             # 清空键码（鼠标事件不需要键码）
             self.keycode_edit.clear()
-        elif event_type in ["按键按下", "按键释放"]:
+        elif event_type in KEY_PRESS_EVENTS:
             # 选择按键事件
             # 检查是否需要自动填充
             should_auto_fill = False
@@ -957,7 +957,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         Args:
             keycode (str): 新的键码值
         """
-        if self.type_combo.currentText() in ["按键按下", "按键释放"] and keycode.strip():
+        if self.type_combo.currentText() in KEY_PRESS_EVENTS and keycode.strip():
             try:
                 keycode_int = int(keycode)
                 # 使用虚拟键码映射
@@ -1054,7 +1054,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             
             # 自动生成事件名称
             event_type = self.type_combo.currentText()
-            if event_type in ["按键按下", "按键释放"]:
+            if event_type in KEY_PRESS_EVENTS:
                 action = "按下" if event_type == "按键按下" else "释放"
                 self.name_edit.setText(f"{action}{key_name_cn}")
             

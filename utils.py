@@ -94,6 +94,10 @@ EVENT_TYPE_MAP = {
     "鼠标滚轮": 6
 }
 
+# 事件类型常量集合（用于快速成员判断）
+KEY_PRESS_EVENTS = {"按键按下", "按键释放"}
+MOUSE_EVENTS = {"左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"}
+
 # 排序提示文本
 SORT_TIP_TEXT = "💡 提示：为避免计算出现异常，若添加事件、编辑事件、粘贴事件后相对时间出现负数，请点击'事件排序'"
 
@@ -180,7 +184,7 @@ def generate_key_event_name(event_type_str, keycode):
     Returns:
         str: 生成的事件名称
     """
-    if event_type_str in ["按键按下", "按键释放"] and keycode:
+    if event_type_str in KEY_PRESS_EVENTS and keycode:
         try:
             keycode_int = int(keycode)
             key_name_cn = _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
@@ -189,7 +193,7 @@ def generate_key_event_name(event_type_str, keycode):
             return f"{action}{key_name_cn}"
         except (ValueError, TypeError):
             return event_type_str
-    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"]:
+    elif event_type_str in MOUSE_EVENTS:
         return event_type_str
     else:
         return event_type_str

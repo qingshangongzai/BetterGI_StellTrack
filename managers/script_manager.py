@@ -24,6 +24,8 @@ from utils import (
     VK_MAPPING,
     KEY_NAME_MAPPING,
     EVENT_TYPE_MAP,
+    KEY_PRESS_EVENTS,
+    MOUSE_EVENTS,
     check_event_pairing,
     convert_event_type_num_to_str,
     convert_event_type_str_to_num,
@@ -199,15 +201,15 @@ class GenerateScriptThread(QThread):
                     }
                     
                     # 如果是键盘事件，添加keyCode
-                    if event_data[1] in ["按键按下", "按键释放"] and event_data[2]:
+                    if event_data[1] in KEY_PRESS_EVENTS and event_data[2]:
                         script_event["keyCode"] = int(event_data[2])
-                    
+
                     # 如果是鼠标点击事件，添加mouseButton
-                    if event_data[1] in ["左键按下", "左键释放"]:
+                    if event_data[1] in {"左键按下", "左键释放"}:
                         script_event["mouseButton"] = "Left"
-                    elif event_data[1] in ["右键按下", "右键释放"]:
+                    elif event_data[1] in {"右键按下", "右键释放"}:
                         script_event["mouseButton"] = "Right"
-                    elif event_data[1] in ["中键按下", "中键释放"]:
+                    elif event_data[1] in {"中键按下", "中键释放"}:
                         script_event["mouseButton"] = "Middle"
                     
                     events.append(script_event)
@@ -404,7 +406,7 @@ class ImportScriptThread(QThread):
                 event_type = convert_event_type_num_to_str(event["type"])
 
                 # 获取事件数据
-                keycode = str(event.get("keyCode", "")) if event_type in ["按键按下", "按键释放"] else ""
+                keycode = str(event.get("keyCode", "")) if event_type in KEY_PRESS_EVENTS else ""
                 mouse_x = str(event.get("mouseX", 0))
                 mouse_y = str(event.get("mouseY", 0))
                 time = str(event.get("time", 0))
