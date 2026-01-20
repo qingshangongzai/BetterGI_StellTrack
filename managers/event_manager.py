@@ -198,46 +198,38 @@ class SearchFilterThread(QThread):
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
-        """线程运行方法，执行搜索过滤逻辑"""
+        """线程运行方法，执行搜索过滤逻辑 - 优化版本"""
         try:
             show_rows = []
             hide_rows = []
-            
-            # 遍历所有行，根据条件隐藏或显示
+
             for row in range(self.events_table.rowCount()):
-                # 获取当前行的事件类型
-                type_item = self.events_table.item(row, 2)
-                event_type = type_item.text() if type_item else ""
-                
-                # 获取当前行的事件名称
-                name_item = self.events_table.item(row, 1)
-                event_name = name_item.text().lower() if name_item else ""
-                
-                # 获取当前行的键码
-                keycode_item = self.events_table.item(row, 3)
-                key_code = keycode_item.text().lower() if keycode_item else ""
-                
-                # 搜索条件匹配
+                row_data = []
+                for col in range(1, 4):
+                    item = self.events_table.item(row, col)
+                    row_data.append(item.text() if item else "")
+
+                event_name = row_data[0].lower() if row_data[0] else ""
+                event_type = row_data[1] if row_data[1] else ""
+                key_code = row_data[2].lower() if row_data[2] else ""
+
                 matches_search = True
                 if self.search_text:
                     if self.search_text not in event_name and self.search_text not in event_type.lower() and self.search_text not in key_code:
                         matches_search = False
-                
-                # 类型过滤匹配
+
                 matches_type = True
                 if self.filter_type != "全部事件类型":
                     if event_type != self.filter_type:
                         matches_type = False
-                
-                # 根据匹配结果添加到相应列表
+
                 if matches_search and matches_type:
                     show_rows.append(row)
                 else:
                     hide_rows.append(row)
-            
-            # 发送过滤完成信号
+
             self.filter_complete.emit(show_rows, hide_rows)
-            
+
         except Exception as e:
             error_msg = f"搜索过滤事件失败: {str(e)}"
             self.filter_failed.emit(error_msg)
