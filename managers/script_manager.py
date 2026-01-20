@@ -1,15 +1,40 @@
 # script_manager.py
-import os
+# 标准库模块导入
 import json
+import os
 from datetime import datetime
-from PyQt6.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
-from PyQt6.QtGui import QDesktopServices, QFont
-from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
-# 导入共享模块
-from styles import ChineseMessageBox, UnifiedStyleHelper, FadeInWindowMixin, StyledDialog, get_global_font_manager, DialogFactory
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, convert_event_type_str_to_num, convert_event_type_num_to_str, get_key_chinese_name, get_event_data_from_table, check_event_pairing, load_icon_universal, get_script_default_dir
-from debug_tools import get_global_debug_logger
+# 第三方模块导入
+from PyQt6.QtCore import QThread, Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QDesktopServices
+from PyQt6.QtWidgets import (
+    QDialog, QFileDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
+)
+
+# 项目模块导入
+from styles import (
+    ChineseMessageBox,
+    DialogFactory,
+    FadeInWindowMixin,
+    StyledDialog,
+    UnifiedStyleHelper,
+    get_global_font_manager
+)
+from utils import (
+    VK_MAPPING,
+    KEY_NAME_MAPPING,
+    EVENT_TYPE_MAP,
+    check_event_pairing,
+    convert_event_type_num_to_str,
+    convert_event_type_str_to_num,
+    get_event_data_from_table,
+    get_key_chinese_name,
+    get_script_default_dir,
+    load_icon_universal,
+    get_current_app_info,
+    generate_key_event_name
+)
+from dialogs.debug_tools import get_global_debug_logger
 
 # =============================================================================
 # 脚本生成进度对话框
@@ -85,14 +110,14 @@ class ScriptGenerationProgressDialog(FadeInWindowMixin, StyledDialog):
     
     def update_progress(self, value, status_text):
         """更新进度条和状态文本
-        
+
         Args:
-            value: 进度值 (0-100)
-            status_text: 状态文本
+            value (int): 进度值 (0-100)
+            status_text (str): 状态文本
         """
         self.progress_bar.setValue(value)
         self.status_label.setText(status_text)
-    
+
     def on_cancel_clicked(self):
         """取消按钮点击事件"""
         if not self.is_cancelled:
@@ -100,15 +125,19 @@ class ScriptGenerationProgressDialog(FadeInWindowMixin, StyledDialog):
             self.cancel_requested.emit()
             self.status_label.setText("正在取消...")
             self.cancel_button.setEnabled(False)
-    
+
     def closeEvent(self, event):
-        """重写关闭事件,直接取消操作"""
-        # 如果已经取消或已经完成,直接关闭
+        """重写关闭事件，直接取消操作
+
+        Args:
+            event: 关闭事件对象
+        """
+        # 如果已经取消或已经完成，直接关闭
         if self.is_cancelled or self.progress_bar.value() == 100:
             event.accept()
             return
-        
-        # 直接取消,不弹出确认对话框
+
+        # 直接取消，不弹出确认对话框
         self.is_cancelled = True
         self.cancel_requested.emit()
         event.accept()
@@ -331,46 +360,58 @@ class CheckEventPairingThread(QThread):
 
 
 class ImportScriptThread(QThread):
-    """脚本导入线程类，负责在后台导入脚本"""
-    
+    """脚本导入线程类，负责在后台导入脚本
+
+    在后台线程中执行脚本导入逻辑，避免阻塞主线程。
+
+    Signals:
+        import_complete (list): 导入完成信号，发送导入的事件列表
+        import_failed (str): 导入失败信号，发送错误信息
+    """
+
     # 信号定义
     import_complete = pyqtSignal(list)  # 导入完成信号
     import_failed = pyqtSignal(str)  # 导入失败信号
-    
+
     def __init__(self, filename, event_manager):
+        """初始化脚本导入线程
+
+        Args:
+            filename (str): 脚本文件路径
+            event_manager: 事件管理器实例
+        """
         super().__init__()
         self.filename = filename
         self.event_manager = event_manager
         self.debug_logger = get_global_debug_logger()
-    
+
     def run(self):
         """线程运行方法，执行脚本导入逻辑"""
         try:
             # 读取并解析脚本文件
             with open(self.filename, 'r', encoding='utf-8') as f:
                 script_data = json.load(f)
-            
+
             # 检查脚本格式是否正确
             if "macroEvents" not in script_data:
                 self.import_failed.emit("无效的脚本格式: 缺少macroEvents字段")
                 return
-            
+
             # 导入事件
             imported_events = []
             for i, event in enumerate(script_data["macroEvents"]):
                 # 转换事件类型
                 event_type = convert_event_type_num_to_str(event["type"])
-                
+
                 # 获取事件数据
                 keycode = str(event.get("keyCode", "")) if event_type in ["按键按下", "按键释放"] else ""
                 mouse_x = str(event.get("mouseX", 0))
                 mouse_y = str(event.get("mouseY", 0))
                 time = str(event.get("time", 0))
-                
+
                 # 生成事件名称
-                from utils import generate_key_event_name
                 event_name = generate_key_event_name(event_type, keycode)
-                
+
                 # 添加到导入事件列表
                 imported_events.append([
                     str(i + 1),  # 行号
@@ -382,10 +423,10 @@ class ImportScriptThread(QThread):
                     "0",  # 相对偏移（将在后续重新计算）
                     time  # 绝对偏移
                 ])
-            
+
             # 发送导入完成信号
             self.import_complete.emit(imported_events)
-            
+
         except json.JSONDecodeError:
             self.import_failed.emit("无效的JSON文件格式")
         except Exception as e:
@@ -444,44 +485,44 @@ class ScriptManager:
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_pairing_check_complete(self, is_passed, issues):
-        """事件成对性检查完成回调
-        
+        """事件检查完成回调
+
         根据检查结果决定是否继续生成脚本，如果有问题则询问用户是否继续。
-        
+
         Args:
             is_passed: 布尔值，表示检查是否通过
             issues: 字符串列表，包含检查出的问题
         """
         if not is_passed:
             # 显示详细的问题信息，并询问是否继续
-            message = "检测到以下事件成对性问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
-            self.debug_logger.log_warning(f"事件成对性问题: {issues}")
-            
-            if not ChineseMessageBox.show_question(self.main_window, "事件成对性检查", message):
-                self.debug_logger.log_warning("事件成对性检查失败，脚本生成取消")
+            message = "检测到以下事件问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
+            self.debug_logger.log_warning(f"事件问题: {issues}")
+
+            if not ChineseMessageBox.show_question(self.main_window, "事件检查", message):
+                self.debug_logger.log_warning("事件检查失败，脚本生成取消")
                 return
-        
-        self.debug_logger.log_info("事件成对性检查通过")
-        
-        # 成对性检查通过，开始生成脚本
+
+        self.debug_logger.log_info("事件检查通过")
+
+        # 事件检查通过，开始生成脚本
         self.start_generate_script_thread()
     
     def start_generate_script_thread(self):
         """启动脚本生成线程
-        
+
         创建并启动脚本生成线程，连接相关信号处理程序。
         如果事件数量较多，显示进度对话框。
         """
         event_manager = self.main_window.event_manager
-        
+
         # 检查事件数量，如果超过阈值则显示进度条
         event_count = event_manager.events_table.rowCount()
         loop_count = self.main_window.settings_panel.get_safe_loop_count()
         total_events = event_count * loop_count
-        
-        # 设置阈值：总事件数超过1000时显示进度条
-        PROGRESS_THRESHOLD = 1000
-        
+
+        # 设置阈值：总事件数超过20000时显示进度条
+        PROGRESS_THRESHOLD = 20000
+
         # 如果事件数量过多，先弹出确认对话框
         if total_events > PROGRESS_THRESHOLD:
             reply = ChineseMessageBox.show_question(
@@ -489,27 +530,27 @@ class ScriptManager:
                 "确认生成",
                 "生成的事件数量过多，\n可能会对程序的运行造成卡顿\n\n请确认生成脚本"
             )
-            
+
             if not reply:
                 # 用户选择取消
                 self.debug_logger.log_info("用户取消生成大量事件脚本")
                 return
-            
+
             # 用户确认，创建并显示进度对话框
             self.progress_dialog = ScriptGenerationProgressDialog(self.main_window)
             # 连接取消信号
             self.progress_dialog.cancel_requested.connect(self.on_cancel_requested)
-            
+
         # 创建并启动脚本生成线程
         self.generate_script_thread = GenerateScriptThread(self.main_window, event_manager.events_table)
         self.generate_script_thread.script_generated.connect(self.on_script_generated)
         self.generate_script_thread.script_generation_failed.connect(self.on_script_generation_failed)
-        
+
         # 连接进度更新信号
         if self.progress_dialog:
             self.generate_script_thread.progress_updated.connect(self.on_progress_updated)
             self.progress_dialog.show()
-        
+
         self.generate_script_thread.start()
     
     def on_cancel_requested(self):
@@ -570,59 +611,58 @@ class ScriptManager:
         """检查事件成对性"""
         event_manager = self.main_window.event_manager
         issues = check_event_pairing(event_manager.events_table)
-        
+
         if issues:
             # 显示详细的问题信息，并询问是否继续
-            message = "检测到以下事件成对性问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
-            self.debug_logger.log_warning(f"事件成对性问题: {issues}")
-            return ChineseMessageBox.show_question(self.main_window, "事件成对性检查", message)
-        
-        self.debug_logger.log_info("事件成对性检查通过")
-        return True
-    
+            message = "检测到以下事件问题：\n\n" + "\n".join(issues) + "\n\n是否继续生成脚本？"
+            self.debug_logger.log_warning(f"事件问题: {issues}")
+            return ChineseMessageBox.show_question(self.main_window, "事件检查", message)
 
-    
+        self.debug_logger.log_info("事件检查通过")
+        return True
+
+
     def on_save_script(self):
-        """保存脚本"""
+        """保存脚本到文件"""
         try:
             if not self.script:
                 self.debug_logger.log_warning("尝试保存但未生成脚本")
                 ChineseMessageBox.show_warning(self.main_window, "警告", "请先生成脚本")
                 return
-            
+
             # 生成默认文件名
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
             default_filename = f"BetterGI_GCM_{timestamp}.json"
-            
+
             # 获取脚本默认目录作为默认保存路径
             script_default_dir = get_script_default_dir()
             default_path = os.path.join(script_default_dir, default_filename)
-            
+
             filename, _ = QFileDialog.getSaveFileName(
                 self.main_window,
                 "保存脚本",
                 default_path,
                 "JSON文件 (*.json);;所有文件 (*.*)"
             )
-            
+
             if not filename:
                 self.debug_logger.log_info("用户取消保存脚本")
                 return
-            
+
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(self.script, f, ensure_ascii=False, separators=(',', ':'))
-            
+
             self.main_window.status_bar.showMessage(f"✅ 脚本已保存到: {filename}")
             self.debug_logger.log_info(f"脚本已保存到: {filename}")
             ChineseMessageBox.show_info(self.main_window, "成功", f"脚本已保存到:\n{filename}")
-            
+
         except Exception as e:
             error_msg = f"保存脚本失败: {str(e)}"
             self.debug_logger.log_error(error_msg, exc_info=True)
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
-    
+
     def on_import_script(self):
-        """导入脚本"""
+        """从文件导入脚本"""
         try:
             # 显示警告弹窗
             reply = ChineseMessageBox.show_question(
@@ -630,86 +670,94 @@ class ScriptManager:
                 "导入脚本警告",
                 "导入脚本会清空现有事件列表！\n请确保已保存当前事件列表后再导入。\n\n是否继续导入？"
             )
-            
+
             if not reply:
                 self.debug_logger.log_info("用户取消导入脚本")
                 return
-            
+
             # 打开文件对话框选择要导入的脚本文件
             # 获取脚本默认目录作为默认导入路径
             script_default_dir = get_script_default_dir()
-            
+
             filename, _ = QFileDialog.getOpenFileName(
                 self.main_window,
                 "导入脚本",
                 script_default_dir,
                 "JSON文件 (*.json);;所有文件 (*.*)"
             )
-            
+
             if not filename:
                 self.debug_logger.log_info("用户取消导入脚本")
                 return
-            
+
             event_manager = self.main_window.event_manager
-            
+
             # 创建并启动脚本导入线程
             self.import_script_thread = ImportScriptThread(filename, event_manager)
             self.import_script_thread.import_complete.connect(self.on_import_complete)
             self.import_script_thread.import_failed.connect(self.on_import_failed)
             self.import_script_thread.start()
-            
+
         except Exception as e:
             error_msg = f"导入脚本失败: {str(e)}"
             self.debug_logger.log_error(error_msg, exc_info=True)
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
-    
+
     def on_import_complete(self, imported_events):
-        """脚本导入完成回调"""
+        """脚本导入完成回调
+
+        Args:
+            imported_events (list): 导入的事件列表
+        """
         try:
             event_manager = self.main_window.event_manager
-            
+
             # 清空当前事件
             event_manager.events_table.setRowCount(0)
-            
+
             # 重置搜索筛选条件，确保导入的事件都能显示出来
             event_manager.on_reset_search_filter()
-            
+
             # 保存当前状态到撤销栈
             self.main_window.state_manager.save_state_to_undo_stack()
-            
+
             # 开始批量操作
             self.main_window._batch_operation = True
-            
+
             try:
                 # 导入事件
                 event_manager.add_table_rows(imported_events)
-                
+
                 # 重新计算相对时间
                 event_manager.recalculate_relative_times()
-                
+
                 # 更新行号
                 event_manager.update_row_numbers()
-                
+
                 # 更新统计信息
                 event_manager.update_stats()
-                
+
                 self.main_window.status_bar.showMessage("✅ 脚本导入成功")
                 self.debug_logger.log_info(f"脚本导入成功: {len(imported_events)} 个事件")
                 ChineseMessageBox.show_info(self.main_window, "成功", f"脚本导入成功！\n包含 {len(imported_events)} 个事件")
-                
+
                 # 立即更新预计总时间
                 self.main_window.settings_panel.on_calculate_total_time()
             finally:
                 # 结束批量操作
                 self.main_window._batch_operation = False
-                
+
         except Exception as e:
             error_msg = f"处理导入的脚本时失败: {str(e)}"
             self.debug_logger.log_error(error_msg, exc_info=True)
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
-    
+
     def on_import_failed(self, error_msg):
-        """脚本导入失败回调"""
+        """脚本导入失败回调
+
+        Args:
+            error_msg (str): 错误信息
+        """
         self.debug_logger.log_error(f"导入脚本失败: {error_msg}")
         ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     

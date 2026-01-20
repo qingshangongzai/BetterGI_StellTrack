@@ -1,27 +1,60 @@
 # event_dialogs.py
+# 标准库模块导入
 import os
-from PyQt6.QtWidgets import (QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QLineEdit, QComboBox, QPushButton, QTableWidgetItem,
-                            QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
-                            QListView, QFileDialog, QTextBrowser, QSpinBox, QSizePolicy)
-from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QDesktopServices
+import re
 
-# 导入共享模块
-from styles import UnifiedStyleHelper, CenteredComboBox, CenteredLineEdit, TimeOffsetSpinBox, EventEditButton, StyledDialog, FadeInWindowMixin, AnimatedDialog, ModernGroupBox
-from styles import ChineseMessageBox, DialogFactory
-from utils import VK_MAPPING, KEY_NAME_MAPPING
-# 导入资源管理器（从utils模块）
-from utils import find_resource_file
+# 第三方模块导入
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QComboBox, QPushButton, QTableWidgetItem, QFrame, QGroupBox,
+    QGridLayout, QScrollArea, QFileDialog, QSpinBox, QSizePolicy,
+    QTextEdit
+)
+
+# 项目模块导入
+from styles import (
+    UnifiedStyleHelper,
+    CenteredComboBox,
+    CenteredLineEdit,
+    TimeOffsetSpinBox,
+    EventEditButton,
+    StyledDialog,
+    FadeInWindowMixin,
+    AnimatedDialog,
+    ModernGroupBox,
+    ChineseMessageBox,
+    DialogFactory
+)
+from utils import VK_MAPPING, KEY_NAME_MAPPING, find_resource_file
 
 # =============================================================================
 # 事件编辑对话框相关组件
 # =============================================================================
 
 class SimpleCoordinateCapture(StyledDialog):
-    """简化版坐标捕获对话框"""
+    """简化版坐标捕获对话框，用于从图片中选择坐标
+    
+    提供图片显示和鼠标交互功能，允许用户通过点击图片选择坐标点。
+    支持图片缩放显示，自动计算原始图片坐标。
+    
+    功能特性：
+    - 加载并显示图片
+    - 鼠标移动时实时显示坐标
+    - 点击确认选择坐标
+    - 支持ESC键取消
+    
+    Args:
+        image_path (str): 图片文件路径
+    """
     
     def __init__(self, image_path):
+        """初始化坐标捕获对话框
+        
+        Args:
+            image_path (str): 图片文件路径
+        """
         super().__init__()
         self.image_path = image_path
         self.pixmap = None
@@ -30,7 +63,7 @@ class SimpleCoordinateCapture(StyledDialog):
         self.init_ui()
         
     def init_ui(self):
-        """初始化UI"""
+        """初始化UI界面"""
         self.setWindowTitle("坐标捕获 - 点击图片选择坐标 (ESC取消)")
         self.setMinimumSize(800, 600)
         
@@ -83,7 +116,13 @@ class SimpleCoordinateCapture(StyledDialog):
         self.image_label.mousePressEvent = self.on_mouse_press
         
     def on_mouse_move(self, event):
-        """指针移动事件"""
+        """鼠标移动事件处理
+        
+        实时计算并显示鼠标在图片上的坐标位置。
+        
+        Args:
+            event: 鼠标移动事件对象
+        """
         if self.pixmap is None or self.pixmap.isNull():
             return
             
@@ -109,7 +148,13 @@ class SimpleCoordinateCapture(StyledDialog):
             self.coord_label.setText("移动鼠标选择坐标，点击左键确认，右键或ESC取消")
             
     def on_mouse_press(self, event):
-        """鼠标点击事件"""
+        """鼠标点击事件处理
+        
+        左键点击确认坐标选择，右键点击取消选择。
+        
+        Args:
+            event: 鼠标点击事件对象
+        """
         if self.pixmap is None or self.pixmap.isNull():
             return
             
@@ -136,11 +181,17 @@ class SimpleCoordinateCapture(StyledDialog):
             self.reject()
             
     def confirm_selection(self):
-        """确认选择坐标"""
+        """确认选择坐标并关闭对话框"""
         self.accept()
             
     def keyPressEvent(self, event):
-        """按键事件"""
+        """按键事件处理
+        
+        按ESC键取消选择，其他按键传递给父类处理。
+        
+        Args:
+            event: 按键事件对象
+        """
         if event.key() == Qt.Key.Key_Escape:
             self.reject()
         else:
@@ -149,27 +200,37 @@ class SimpleCoordinateCapture(StyledDialog):
 
 
 class EventEditDialog(FadeInWindowMixin, StyledDialog):
-    """事件编辑对话框
+    """事件编辑对话框，用于添加和编辑各种类型的键鼠事件
     
-    用于添加和编辑各种类型的键鼠事件，支持多种事件类型和参数设置。
+    支持的事件类型包括：按键按下/释放、指针移动、平行移动、鼠标按键按下/释放、鼠标滚轮。
     提供直观的UI界面，允许用户设置事件名称、类型、键码、坐标和时间等参数。
     
-    支持的事件类型包括：
-    - 按键按下/释放
-    - 指针移动
-    - 鼠标按键按下/释放（左、右、中键）
-    - 鼠标滚轮
-    
-    参数：
-    - parent: 父窗口实例
-    - event_data: 事件数据字典，用于编辑模式
-    - is_edit_mode: 是否为编辑模式
-    - insert_position: 插入位置（用于插入模式）
-    - insert_after_item: 插入后项目（用于插入模式）
-    - edit_logic: 编辑事件逻辑（'current' 或 'recalculate'），默认为 'current'
+    Args:
+        parent: 父窗口实例
+        event_data: 事件数据字典，用于编辑模式
+        is_edit_mode: 是否为编辑模式
+        insert_position: 插入位置（用于插入模式）
+        insert_after_item: 插入后项目（用于插入模式）
+        prev_absolute_time: 前一个事件的绝对时间
+        current_row: 当前行号
+        edit_logic: 编辑事件逻辑（'current' 或 'recalculate'），默认为 'current'
+        default_time_unit: 默认时间单位（'auto', 'ms', 's', 'min'），默认为 'auto'
     """
     
     def __init__(self, parent=None, event_data=None, is_edit_mode=False, insert_position=None, insert_after_item=None, prev_absolute_time=0, current_row=None, edit_logic='current', default_time_unit='auto'):
+        """初始化事件编辑对话框
+        
+        Args:
+            parent: 父窗口实例
+            event_data: 事件数据字典，用于编辑模式
+            is_edit_mode: 是否为编辑模式
+            insert_position: 插入位置（用于插入模式）
+            insert_after_item: 插入后项目（用于插入模式）
+            prev_absolute_time: 前一个事件的绝对时间
+            current_row: 当前行号
+            edit_logic: 编辑事件逻辑（'current' 或 'recalculate'），默认为 'current'
+            default_time_unit: 默认时间单位（'auto', 'ms', 's', 'min'），默认为 'auto'
+        """
         # 使用基类初始化方法设置窗口属性
         super().__init__(parent,
                        title="编辑事件" if is_edit_mode else "添加事件",
@@ -202,13 +263,20 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             if event_data:
                 self.load_event_data(event_data)
             
-        except Exception as e:
-            print(f"事件编辑对话框初始化错误: {e}")
-            import traceback
-            traceback.print_exc()
+        except (OSError, ValueError) as e:
+            pass
 
     def setup_ui(self):
-        """设置UI界面"""
+        """设置UI界面
+        
+        创建事件编辑对话框的所有UI组件，包括：
+        - 事件基本信息组（事件名称、事件类型）
+        - 键码设置组（键码输入、按键捕获、常用按键）
+        - 坐标设置组（X/Y坐标、坐标捕获）
+        - 时间设置组（相对时间、绝对时间、快速时间、时间修改选项）
+        - 插入/编辑位置信息组
+        - 确定和取消按钮
+        """
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(12)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -522,7 +590,15 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         main_layout.addLayout(button_layout)
 
     def setup_connections(self):
-        """设置信号连接"""
+        """设置信号连接
+        
+        连接所有UI组件的信号到对应的槽函数：
+        - 按键捕获按钮
+        - 坐标捕获按钮
+        - 事件类型变化
+        - 键码变化
+        - 时间相关变化（相对时间、时间单位）
+        """
         # 按钮连接 - save_btn和cancel_btn的信号已在DialogFactory中连接
         self.capture_btn.clicked.connect(self.toggle_key_capture)
         self.coord_capture_btn.clicked.connect(self.on_coordinate_capture)
@@ -540,14 +616,21 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.time_unit_combo.currentTextChanged.connect(self.time_edit.update_step_based_on_unit)
 
     def toggle_key_capture(self):
-        """切换按键捕获状态"""
+        """切换按键捕获状态
+        
+        在按键捕获和非捕获状态之间切换。
+        """
         if self.key_capture_active:
             self.on_key_capture_cancel()
         else:
             self.on_key_capture_start()
 
     def on_coordinate_capture(self):
-        """坐标捕获按钮点击事件"""
+        """坐标捕获按钮点击事件处理
+        
+        打开文件对话框选择截图文件，然后显示坐标捕获对话框。
+        用户可以在图片上点击选择坐标。
+        """
         # 打开文件对话框选择图片
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
@@ -567,7 +650,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 ChineseMessageBox.show_error(self, "错误", f"坐标捕获失败: {str(e)}")
 
     def load_event_data(self, event_data):
-        """加载事件数据"""
+        """加载事件数据到对话框
+        
+        将事件数据填充到对话框的各个输入框中。
+        根据时间值自动选择合适的时间单位（ms/s/min）。
+        
+        Args:
+            event_data (tuple): 事件数据元组，包含（事件名称、事件类型、键码、X坐标、Y坐标、相对时间）
+        """
         if len(event_data) >= 7:
             # 设置加载数据标志，防止on_event_type_changed覆盖自定义名称
             self._loading_data = True
@@ -636,7 +726,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 self._loading_data = False
 
     def get_event_data(self):
-        """获取事件数据"""
+        """获取对话框中的事件数据
+        
+        将用户输入的数据转换为事件数据元组。
+        时间值会根据选择的单位自动转换为毫秒。
+        
+        Returns:
+            tuple: 事件数据元组，包含（事件名称、事件类型、键码、X坐标、Y坐标、相对时间ms）
+        """
         try:
             # 获取相对时间并转换为毫秒
             relative_time = self.time_edit.value()
@@ -668,11 +765,18 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             )
 
     def get_time_option(self):
-        """获取时间修改选项"""
+        """获取时间修改选项
+        
+        Returns:
+            str: 时间修改选项文本
+        """
         return self.time_option_combo.currentText()
 
     def on_save(self):
-        """保存事件"""
+        """保存事件
+        
+        验证必填字段和数字字段，如果验证通过则接受对话框。
+        """
         # 验证必填字段
         if not self.name_edit.text().strip():
             ChineseMessageBox.show_warning(self, "警告", "请填写事件名称")
@@ -698,7 +802,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.accept()
 
     def on_key_capture_start(self):
-        """开始按键捕获"""
+        """开始按键捕获
+        
+        设置对话框焦点，等待用户按下键盘按键。
+        """
         self.key_capture_active = True
         self.capture_btn.setText("取消捕获")
         self.capture_status.setText("等待按键...")
@@ -708,14 +815,21 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.setFocus()
 
     def on_key_capture_cancel(self):
-        """取消按键捕获"""
+        """取消按键捕获
+        
+        恢复到非捕获状态。
+        """
         self.key_capture_active = False
         self.capture_btn.setText("按键捕获")
         self.capture_status.setText("已取消")
         self.capture_status.setStyleSheet(UnifiedStyleHelper.get_instance().get_capture_status_style("inactive"))
 
     def on_common_key_clicked(self):
-        """常用按键点击"""
+        """常用按键点击事件处理
+        
+        将选中的常用按键的键码填入键码输入框。
+        如果是按键事件，自动生成事件名称。
+        """
         sender = self.sender()
         key_code = sender.property("key_code")
         key_name = sender.property("key_name")
@@ -729,7 +843,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             self.name_edit.setText(f"{action}{key_name}")
 
     def on_quick_time_clicked(self):
-        """快速时间点击"""
+        """快速时间按钮点击事件处理
+        
+        将选中的快速时间值填入时间输入框。
+        """
         sender = self.sender()
         time_value = sender.property("time_value")
         
@@ -740,7 +857,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             pass
 
     def on_event_type_changed(self, event_type):
-        """事件类型变化"""
+        """事件类型变化处理
+        
+        根据选择的事件类型自动更新事件名称和键码。
+        如果是加载事件数据时触发，则不自动更新事件名称。
+        
+        Args:
+            event_type (str): 新的事件类型
+        """
         # 获取当前事件名称
         current_name = self.name_edit.text().strip()
         
@@ -825,7 +949,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                     self.name_edit.clear()
 
     def on_keycode_changed(self, keycode):
-        """键码变化"""
+        """键码变化处理
+        
+        根据输入的键码自动生成事件名称。
+        如果是鼠标事件且输入了键码，提示冲突并清空键码。
+        
+        Args:
+            keycode (str): 新的键码值
+        """
         if self.type_combo.currentText() in ["按键按下", "按键释放"] and keycode.strip():
             try:
                 keycode_int = int(keycode)
@@ -841,7 +972,6 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 current_name = self.name_edit.text().strip()
                 
                 # 判断是否为自定义名称
-                import re
                 def is_custom_name(name):
                     """判断是否为自定义名称（非系统自动生成）"""
                     if not name:
@@ -875,6 +1005,9 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         """计算绝对偏移时间
         
         绝对偏移时间 = 前面所有事件的累计相对时间 + 当前事件的相对时间
+        
+        Returns:
+            int: 绝对偏移时间（毫秒）
         """
         try:
             # 获取当前事件的相对时间（转换为ms）
@@ -890,8 +1023,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             absolute_offset = self.prev_absolute_time + relative_time
             
             return absolute_offset
-        except Exception as e:
-            print(f"计算绝对偏移时间错误: {e}")
+        except Exception:
             return 0
     
     def update_absolute_time(self):
@@ -900,7 +1032,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.absolute_time_edit.setText(f"{absolute_offset}")
     
     def keyPressEvent(self, event):
-        """按键事件 - 用于捕获按键"""
+        """按键事件处理 - 用于捕获按键
+        
+        如果处于按键捕获状态，捕获按下的键并填入键码输入框。
+        否则将事件传递给父类处理。
+        
+        Args:
+            event: 按键事件对象
+        """
         if self.key_capture_active:
             # 获取虚拟键码
             key_code = event.nativeVirtualKey()
@@ -933,7 +1072,14 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             super().keyPressEvent(event)
 
     def update_insert_position_info(self, insert_position, insert_after_item=None):
-        """更新插入位置信息"""
+        """更新插入位置信息显示
+        
+        根据插入位置和插入后项目更新位置信息标签。
+        
+        Args:
+            insert_position: 插入位置
+            insert_after_item: 插入后项目（可选）
+        """
         if hasattr(self, 'insert_position_label'):
             if insert_after_item is not None:
                 # 在指定事件后插入
@@ -951,23 +1097,36 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
 # =============================================================================
 
 class PasteOptionsDialog(AnimatedDialog):
-    """粘贴选项对话框
+    """粘贴选项对话框，用于设置事件粘贴时的选项
     
-    用于设置事件粘贴时的选项，特别是时间修改策略。
     允许用户选择粘贴事件时的时间处理方式，以适应不同的场景需求。
     
     提供的时间修改选项包括：
-    - 保持原始时间：直接使用事件的原始时间值
-    - 基于当前时间：将事件时间相对于当前位置调整
-    - 自定义偏移：为所有粘贴的事件添加自定义时间偏移
+    - 仅修改当前事件时间：根据复制事件原有的相对时间，调整绝对时间
+    - 修改后重新计算后续事件时间：在粘贴位置之后的事件的时间都要重新计算
+    
+    Args:
+        parent: 父窗口实例
     """
     
     def __init__(self, parent=None):
+        """初始化粘贴选项对话框
+        
+        Args:
+            parent: 父窗口实例
+        """
         super().__init__(parent)
         self.setup_ui()
         
     def setup_ui(self):
-        """设置UI界面"""
+        """设置UI界面
+        
+        创建粘贴选项对话框的所有UI组件，包括：
+        - 标题标签
+        - 时间修改选项下拉框
+        - 选项说明文本框
+        - 确定和取消按钮
+        """
         self.setWindowTitle("粘贴选项")
         self.setMinimumWidth(400)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())
@@ -993,7 +1152,6 @@ class PasteOptionsDialog(AnimatedDialog):
         # 说明文本
         explanation = QTextEdit()
         explanation.setReadOnly(True)
-        explanation.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         explanation.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         explanation.setPlainText("""选项说明：
 
@@ -1032,24 +1190,36 @@ class PasteOptionsDialog(AnimatedDialog):
 # =============================================================================
 
 class DeleteOptionsDialog(AnimatedDialog):
-    """删除选项对话框
+    """删除选项对话框，用于设置事件删除时的选项
     
-    用于设置事件删除时的选项，特别是时间调整策略。
     允许用户选择删除事件后如何处理后续事件的时间。
     
     提供的删除选项包括：
-    - 删除后调整后续事件时间：删除事件后，自动调整后续事件的相对时间
-    - 保持后续事件时间不变：删除事件后，后续事件的时间保持不变
+    - 仅修改当前事件时间：删除事件后，后续事件的绝对时间不变
+    - 修改后重新计算后续事件时间：删除事件后，重新计算后续所有事件的绝对时间
     
-    帮助用户在删除事件时灵活控制时间流的处理方式。
+    Args:
+        parent: 父窗口实例
     """
     
     def __init__(self, parent=None):
+        """初始化删除选项对话框
+        
+        Args:
+            parent: 父窗口实例
+        """
         super().__init__(parent)
         self.setup_ui()
         
     def setup_ui(self):
-        """设置UI界面"""
+        """设置UI界面
+        
+        创建删除选项对话框的所有UI组件，包括：
+        - 标题标签
+        - 时间修改选项下拉框
+        - 选项说明文本框
+        - 确定和取消按钮
+        """
         self.setWindowTitle("删除选项")
         self.setMinimumWidth(400)
         self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())

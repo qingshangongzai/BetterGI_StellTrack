@@ -3,20 +3,35 @@
 通用工具和资源管理模块，包含全局常量、映射和辅助函数。
 """
 
+# 标准库模块导入
 import sys
 import os
 import ctypes
 from datetime import datetime
+
+# 第三方模块导入
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter
 
-# 导入版本管理器
+# 项目模块导入
 from version import version_manager
 
 # =============================================================================
 # 全局常量和映射
 # =============================================================================
+
+# Windows API 常量
+DWMWA_USE_IMMERSIVE_DARK_MODE = 20  # Windows DWM API 沉浸式深色模式标志
+
+# 资源相关常量
+RESOURCE_DIRS = ["assets", "fonts", "file", "logo"]  # 资源目录列表
+ICON_FILES = ["logo.ico", "logo.png"]  # 图标文件列表
+LOGO_FILE = "logo.png"  # Logo文件名
+
+# 应用程序信息常量
+APP_NAME = "BetterGI StellTrack"  # 应用程序名称
+SCRIPT_DEFAULT_DIR = r"C:\Program Files\BetterGI\User\KeyMouseScript"  # 脚本默认目录
 
 # 虚拟键码到按键名称的映射（Windows虚拟键码）
 VK_MAPPING = {
@@ -56,6 +71,12 @@ KEY_NAME_MAPPING = {
     "F9": "F9", "F10": "F10", "F11": "F11", "F12": "F12",
     "Num Lock": "Num Lock", "Scroll Lock": "Scroll Lock", ";": ";", "=": "=", ",": ",", "-": "-", ".": ".",
     "/": "/", "`": "`", "[": "[", "\\": "\\", "]": "]", "'": "'"
+}
+
+# 合并的按键映射表: 虚拟键码 -> 中文名称
+_COMBINED_KEY_MAPPING = {
+    vk: KEY_NAME_MAPPING.get(name, name)
+    for vk, name in VK_MAPPING.items()
 }
 
 # 事件类型映射
@@ -151,55 +172,44 @@ def convert_event_type_str_to_num(type_str):
 
 def generate_key_event_name(event_type_str, keycode):
     """根据事件类型和键码生成事件名称
-    
+
     Args:
         event_type_str: 事件类型字符串
         keycode: 键码
-        
+
     Returns:
         str: 生成的事件名称
     """
     if event_type_str in ["按键按下", "按键释放"] and keycode:
         try:
             keycode_int = int(keycode)
-            # 使用虚拟键码映射获取按键名称
-            key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-            # 转换为中文名称
-            key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-            
+            key_name_cn = _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
+
             action = "按下" if event_type_str == "按键按下" else "释放"
             return f"{action}{key_name_cn}"
         except (ValueError, TypeError):
-            # 如果键码不是数字，返回默认名称
             return event_type_str
     elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"]:
-        # 鼠标事件，返回原名称
         return event_type_str
     else:
-        # 其他事件，返回原名称
         return event_type_str
 
 def get_key_chinese_name(keycode):
     """获取按键的中文名称
-    
+
     Args:
         keycode: 键码
-        
+
     Returns:
         str: 按键的中文名称
     """
     if not keycode:
         return "未知"
-    
+
     try:
         keycode_int = int(keycode)
-        # 使用虚拟键码映射获取按键名称
-        key_name = VK_MAPPING.get(keycode_int, f"键码:{keycode}")
-        # 转换为中文名称
-        key_name_cn = KEY_NAME_MAPPING.get(key_name, key_name)
-        return key_name_cn
+        return _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
     except (ValueError, TypeError):
-        # 如果键码不是数字，返回原值
         return keycode
 
 def get_event_data_from_table(table, row, skip_row_number=True):
@@ -226,16 +236,43 @@ def get_event_data_from_table(table, row, skip_row_number=True):
     
     return event_data
 
+def get_multiple_event_data_from_table(table, rows, skip_row_number=True):
+    """批量获取多行事件数据
+    
+    Args:
+        table: 事件表格对象
+        rows: 行索引列表
+        skip_row_number: 是否跳过行号列（默认True）
+        
+    Returns:
+        list: 多行事件数据列表
+    """
+    start_col = 1 if skip_row_number else 0
+    end_col = 8
+    
+    all_data = []
+    for row in rows:
+        event_data = []
+        for col in range(start_col, end_col):
+            item = table.item(row, col)
+            event_data.append(item.text() if item else "")
+        all_data.append(event_data)
+    
+    return all_data
+
 def handle_errors(logger=None, error_title="错误", error_message="操作失败"):
     """错误处理装饰器，用于统一处理函数中的异常
-    
+
     Args:
         logger: 日志记录器对象
         error_title: 错误对话框标题
         error_message: 错误对话框默认消息
-        
+
     Returns:
         decorator: 装饰器函数
+
+    Note:
+        如果未提供logger，则使用print输出
     """
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -244,36 +281,36 @@ def handle_errors(logger=None, error_title="错误", error_message="操作失败
             except Exception as e:
                 # 构造完整的错误消息
                 full_error_message = f"{error_message}: {str(e)}"
-                
+
                 # 记录错误日志
                 if logger:
                     logger.log_error(full_error_message, exc_info=True)
                 else:
                     print(f"[ERROR] {full_error_message}")
-                
+
                 # 显示错误消息给用户
                 # 注意：这里需要从args中获取主窗口对象，或者使用其他方式获取
                 # 这里简化处理，假设第一个参数是self，且self.main_window是主窗口对象
                 if args and hasattr(args[0], 'main_window'):
                     from styles import ChineseMessageBox
                     ChineseMessageBox.show_error(args[0].main_window, error_title, full_error_message)
-                
+
                 return None
         return wrapper
     return decorator
 
-class batch_operation:
+class BatchOperation:
     """批量操作上下文管理器，用于统一处理批量操作的开始和结束逻辑
-    
+
     典型用法：
-    with batch_operation(main_window):
+    with BatchOperation(main_window):
         # 执行批量操作
         pass
     """
     
     def __init__(self, main_window, save_to_undo_stack=True):
         """初始化批量操作上下文管理器
-        
+
         Args:
             main_window: 主窗口对象
             save_to_undo_stack: 是否保存当前状态到撤销栈（默认True）
@@ -341,15 +378,19 @@ def update_app_state(main_window, event_manager=None):
 _TASKBAR_ICON_FIXED_WINDOWS = {}
 
 def set_app_user_model_id():
-    """设置AppUserModelID - 使用版本管理器"""
+    """设置AppUserModelID - 使用版本管理器
+
+    Returns:
+        bool: 设置成功返回True，失败返回False
+    """
     if os.name != 'nt':
         return False
-    
+
     try:
         # 使用版本管理器获取信息
         app_info = version_manager.get_app_info()
         version = version_manager.get_version()
-        
+
         app_id = f'{app_info["company"]}.{app_info["name_en"]}.{version}'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
         print(f"[DEBUG] AppUserModelID设置成功: {app_id}")
@@ -361,42 +402,51 @@ def set_app_user_model_id():
 
 def fix_windows_taskbar_icon_for_window(window):
     """为特定窗口修复Windows任务栏图标
-    
+
     为每个窗口单独跟踪图标修复状态，避免一个窗口的修复影响其他窗口。
+
+    Args:
+        window: PyQt6 窗口对象
+
+    Returns:
+        bool: 修复成功返回True，失败返回False
+
+    Note:
+        使用窗口对象的id作为键，为每个窗口单独跟踪修复状态
     """
     if os.name != 'nt':
         return False
-    
+
     # 使用窗口对象的id作为键，为每个窗口单独跟踪修复状态
     window_id = id(window)
     global _TASKBAR_ICON_FIXED_WINDOWS
-    
+
     # 检查此窗口是否已经修复过
     if window_id in _TASKBAR_ICON_FIXED_WINDOWS and _TASKBAR_ICON_FIXED_WINDOWS[window_id]:
         return False
-    
+
     try:
         # 确保窗口已经显示：如果已经可见，就不要重复 show，避免位置/动画抖动
         if not window.isVisible():
             window.show()
         window.raise_()
         window.activateWindow()
-        
+
         # 使用Qt方法获取窗口句柄
         hwnd = int(window.winId())
-        
+
         # 查找图标文件
-        icon_path = find_resource_file("logo.ico")
+        icon_path = find_resource_file(ICON_FILES[0])  # logo.ico
         if not icon_path:
-            icon_path = find_resource_file("logo.png")
-        
+            icon_path = find_resource_file(ICON_FILES[1])  # logo.png
+
         if not icon_path:
             print("[DEBUG] 未找到图标文件用于任务栏修复")
             return False
-        
+
         # 使用ctypes设置图标
         user32 = ctypes.windll.user32
-        
+
         # 加载图标
         if icon_path.lower().endswith('.ico'):
             h_icon = user32.LoadImageW(
@@ -412,36 +462,28 @@ def fix_windows_taskbar_icon_for_window(window):
             if not pixmap.isNull():
                 h_icon = pixmap.toImage().bits()
             else:
-                from debug_tools import get_global_debug_logger
-                debug_logger = get_global_debug_logger()
-                debug_logger.log_debug("无法加载PNG图标文件")
+                print("[DEBUG] 无法加载PNG图标文件")
                 return False
-        
+
         if h_icon:
             # 设置图标
             user32.SendMessageW(hwnd, 0x0080, 1, h_icon)  # WM_SETICON, ICON_BIG
             user32.SendMessageW(hwnd, 0x0080, 0, h_icon)  # WM_SETICON, ICON_SMALL
-            
+
             # 强制刷新任务栏
             user32.UpdateWindow(hwnd)
-            
-            from debug_tools import get_global_debug_logger
-            debug_logger = get_global_debug_logger()
-            debug_logger.log_debug(f"任务栏图标修复成功: {icon_path}")
-            
+
+            print(f"[DEBUG] 任务栏图标修复成功: {icon_path}")
+
             # 标记此窗口已修复，但不影响其他窗口
             _TASKBAR_ICON_FIXED_WINDOWS[window_id] = True
             return True
-        
-        from debug_tools import get_global_debug_logger
-        debug_logger = get_global_debug_logger()
-        debug_logger.log_debug("图标句柄创建失败")
+
+        print("[DEBUG] 图标句柄创建失败")
         return False
-        
+
     except Exception as e:
-        from debug_tools import get_global_debug_logger
-        debug_logger = get_global_debug_logger()
-        debug_logger.log_error(f"修复任务栏图标失败: {e}")
+        print(f"[DEBUG] 修复任务栏图标失败: {e}")
         return False
 
 # =============================================================================
@@ -449,7 +491,11 @@ def fix_windows_taskbar_icon_for_window(window):
 # =============================================================================
 
 def load_icon_exe_safe():
-    """兼容性函数，指向统一的图标加载函数"""
+    """兼容性函数，指向统一的图标加载函数
+
+    Returns:
+        QIcon: 应用程序图标对象
+    """
     return load_icon_universal()
 
 
@@ -458,8 +504,47 @@ def load_icon_exe_safe():
 # 资源管理器 - 从styles.py迁移
 # =============================================================================
 
+# 资源文件搜索路径缓存
+_search_paths_cache = None
+_base_path_cache = None
+_file_find_cache = {}
+
+def _build_search_paths(base_path):
+    """构建资源文件搜索路径列表
+    
+    Args:
+        base_path: 基础路径
+        
+    Returns:
+        list: 搜索路径列表
+    """
+    search_paths = []
+    
+    # 添加基础路径及其子目录
+    search_paths.append(base_path)
+    for resource_dir in RESOURCE_DIRS:
+        search_paths.append(os.path.join(base_path, resource_dir))
+    
+    # 添加 _MEIPASS 路径及其子目录（如果存在）
+    if hasattr(sys, '_MEIPASS'):
+        meipass = sys._MEIPASS
+        if meipass not in search_paths:
+            search_paths.append(meipass)
+            for resource_dir in RESOURCE_DIRS:
+                search_paths.append(os.path.join(meipass, resource_dir))
+    
+    return search_paths
+
 def get_base_path():
-    """获取程序基础路径，兼容开发环境和打包环境"""
+    """获取程序基础路径，兼容开发环境和打包环境
+
+    Returns:
+        str: 程序基础路径
+
+    Note:
+        - 打包环境：返回 PyInstaller 临时目录或可执行文件所在目录
+        - 开发环境：返回当前脚本文件所在目录
+    """
     if getattr(sys, 'frozen', False):
         # 打包后的环境
         if hasattr(sys, '_MEIPASS'):
@@ -474,47 +559,62 @@ def get_base_path():
 
 def get_user_data_dir():
     """获取用户数据目录，用于保存日志和配置文件
-    
-    在Windows上，返回: C:/Users/<用户名>/AppData/Local/BetterGI StellTrack
-    在Linux上，返回: ~/.local/share/BetterGI StellTrack
-    在macOS上，返回: ~/Library/Application Support/BetterGI StellTrack
+
+    Returns:
+        str: 用户数据目录路径
+
+    Note:
+        - Windows: C:/Users/<用户名>/AppData/Local/BetterGI StellTrack
+        - Linux: ~/.local/share/BetterGI StellTrack
+        - macOS: ~/Library/Application Support/BetterGI StellTrack
     """
-    app_name = "BetterGI StellTrack"
-    
     if sys.platform == "win32":
         # Windows使用AppData\Local目录
         appdata_dir = os.getenv("LOCALAPPDATA")
         if not appdata_dir:
             appdata_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local")
-        data_dir = os.path.join(appdata_dir, app_name)
+        data_dir = os.path.join(appdata_dir, APP_NAME)
     elif sys.platform == "darwin":
         # macOS使用Library/Application Support目录
-        data_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", app_name)
+        data_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", APP_NAME)
     else:
         # Linux使用~/.local/share目录
-        data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", app_name)
-    
+        data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", APP_NAME)
+
     # 确保目录存在
     if not os.path.exists(data_dir):
         os.makedirs(data_dir, exist_ok=True)
-    
+
     return data_dir
 
 def get_script_default_dir():
     r"""获取脚本默认目录，用于打开和保存脚本文件
-    
-    返回: C:\Program Files\BetterGI\User\KeyMouseScript
+
+    Returns:
+        str: 脚本默认目录路径 (C:\Program Files\BetterGI\User\KeyMouseScript)
+
+    Note:
+        如果目录不存在，会自动创建
     """
-    script_dir = r"C:\Program Files\BetterGI\User\KeyMouseScript"
-    
+    script_dir = SCRIPT_DEFAULT_DIR
+
     # 确保目录存在
     if not os.path.exists(script_dir):
         os.makedirs(script_dir, exist_ok=True)
-    
+
     return script_dir
 
 def get_system_theme_mode():
-    """获取系统主题模式（"light" 或 "dark"）"""
+    """获取系统主题模式
+
+    Returns:
+        str: 系统主题模式，"light" 或 "dark"
+
+    Note:
+        - Windows: 从注册表读取主题设置
+        - 其他平台: 默认返回 "light"
+        - 读取失败时默认返回 "light"
+    """
     try:
         if sys.platform == "win32":
             try:
@@ -536,99 +636,113 @@ def get_system_theme_mode():
 
 def find_resource_file(filename):
     """查找资源文件，返回找到的路径或None
-    
-    搜索顺序：
-    1. 基础路径
-    2. 基础路径/assets
-    3. 基础路径/fonts
-    4. 基础路径/file
-    5. 基础路径/logo
-    6. _MEIPASS（打包环境）
-    7. _MEIPASS/assets
-    8. _MEIPASS/fonts
-    9. _MEIPASS/file
-    10. _MEIPASS/logo
+
+    Args:
+        filename: 资源文件名
+
+    Returns:
+        str: 资源文件的完整路径，未找到返回None
+
+    Note:
+        搜索顺序：
+        1. 基础路径
+        2. 基础路径/assets
+        3. 基础路径/fonts
+        4. 基础路径/file
+        5. 基础路径/logo
+        6. _MEIPASS（打包环境）
+        7. _MEIPASS/assets
+        8. _MEIPASS/fonts
+        9. _MEIPASS/file
+        10. _MEIPASS/logo
     """
+    global _search_paths_cache, _base_path_cache, _file_find_cache
+
+    # 检查缓存
+    if filename in _file_find_cache:
+        cached_path = _file_find_cache[filename]
+        if cached_path and os.path.exists(cached_path):
+            print(f"[DEBUG] 从缓存获取资源文件: {filename} -> {cached_path}")
+            return cached_path
+        else:
+            del _file_find_cache[filename]
+
     base_path = get_base_path()
-    
-    # 构建搜索路径列表，简化逻辑，合并重复路径
-    search_paths = []
-    
-    # 添加基础路径及其子目录
-    search_paths.extend([
-        base_path,
-        os.path.join(base_path, "assets"),
-        os.path.join(base_path, "fonts"),
-        os.path.join(base_path, "file"),
-        os.path.join(base_path, "logo"),
-    ])
-    
-    # 添加 _MEIPASS 路径及其子目录（如果存在）
-    if hasattr(sys, '_MEIPASS'):
-        meipass = sys._MEIPASS
-        if meipass not in search_paths:
-            search_paths.extend([
-                meipass,
-                os.path.join(meipass, "assets"),
-                os.path.join(meipass, "fonts"),
-                os.path.join(meipass, "file"),
-                os.path.join(meipass, "logo"),
-            ])
-    
+
+    # 只在基础路径变化时重新构建搜索路径
+    if _base_path_cache != base_path:
+        _base_path_cache = base_path
+        _search_paths_cache = _build_search_paths(base_path)
+        # 基础路径变化时清空文件缓存
+        _file_find_cache.clear()
+
     # 在所有路径中查找文件
-    for path in search_paths:
+    for path in _search_paths_cache:
         full_path = os.path.join(path, filename)
         if os.path.exists(full_path):
             # 调试日志：记录找到的资源文件路径
             print(f"[DEBUG] 找到资源文件: {filename} -> {full_path}")
+            # 缓存查找结果
+            _file_find_cache[filename] = full_path
             return full_path
-    
+
     # 调试日志：记录未找到的资源文件
     print(f"[DEBUG] 未找到资源文件: {filename}")
-    print(f"[DEBUG] 搜索路径列表: {search_paths}")
+    print(f"[DEBUG] 搜索路径列表: {_search_paths_cache}")
     return None
 
 def get_resource_path(relative_path):
     """获取资源文件的绝对路径，是资源加载的主要接口
-    
+
     Args:
         relative_path: 资源文件的相对路径
-        
+
     Returns:
         str: 资源文件的绝对路径，如果找不到则返回基于基础路径的相对路径
+
+    Note:
+        此函数是资源加载的主要接口，会调用 find_resource_file 进行查找
     """
     return find_resource_file(relative_path) or os.path.join(get_base_path(), relative_path)
 
 def load_icon_universal():
-    """统一的图标加载函数，适用于所有环境"""
+    """统一的图标加载函数，适用于所有环境
+
+    Returns:
+        QIcon: 应用程序图标对象
+
+    Note:
+        尝试加载 logo.ico 和 logo.png，如果都失败则创建后备图标
+    """
     # 尝试多种图标格式和路径
-    icon_files = ["logo.ico", "logo.png"]
-    
-    for icon_file in icon_files:
+    for icon_file in ICON_FILES:
         icon_path = find_resource_file(icon_file)
         if icon_path and os.path.exists(icon_path):
             return QIcon(icon_path)
-    
+
     # 创建后备图标
     return create_fallback_icon()
 
 def load_logo(logo_size=(60, 60)):
     """统一的Logo加载函数，适用于所有环境
-    
+
     Args:
         logo_size: Logo的目标尺寸，默认(60, 60)
-    
+
     Returns:
         QPixmap: 缩放后的Logo图片，如果加载失败则返回None
+
+    Note:
+        使用平滑变换模式进行缩放，保持宽高比
     """
     try:
         # 查找logo文件
-        logo_path = find_resource_file("logo.png")
+        logo_path = find_resource_file(LOGO_FILE)
         if logo_path and os.path.exists(logo_path):
             pixmap = QPixmap(logo_path)
             if not pixmap.isNull():
-                return pixmap.scaled(logo_size[0], logo_size[1], 
-                                   Qt.AspectRatioMode.KeepAspectRatio, 
+                return pixmap.scaled(logo_size[0], logo_size[1],
+                                   Qt.AspectRatioMode.KeepAspectRatio,
                                    Qt.TransformationMode.SmoothTransformation)
         return None
     except Exception as e:
@@ -636,19 +750,26 @@ def load_logo(logo_size=(60, 60)):
         return None
 
 def create_fallback_icon():
-    """创建后备图标"""
+    """创建后备图标
+
+    Returns:
+        QIcon: 后备图标对象，创建失败返回空图标
+
+    Note:
+        创建一个简单的蓝色图标，上面显示"BG"文字
+    """
     try:
         # 创建一个简单的蓝色图标
         pixmap = QPixmap(32, 32)
         pixmap.fill(QColor("#66ccff"))
-        
+
         painter = QPainter(pixmap)
         painter.setPen(QColor('white'))
         painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "BG")
         painter.end()
-        
+
         return QIcon(pixmap)
-    except:
+    except Exception:
         # 如果创建失败，返回默认图标
         return QIcon()
 
@@ -658,161 +779,208 @@ def create_fallback_icon():
 # =============================================================================
 
 def get_current_version():
-    """
-    获取当前应用程序版本号
-    
+    """获取当前应用程序版本号
+
     Returns:
         str: 应用程序版本号，格式为"X.Y.Z"
+
+    Note:
+        此函数是版本信息的统一入口点
     """
     return version_manager.get_version()
 
 
 def get_current_app_info():
-    """
-    获取当前应用程序信息
-    
+    """获取当前应用程序信息
+
     Returns:
         dict: 包含应用程序名称、英文名称、公司、版权等元数据的字典
+
+    Note:
+        此函数是应用程序信息的统一入口点
     """
     return version_manager.get_app_info()
 
+def _get_key_display_name(keycode):
+    """获取按键显示名称的辅助函数
+
+    Args:
+        keycode: 键码
+
+    Returns:
+        str: 按键的中文名称
+    """
+    try:
+        keycode_int = int(keycode)
+        return _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
+    except (ValueError, TypeError):
+        return keycode
 
 def check_event_pairing(events_table):
-    """
-    检查事件成对性
-    
+    """检查事件成对性
+
     Args:
         events_table: 事件表格对象
-        
+
     Returns:
         list: 包含检查出的问题的列表
+
+    Note:
+        检查以下问题：
+        - 按键重复按下
+        - 按键未按下就释放
+        - 鼠标按钮重复按下
+        - 鼠标按钮未按下就释放
+        - 按键被按下但未释放
+        - 鼠标按钮被按下但未释放
+        - 同一时间存在多个事件
     """
     pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
     pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
-    issues = []
-    
+    pairing_issues = []  # 成对性问题列表
+    time_issues = []  # 时间问题列表
+
     for row in range(events_table.rowCount()):
         type_item = events_table.item(row, 2)  # 事件类型列
         keycode_item = events_table.item(row, 3)  # 键码列
-        
+
         if not type_item:
             continue
-            
+
         event_type = type_item.text()
         keycode = keycode_item.text() if keycode_item else ""
-        
+
         # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
-                # 获取按键的中文名称
-                key_name_cn = get_key_chinese_name(keycode)
-                issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
+                key_name_cn = _get_key_display_name(keycode)
+                pairing_issues.append(f"第{row+1}行: 按键{key_name_cn}重复按下")
             else:
-                pressed_keys[keycode] = row + 1  # 记录按下的行号
+                pressed_keys[keycode] = row + 1
         elif event_type == "按键释放":
             if keycode not in pressed_keys:
-                # 获取按键的中文名称
-                key_name_cn = get_key_chinese_name(keycode)
-                issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
+                key_name_cn = _get_key_display_name(keycode)
+                pairing_issues.append(f"第{row+1}行: 按键{key_name_cn}未按下就释放")
             else:
                 del pressed_keys[keycode]
-        
+
         # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 左键重复按下")
+                pairing_issues.append(f"第{row+1}行: 左键重复按下")
             else:
-                pressed_mouse_buttons["Left"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Left"] = row + 1
         elif event_type == "左键释放":
             if "Left" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 左键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 左键未按下就释放")
             else:
                 del pressed_mouse_buttons["Left"]
-                
+
         elif event_type == "右键按下":
             if "Right" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 右键重复按下")
+                pairing_issues.append(f"第{row+1}行: 右键重复按下")
             else:
-                pressed_mouse_buttons["Right"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Right"] = row + 1
         elif event_type == "右键释放":
             if "Right" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 右键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 右键未按下就释放")
             else:
                 del pressed_mouse_buttons["Right"]
-                
+
         elif event_type == "中键按下":
             if "Middle" in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 中键重复按下")
+                pairing_issues.append(f"第{row+1}行: 中键重复按下")
             else:
-                pressed_mouse_buttons["Middle"] = row + 1  # 记录按下的行号
+                pressed_mouse_buttons["Middle"] = row + 1
         elif event_type == "中键释放":
             if "Middle" not in pressed_mouse_buttons:
-                issues.append(f"第{row+1}行: 中键未按下就释放")
+                pairing_issues.append(f"第{row+1}行: 中键未按下就释放")
             else:
                 del pressed_mouse_buttons["Middle"]
-    
+
     # 检查未释放的按键
     for key, row_num in pressed_keys.items():
-        key_name_cn = get_key_chinese_name(key)
-        issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
+        key_name_cn = _get_key_display_name(key)
+        pairing_issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
     for button, row_num in pressed_mouse_buttons.items():
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
-        issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
-    
+        pairing_issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
+
+    # 检查同一时间存在多个事件
+    absolute_time_events = {}
+    for row in range(events_table.rowCount()):
+        abs_time_item = events_table.item(row, 7)
+        if abs_time_item and abs_time_item.text():
+            abs_time = abs_time_item.text()
+            if abs_time not in absolute_time_events:
+                absolute_time_events[abs_time] = []
+            absolute_time_events[abs_time].append(row + 1)
+
+    # 检查存在多个事件的绝对时间
+    for abs_time, row_numbers in absolute_time_events.items():
+        if len(row_numbers) > 1:
+            row_str = "和".join([f"第{num}行" for num in row_numbers])
+            time_issues.append(f"在同一时间内{row_str}被同时执行")
+
+    # 合并问题列表，用空行分隔成对性问题和时间问题
+    issues = pairing_issues
+    if pairing_issues and time_issues:
+        issues.append("")  # 添加空行分隔
+    issues.extend(time_issues)
+
     return issues
 
 
 def set_window_title_bar_theme(window, is_dark=False):
-    """
-    为窗口设置标题栏主题（Windows 10+ 深色/浅色模式）
-    
+    """为窗口设置标题栏主题（Windows 10+ 深色/浅色模式）
+
     使用 Windows DWM API 设置窗口标题栏的沉浸式深色模式，
     使标题栏颜色与主题保持一致。
-    
+
     Args:
         window: PyQt6 窗口对象（QMainWindow 或 QDialog）
         is_dark: 是否使用深色模式，True 为深色，False 为浅色
-        
+
     Returns:
         bool: 设置成功返回 True，失败返回 False
-        
+
     Note:
-        此功能仅支持 Windows 10 及以上系统
-        非 Windows 系统会静默跳过，不影响程序运行
+        - 此功能仅支持 Windows 10 及以上系统
+        - 非 Windows 系统会静默跳过，不影响程序运行
+        - 窗口必须有效且具有 windowHandle 属性
     """
     try:
         if sys.platform != "win32":
             return False
-        
+
         # 全面的窗口有效性检查
         if not window:
             return False
-            
+
         # 检查窗口是否已被删除或无效
         if hasattr(window, 'isValid') and callable(window.isValid):
             if not window.isValid():
                 return False
-                
+
         # 检查窗口是否有windowHandle属性
         if not hasattr(window, 'windowHandle'):
             return False
-            
+
         # 获取windowHandle
         window_handle = window.windowHandle()
         if not window_handle:
             return False
-            
+
         # 检查windowHandle是否有效
         if hasattr(window_handle, 'isValid') and callable(window_handle.isValid):
             if not window_handle.isValid():
                 return False
-                
+
         # 获取窗口句柄
         hwnd = int(window_handle.winId())
-        
-        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+
         value = ctypes.c_int(1 if is_dark else 0)
-        
+
         # 调用DWM API设置窗口标题栏主题
         result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
             hwnd,
@@ -820,13 +988,13 @@ def set_window_title_bar_theme(window, is_dark=False):
             ctypes.byref(value),
             ctypes.sizeof(value)
         )
-        
+
         return result == 0
-        
+
     except RuntimeError as e:
         # 捕获"wrapped C/C++ object of type X has been deleted"错误
         if "wrapped C/C++ object" in str(e) and "has been deleted" in str(e):
-            print(f"[DEBUG] 尝试设置已删除窗口的标题栏主题，跳过")
+            print("[DEBUG] 尝试设置已删除窗口的标题栏主题，跳过")
             return False
         else:
             print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")

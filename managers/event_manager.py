@@ -1,28 +1,40 @@
-# event_manager.py
-import os
-import json
+# 标准库模块导入
 from datetime import datetime
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                            QLineEdit, QComboBox, QPushButton, QTableWidgetItem,
-                            QFrame, QGroupBox, QGridLayout, QScrollArea, QTextEdit,
-                            QListView, QFileDialog, QTextBrowser, QSpinBox, QMenu,
-                            QDialog, QHeaderView, QTableWidget)
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QThread
-from PyQt6.QtGui import (QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
-                        QKeyEvent, QDesktopServices, QIntValidator, QAction, QFontDatabase)
 
-# 导入共享模块
-from styles import UnifiedStyleHelper, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, ModernMenu
-from utils import VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP, generate_key_event_name, SORT_TIP_TEXT, get_event_data_from_table
-from dialogs import EventEditDialog, PasteOptionsDialog, DeleteOptionsDialog
-from dialogs import BatchEditDialog
-from debug_tools import get_global_debug_logger
+# 第三方模块导入
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QUrl
+from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtWidgets import (
+    QDialog, QGroupBox, QGridLayout, QHBoxLayout, QLabel, 
+    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QHeaderView
+)
 
-# =============================================================================
-# 常量定义
-# =============================================================================
-
-
+# 项目模块导入
+from styles import (
+    UnifiedStyleHelper,
+    ChineseMessageBox,
+    ModernGroupBox,
+    ModernLineEdit,
+    ModernComboBox,
+    ModernMenu
+)
+from utils import (
+    VK_MAPPING,
+    KEY_NAME_MAPPING,
+    EVENT_TYPE_MAP,
+    generate_key_event_name,
+    SORT_TIP_TEXT,
+    get_event_data_from_table
+)
+from dialogs import (
+    EventEditDialog,
+    PasteOptionsDialog,
+    DeleteOptionsDialog,
+    BatchEditDialog
+)
+from dialogs.debug_tools import get_global_debug_logger
+from ui import ModernTableWidget
 
 # =============================================================================
 # 线程类定义
@@ -381,7 +393,6 @@ class EventManager:
             parent_layout: 父布局，用于放置事件表格
         """
         # 创建表格
-        from main_window import ModernTableWidget
         self.events_table = ModernTableWidget(0, 8)  # 8列：行号 + 原有7列
         headers = ["序号", "事件名称", "事件类型", "键码", "X坐标", "Y坐标", "相对偏移时间", "绝对偏移时间"]
         self.events_table.setHorizontalHeaderLabels(headers)
@@ -429,7 +440,13 @@ class EventManager:
         parent_layout.addWidget(self.events_table, 1)
     
     def create_event_buttons(self, parent_layout):
-        """创建事件操作按钮"""
+        """创建事件操作按钮
+        
+        创建事件操作按钮区域，包括添加、编辑、清空、撤销、重做和排序按钮。
+        
+        Args:
+            parent_layout: 父布局，用于放置操作按钮
+        """
         # 整合所有按钮到一行并居中排列
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(6)
@@ -483,7 +500,15 @@ class EventManager:
         self.sort_events_btn.clicked.connect(self.sort_events_by_absolute_time)
     
     def refresh_theme_styles(self):
-        """根据当前主题重新应用事件编辑区域的样式"""
+        """根据当前主题重新应用事件编辑区域的样式
+        
+        刷新事件编辑器中所有UI组件的样式，包括：
+        - 根容器背景
+        - 事件编辑 GroupBox
+        - 搜索区域（容器、标签、输入框、下拉框、按钮）
+        - 事件表格
+        - 操作按钮和排序提示
+        """
         helper = UnifiedStyleHelper.get_instance()
 
         # 根容器背景
@@ -593,6 +618,12 @@ class EventManager:
         """显示事件表格的右键菜单
         
         使用 ModernMenu 以修复 Windows 系统下菜单圆角显示问题。
+        菜单项根据选中状态条件显示：
+        - 始终显示：添加事件、复制事件、剪切事件、粘贴事件、全选事件
+        - 有选中事件时显示：编辑事件、批量编辑、删除事件
+        
+        Args:
+            position: 鼠标右键点击位置
         """
         # 使用 ModernMenu 代替 QMenu
         context_menu = ModernMenu(self.main_window)
@@ -686,7 +717,10 @@ class EventManager:
         context_menu.exec(self.events_table.horizontalHeader().mapToGlobal(position))
     
     def on_search_filter_changed(self):
-        """搜索过滤条件改变时调用"""
+        """搜索过滤条件改变时调用
+        
+        获取当前搜索文本和过滤类型，创建并启动搜索过滤线程。
+        """
         search_text = self.search_input.text().lower()
         filter_type = self.filter_type_combo.currentText()
         
@@ -697,30 +731,46 @@ class EventManager:
         self.search_filter_thread.start()
     
     def on_search_filter_complete(self, show_rows, hide_rows):
-        """搜索过滤完成回调"""
-        # 批量更新优化：禁用中间重绘
+        """搜索过滤完成回调
+        
+        根据搜索过滤结果批量更新表格行的显示状态。
+        
+        Args:
+            show_rows (list): 需要显示的行索引列表
+            hide_rows (list): 需要隐藏的行索引列表
+        """
+        show_rows_set = set(show_rows)
         self.events_table.setUpdatesEnabled(False)
         
         try:
-            # 遍历所有行，根据条件隐藏或显示
             for row in range(self.events_table.rowCount()):
-                # 根据匹配结果隐藏或显示行
-                should_show = row in show_rows
+                should_show = row in show_rows_set
                 self.events_table.setRowHidden(row, not should_show)
             
-            # 更新统计信息
             self.update_stats()
         finally:
-            # 确保重新启用重绘
             self.events_table.setUpdatesEnabled(True)
     
     def on_search_filter_failed(self, error_msg):
-        """搜索过滤失败回调"""
+        """搜索过滤失败回调
+        
+        记录错误日志并显示错误消息框。
+        
+        Args:
+            error_msg (str): 错误消息
+        """
         self.debug_logger.log_error(error_msg)
         ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_combo_key_press(self, event):
-        """处理过滤类型下拉框的按键事件"""
+        """处理过滤类型下拉框的按键事件
+        
+        调用原有的keyPressEvent方法，确保其他功能正常。
+        如果是回车键，触发搜索功能。
+        
+        Args:
+            event: 按键事件对象
+        """
         from PyQt6.QtCore import Qt
         # 调用原有的keyPressEvent方法，确保其他功能正常
         super(self.filter_type_combo.__class__, self.filter_type_combo).keyPressEvent(event)
@@ -731,7 +781,10 @@ class EventManager:
             self.on_search_filter_changed()
     
     def on_reset_search_filter(self):
-        """重置搜索过滤条件"""
+        """重置搜索过滤条件
+        
+        显示所有行，清空搜索输入和过滤类型，更新统计信息。
+        """
         # 批量更新优化：禁用中间重绘
         self.events_table.setUpdatesEnabled(False)
         
@@ -755,7 +808,11 @@ class EventManager:
         self.debug_logger.log_info("搜索过滤已重置")
     
     def on_batch_edit(self):
-        """批量编辑事件"""
+        """批量编辑事件
+        
+        获取选中的行，打开批量编辑对话框。
+        如果用户确认编辑，应用批量编辑并更新统计信息。
+        """
         # 获取选中的行
         selected_rows = self.get_selected_event_rows()
         if not selected_rows:
@@ -778,7 +835,14 @@ class EventManager:
             self.debug_logger.log_info(f"已批量编辑 {len(selected_rows)} 个事件")
     
     def apply_batch_edit(self, dialog):
-        """应用批量编辑"""
+        """应用批量编辑
+        
+        从批量编辑对话框获取编辑参数，保存当前状态到撤销栈，
+        创建并启动批量编辑线程。
+        
+        Args:
+            dialog: 批量编辑对话框实例
+        """
         # 获取编辑参数
         offset = dialog.get_offset_adjustment()
         unified_rel_time = dialog.get_unified_rel_time()
@@ -809,7 +873,25 @@ class EventManager:
         self.batch_edit_thread.start()
     
     def on_batch_edit_complete(self, rows_to_adjust, offset, old_type_info, new_type_info, selected_row_indices, unified_rel_time, unified_x, unified_y, apply_coords):
-        """批量编辑完成回调"""
+        """批量编辑完成回调
+        
+        应用批量编辑结果到表格，包括：
+        - 增减偏移时间
+        - 事件类型替换
+        - 统一相对时间
+        - 统一坐标
+        
+        Args:
+            rows_to_adjust (list): 需要调整的行索引列表
+            offset (int): 时间偏移量
+            old_type_info (tuple): 旧事件类型信息 (类型, 键码)
+            new_type_info (tuple): 新事件类型信息 (类型, 键码)
+            selected_row_indices (list): 选中的行索引列表
+            unified_rel_time (int): 统一的相对时间
+            unified_x (int): 统一的X坐标
+            unified_y (int): 统一的Y坐标
+            apply_coords (bool): 是否应用统一坐标
+        """
         # 开始批量操作
         self.main_window._batch_operation = True
         
@@ -921,12 +1003,21 @@ class EventManager:
             self.main_window._batch_operation = False
     
     def on_batch_edit_failed(self, error_msg):
-        """批量编辑失败回调"""
+        """批量编辑失败回调
+        
+        记录错误日志并显示错误消息框。
+        
+        Args:
+            error_msg (str): 错误消息
+        """
         self.debug_logger.log_error(error_msg)
         ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def add_sample_data(self):
-        """添加示例数据用于测试"""
+        """添加示例数据用于测试
+        
+        添加5个示例事件到表格中，包括按键事件、平行移动和鼠标事件。
+        """
         sample_data = [
             [1, "按下回车", "按键按下", "13", "0", "0", "0", "0"],
             [2, "释放回车", "按键释放", "13", "0", "0", "100", "100"],
@@ -942,7 +1033,13 @@ class EventManager:
         self.debug_logger.log_info("示例数据已添加")
     
     def add_table_row(self, row_data):
-        """添加表格行"""
+        """添加表格行
+        
+        在表格末尾添加一行数据。
+        
+        Args:
+            row_data (list): 行数据列表，包含8列数据
+        """
         row_position = self.events_table.rowCount()
         self.events_table.insertRow(row_position)
         
@@ -952,7 +1049,13 @@ class EventManager:
             self.events_table.setItem(row_position, col, item)
     
     def add_table_rows(self, rows_data):
-        """批量添加表格行 - 高性能版本"""
+        """批量添加表格行 - 高性能版本
+        
+        一次性设置表格行数并填充数据，避免频繁的插入操作。
+        
+        Args:
+            rows_data (list): 行数据列表，每个元素是一个包含8列数据的列表
+        """
         if not rows_data:
             return
         
@@ -973,12 +1076,19 @@ class EventManager:
                 self.events_table.setItem(row_position, col, item)
     
     def update_stats(self):
-        """更新统计信息"""
+        """更新统计信息
+        
+        调用统计面板的update_stats方法更新事件统计信息。
+        """
         if hasattr(self.main_window, 'stats_panel'):
             self.main_window.stats_panel.update_stats()
     
     def sort_events_by_absolute_time(self):
-        """按绝对时间对事件进行排序，并重新计算相对时间"""
+        """按绝对时间对事件进行排序，并重新计算相对时间
+        
+        如果表格为空，显示提示信息。
+        否则保存当前状态到撤销栈，创建并启动事件排序线程。
+        """
         if self.events_table.rowCount() == 0:
             ChineseMessageBox.show_info(self.main_window, "提示", "没有可排序的事件")
             return
@@ -993,7 +1103,13 @@ class EventManager:
         self.sort_events_thread.start()
     
     def on_sort_complete(self, sorted_events):
-        """事件排序完成回调"""
+        """事件排序完成回调
+        
+        清空表格，插入排序后的事件，更新统计信息。
+        
+        Args:
+            sorted_events (list): 排序后的事件列表
+        """
         # 开始批量操作
         self.main_window._batch_operation = True
         
@@ -1018,39 +1134,62 @@ class EventManager:
             self.main_window._batch_operation = False
     
     def on_sort_failed(self, error_msg):
-        """事件排序失败回调"""
+        """事件排序失败回调
+        
+        记录错误日志并显示错误消息框。
+        
+        Args:
+            error_msg (str): 错误消息
+        """
         self.debug_logger.log_error(error_msg)
         ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def recalculate_relative_times(self):
-        """重新计算所有事件的相对时间，保持绝对时间不变"""
+        """重新计算所有事件的相对时间，保持绝对时间不变
+        
+        第一个事件的相对时间等于绝对时间。
+        从第二个事件开始，根据绝对时间计算相对时间：
+        相对时间(n) = 绝对时间(n) - 绝对时间(n-1)
+        """
         if self.events_table.rowCount() == 0:
             return
         
-        # 处理第一个事件：相对时间 = 绝对时间
-        first_abs_time_item = self.events_table.item(0, 7)
-        first_rel_time_item = self.events_table.item(0, 6)
-        if first_abs_time_item and first_rel_time_item:
-            first_abs_time = int(first_abs_time_item.text()) if first_abs_time_item.text().isdigit() else 0
-            first_rel_time_item.setText(str(first_abs_time))
+        self.events_table.setUpdatesEnabled(False)
         
-        # 从第二个事件开始，根据绝对时间计算相对时间
-        for i in range(1, self.events_table.rowCount()):
-            # 获取前一个事件的绝对时间
-            prev_abs_time_item = self.events_table.item(i-1, 7)
-            prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+        try:
+            # 处理第一个事件：相对时间 = 绝对时间
+            first_abs_time_item = self.events_table.item(0, 7)
+            first_rel_time_item = self.events_table.item(0, 6)
+            if first_abs_time_item and first_rel_time_item:
+                first_abs_time = int(first_abs_time_item.text()) if first_abs_time_item.text().isdigit() else 0
+                first_rel_time_item.setText(str(first_abs_time))
             
-            # 获取当前事件的绝对时间
-            curr_abs_time_item = self.events_table.item(i, 7)
-            curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item and curr_abs_time_item.text().isdigit() else 0
-            
-            # 计算并更新相对时间
-            rel_time = curr_abs_time - prev_abs_time
-            rel_time_item = self.events_table.item(i, 6)
-            rel_time_item.setText(str(rel_time))
+            # 从第二个事件开始，根据绝对时间计算相对时间
+            for i in range(1, self.events_table.rowCount()):
+                # 获取前一个事件的绝对时间
+                prev_abs_time_item = self.events_table.item(i-1, 7)
+                prev_abs_time = int(prev_abs_time_item.text()) if prev_abs_time_item and prev_abs_time_item.text().isdigit() else 0
+                
+                # 获取当前事件的绝对时间
+                curr_abs_time_item = self.events_table.item(i, 7)
+                curr_abs_time = int(curr_abs_time_item.text()) if curr_abs_time_item and curr_abs_time_item.text().isdigit() else 0
+                
+                # 计算并更新相对时间
+                rel_time = curr_abs_time - prev_abs_time
+                rel_time_item = self.events_table.item(i, 6)
+                rel_time_item.setText(str(rel_time))
+        finally:
+            self.events_table.setUpdatesEnabled(True)
     
     def recalculate_time_from_row(self, start_row):
-        """从指定行开始重新计算时间"""
+        """从指定行开始重新计算时间
+        
+        根据相对时间重新计算从指定行开始的所有事件的绝对时间：
+        绝对时间(n) = 绝对时间(n-1) + 相对时间(n)
+        
+        Args:
+            start_row (int): 开始重新计算的行索引
+        """
         total_rows = self.events_table.rowCount()
         if total_rows <= start_row:
             return
@@ -1076,7 +1215,11 @@ class EventManager:
             prev_abs_time = curr_abs_time
     
     def recalculate_all_times(self):
-        """重新计算所有事件的相对时间和绝对时间"""
+        """重新计算所有事件的相对时间和绝对时间
+        
+        第一个事件的绝对时间设为0。
+        从第二个事件开始重新计算所有时间。
+        """
         if self.events_table.rowCount() == 0:
             return
         
@@ -1110,24 +1253,43 @@ class EventManager:
     
     def update_row_numbers(self):
         """更新行号"""
-        for row in range(self.events_table.rowCount()):
-            item = self.events_table.item(row, 0)
-            if item:
-                item.setText(str(row + 1))
-            else:
-                item = QTableWidgetItem(str(row + 1))
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.events_table.setItem(row, 0, item)
+        self.events_table.setUpdatesEnabled(False)
+        
+        try:
+            for row in range(self.events_table.rowCount()):
+                item = self.events_table.item(row, 0)
+                if item:
+                    item.setText(str(row + 1))
+                else:
+                    item = QTableWidgetItem(str(row + 1))
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.events_table.setItem(row, 0, item)
+        finally:
+            self.events_table.setUpdatesEnabled(True)
     
     def get_prev_absolute_time(self, current_row):
-        """获取当前行前一个事件的绝对时间"""
+        """获取当前行前一个事件的绝对时间
+        
+        Args:
+            current_row (int): 当前行索引
+        
+        Returns:
+            int: 前一个事件的绝对时间，如果是第一行则返回0
+        """
         if current_row == 0:
             return 0
         prev_item = self.events_table.item(current_row - 1, 7)
         return int(prev_item.text()) if prev_item and prev_item.text().isdigit() else 0
     
     def get_next_absolute_time(self, current_row):
-        """获取当前行后一个事件的绝对时间"""
+        """获取当前行后一个事件的绝对时间
+        
+        Args:
+            current_row (int): 当前行索引
+        
+        Returns:
+            int: 后一个事件的绝对时间，如果是最后一行则返回None
+        """
         total_rows = self.events_table.rowCount()
         if current_row >= total_rows - 1:
             return None
@@ -1135,7 +1297,15 @@ class EventManager:
         return int(next_item.text()) if next_item and next_item.text().isdigit() else None
     
     def adjust_next_event_relative_time(self, current_row, new_current_absolute_time):
-        """调整当前行后一个事件的相对时间"""
+        """调整当前行后一个事件的相对时间
+        
+        根据当前事件的新绝对时间，重新计算后一个事件的相对时间：
+        相对时间(n+1) = 绝对时间(n+1) - 新绝对时间(n)
+        
+        Args:
+            current_row (int): 当前行索引
+            new_current_absolute_time (int): 当前事件的新绝对时间
+        """
         next_absolute_time = self.get_next_absolute_time(current_row)
         if next_absolute_time is not None:
             next_row = current_row + 1
@@ -1150,17 +1320,34 @@ class EventManager:
                 self.events_table.setItem(next_row, 6, new_rel_item)
     
     def get_event_absolute_time(self, row):
-        """获取指定行事件的绝对时间"""
+        """获取指定行事件的绝对时间
+        
+        Args:
+            row (int): 行索引
+        
+        Returns:
+            int: 事件的绝对时间
+        """
         abs_time_item = self.events_table.item(row, 7)
         return int(abs_time_item.text()) if abs_time_item and abs_time_item.text().isdigit() else 0
     
     def update_app_state(self):
-        """更新应用状态"""
+        """更新应用状态
+        
+        更新统计信息和预计总时间。
+        """
         self.update_stats()
         self.main_window.settings_panel.on_calculate_total_time()
     
     def on_add_event(self):
-        """添加事件 - 在指定位置插入"""
+        """添加事件 - 在指定位置插入
+        
+        根据选中状态确定插入位置：
+        - 有选中事件：在第一个选中事件后插入
+        - 没有选中事件：在最后插入
+        
+        打开事件编辑对话框，用户确认后插入新事件并更新时间。
+        """
         try:
             # 获取插入位置
             selected_rows = self.get_selected_event_rows()
@@ -1253,7 +1440,11 @@ class EventManager:
             ChineseMessageBox.show_error(self.main_window, "错误", f"添加事件失败: {str(e)}")
     
     def on_edit_event(self):
-        """编辑事件"""
+        """编辑事件
+        
+        获取第一个选中的事件，打开事件编辑对话框。
+        用户确认后更新事件数据并调整时间。
+        """
         try:
             selected_rows = self.get_selected_event_rows()
             if not selected_rows:
@@ -1333,7 +1524,11 @@ class EventManager:
             ChineseMessageBox.show_error(self.main_window, "错误", f"编辑事件失败: {str(e)}")
     
     def on_delete_event(self):
-        """删除事件"""
+        """删除事件
+        
+        获取选中的事件，根据设置决定是否显示删除选项对话框。
+        执行删除操作后更新行号、统计信息和时间。
+        """
         selected_rows = self.get_selected_event_rows()
         if not selected_rows:
             self.debug_logger.log_warning("尝试删除事件但未选择事件")
@@ -1430,22 +1625,71 @@ class EventManager:
                     prev_absolute_time = int(prev_event[1]) if prev_event[1].isdigit() else 0
                 
                 if time_option == "仅修改当前事件时间":
-                    # 仅重新计算删除位置后一个事件的相对时间
-                    next_row_index = first_deleted_index
-                    if next_row_index < self.events_table.rowCount():
-                        # 获取删除位置后一个事件的原始绝对时间
-                        next_absolute_time = None
-                        for event in all_events_before_delete:
-                            if event[0].isdigit() and int(event[0]) > first_deleted_index + 1:  # 找到删除后的第一个事件
-                                next_absolute_time = int(event[1]) if event[1].isdigit() else 0
-                                break
+                    # 仅重新计算被删除事件后第一个未被删除事件的相对时间
+                    # 找出所有被删除的行号（删除前的行号，从1开始）
+                    deleted_row_nums = [row + 1 for row in selected_row_numbers]
+                    deleted_row_nums.sort()
                     
-                    if next_absolute_time is not None:
+                    # 获取删除前的事件数据，用于计算
+                    # 转换为 {行号: 绝对时间} 的映射，方便查找
+                    row_absolute_time_map = {}
+                    for event in all_events_before_delete:
+                        if event[0].isdigit():
+                            row_num = int(event[0])
+                            absolute_time = int(event[1]) if event[1].isdigit() else 0
+                            row_absolute_time_map[row_num] = absolute_time
+                    
+                    # 找出所有需要更新相对时间的行号
+                    # 这些行号是被删除事件后的第一个未被删除事件
+                    rows_to_update = []
+                    
+                    # 遍历所有被删除的行号
+                    for deleted_row_num in deleted_row_nums:
+                        # 从当前被删除行号开始向后查找，找到第一个未被删除的行
+                        next_row_num = None
+                        for row_num in range(deleted_row_num, len(all_events_before_delete) + 1):
+                            if row_num not in deleted_row_nums and row_num in row_absolute_time_map:
+                                next_row_num = row_num
+                                break
+                        
+                        # 如果找到了未被删除的行，并且不在待更新列表中，则添加到待更新列表
+                        if next_row_num is not None and next_row_num not in rows_to_update:
+                            rows_to_update.append(next_row_num)
+                    
+                    # 对需要更新的行号进行排序，确保按顺序处理
+                    rows_to_update.sort()
+                    
+                    # 更新每个需要更新的行的相对时间
+                    for next_row_num in rows_to_update:
+                        # 找出当前行之前的最后一个未被删除的行
+                        prev_row_num = None
+                        # 从当前行号开始向前查找，找到第一个未被删除的行
+                        for row_num in range(next_row_num - 1, 0, -1):
+                            if row_num not in deleted_row_nums and row_num in row_absolute_time_map:
+                                prev_row_num = row_num
+                                break
+                        
+                        # 获取前一个事件的绝对时间
+                        prev_absolute_time = 0
+                        if prev_row_num is not None:
+                            prev_absolute_time = row_absolute_time_map[prev_row_num]
+                        
+                        # 获取当前事件的绝对时间
+                        current_absolute_time = row_absolute_time_map[next_row_num]
+                        
                         # 计算新的相对时间
-                        new_relative_time = next_absolute_time - prev_absolute_time
-                        next_relative_item = QTableWidgetItem(str(new_relative_time))
-                        next_relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                        self.events_table.setItem(next_row_index, 6, next_relative_item)
+                        new_relative_time = current_absolute_time - prev_absolute_time
+                        
+                        # 计算当前行在表格中的行索引
+                        # 计算方法：当前行号 - 前面被删除的行数 - 1（因为行号从1开始，索引从0开始）
+                        deleted_rows_before = len([dr for dr in deleted_row_nums if dr < next_row_num])
+                        table_row_index = next_row_num - 1 - deleted_rows_before
+                        
+                        # 更新相对时间到表格中
+                        if table_row_index < self.events_table.rowCount():
+                            relative_item = QTableWidgetItem(str(new_relative_time))
+                            relative_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                            self.events_table.setItem(table_row_index, 6, relative_item)
                 else:
                     # 重新计算后续所有事件的绝对时间
                     self.recalculate_time_from_row(first_deleted_index)
@@ -1463,7 +1707,10 @@ class EventManager:
             self.main_window._batch_operation = False
     
     def on_copy_event(self):
-        """复制事件"""
+        """复制事件
+        
+        获取选中的事件，将事件数据复制到剪贴板。
+        """
         selected_rows = self.get_selected_event_rows()
         if selected_rows:
             self.main_window.copied_events = []
@@ -1480,7 +1727,10 @@ class EventManager:
             ChineseMessageBox.show_warning(self.main_window, "警告", "请先选择要复制的事件")
     
     def on_cut_event(self):
-        """剪切事件 - 先复制再删除"""
+        """剪切事件 - 先复制再删除
+        
+        先复制选中的事件到剪贴板，然后删除这些事件。
+        """
         try:
             selected_rows = self.get_selected_event_rows()
             if not selected_rows:
@@ -1503,7 +1753,15 @@ class EventManager:
             ChineseMessageBox.show_error(self.main_window, "错误", error_msg)
     
     def on_paste_event(self):
-        """粘贴事件"""
+        """粘贴事件
+        
+        根据选中状态确定粘贴位置：
+        - 有选中事件：在第一个选中事件后粘贴
+        - 没有选中事件：在最后粘贴
+        
+        根据设置决定是否显示粘贴选项对话框。
+        执行粘贴操作后更新行号、统计信息和时间。
+        """
         if not self.main_window.copied_events:
             self.debug_logger.log_warning("尝试粘贴但没有复制的事件")
             ChineseMessageBox.show_warning(self.main_window, "警告", "没有可粘贴的事件")
@@ -1829,13 +2087,19 @@ class EventManager:
             ChineseMessageBox.show_error(self.main_window, "错误", f"添加事件到第一个位置失败: {str(e)}")
     
     def on_select_all_events(self):
-        """全选事件"""
+        """全选事件
+        
+        选中表格中的所有事件。
+        """
         self.events_table.selectAll()
         self.main_window.status_bar.showMessage("✅ 已全选所有事件")
         self.debug_logger.log_info("已全选所有事件")
     
     def on_clear_events(self):
-        """清空所有事件"""
+        """清空所有事件
+        
+        显示确认对话框，用户确认后清空表格并更新统计信息。
+        """
         if self.events_table.rowCount() == 0:
             ChineseMessageBox.show_info(self.main_window, "提示", "事件列表已经为空")
             return

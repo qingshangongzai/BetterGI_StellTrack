@@ -1,25 +1,53 @@
 # batch_edit_dialog.py
 
+# 标准库模块导入
+# 无标准库模块导入
+
+# 第三方模块导入
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QPushButton, 
-    QTableWidget, QTableWidgetItem, QFrame, QGroupBox, QGridLayout,
-    QHeaderView, QScrollArea, QSizePolicy, QSplitter,
-    QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar,
-    QCheckBox
+    QDialog, QCheckBox, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout
 )
 
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
-from PyQt6.QtGui import QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor
-
-# 导入共享模块
-from styles import UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox, ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox, StyledDialog, DialogFactory
+# 项目模块导入
+from styles import (
+    UnifiedStyleHelper,
+    get_global_font_manager,
+    ModernGroupBox,
+    ModernLineEdit,
+    ModernComboBox,
+    ModernDoubleSpinBox,
+    StyledDialog,
+    DialogFactory,
+    ChineseMessageBox
+)
 from styles.widgets import FadeInWindowMixin
 
 
 class BatchEditDialog(FadeInWindowMixin, StyledDialog):
-    """批量编辑对话框"""
+    """批量编辑对话框，用于批量修改事件的属性
+    
+    提供以下批量编辑功能：
+    - 增减绝对时间
+    - 统一相对时间
+    - 事件类型替换
+    - 统一坐标
+    
+    Args:
+        parent: 父窗口组件
+        selected_rows: 选中的行列表
+        events_table: 事件表格控件
+    """
     
     def __init__(self, parent=None, selected_rows=None, events_table=None):
+        """初始化批量编辑对话框
+        
+        Args:
+            parent: 父窗口组件
+            selected_rows: 选中的行列表
+            events_table: 事件表格控件
+        """
         super().__init__(parent)
         self.selected_rows = selected_rows or []
         self.events_table = events_table
@@ -27,7 +55,14 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.setup_ui()
     
     def setup_ui(self):
-        """设置UI界面"""
+        """设置UI界面
+        
+        创建批量编辑对话框的界面布局，包括：
+        - 标题区域
+        - 操作选项组（增减偏移时间、统一相对时间、事件类型替换、统一坐标）
+        - 提示信息
+        - 按钮区域
+        """
         self.setWindowTitle("批量编辑事件")
         self.setFixedSize(500, 400)
         
@@ -274,7 +309,13 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         self.setLayout(layout)
     
     def get_offset_adjustment(self):
-        """获取偏移调整值（转换为毫秒）"""
+        """获取偏移调整值（转换为毫秒）
+        
+        根据用户选择的时间单位，将偏移时间转换为毫秒。
+        
+        Returns:
+            int: 偏移调整值（毫秒）
+        """
         offset = self.offset_input.value()
         time_unit = self.offset_time_unit_combo.currentText()
         
@@ -289,7 +330,13 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         return int(offset_ms)
     
     def get_unified_rel_time(self):
-        """获取统一相对时间值（转换为毫秒）"""
+        """获取统一相对时间值（转换为毫秒）
+        
+        根据用户选择的时间单位，将统一相对时间转换为毫秒。
+        
+        Returns:
+            int: 统一相对时间值（毫秒）
+        """
         rel_time = self.rel_time_input.value()
         time_unit = self.rel_time_unit_combo.currentText()
         
@@ -304,7 +351,15 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         return int(rel_time_ms)
     
     def get_type_replacement(self):
-        """获取类型替换信息"""
+        """获取类型替换信息
+        
+        获取用户选择的事件类型替换信息，包括旧类型和新类型。
+        如果用户选择"不替换类型"，则返回None。
+        
+        Returns:
+            tuple: ((old_type, old_keycode), (new_type, new_keycode))
+                    如果选择"不替换类型"，则返回 (None, None)
+        """
         old_type_text = self.old_type_combo.currentText()
         new_type_text = self.new_type_combo.currentText()
         
@@ -332,7 +387,17 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         return (old_type, old_keycode), (new_type, new_keycode)
     
     def get_unified_coordinates(self):
-        """获取统一坐标值和应用标志"""
+        """获取统一坐标值和应用标志
+        
+        获取用户选择的统一坐标值和是否应用标志。
+        如果坐标输入无效，则使用默认值0。
+        
+        Returns:
+            tuple: (apply_coords, x, y)
+                    apply_coords: 是否应用统一坐标（bool）
+                    x: X坐标值（int）
+                    y: Y坐标值（int）
+        """
         apply_coords = self.unified_coords_checkbox.isChecked()
         
         try:

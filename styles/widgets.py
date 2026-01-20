@@ -1,9 +1,14 @@
+# 标准库模块导入
 import os
-import weakref
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent, QRectF, QPropertyAnimation
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QColor, QStandardItemModel, QStandardItem, QPainterPath, QPen, QRegion, QBitmap, QImage
-from PyQt6.QtWidgets import QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QMessageBox, QListView, QPushButton, QWidget, QDialog, QMainWindow, QHBoxLayout, QVBoxLayout, QLabel, QMenu, QMenuBar
 
+# PyQt6模块导入
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QRectF, QPropertyAnimation
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QPainterPath, QPen, QRegion, QBitmap
+from PyQt6.QtWidgets import (QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox,
+                           QListView, QPushButton, QWidget, QDialog, QMainWindow,
+                           QMenu, QMenuBar)
+
+# 项目模块导入
 from .themes import UnifiedStyleHelper, COLORS, SHADOWS
 from .fonts import get_global_font_manager
 from utils import fix_windows_taskbar_icon_for_window
@@ -15,6 +20,7 @@ class StyledWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.font_manager = get_global_font_manager()
+
 
 
 class TitleBarThemeMixin:
