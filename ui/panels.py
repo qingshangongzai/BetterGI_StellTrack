@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 
 # 项目模块导入
 from dialogs.debug_tools import get_global_debug_logger
+from utils import convert_time_to_ms
 from styles import (
     AnimatedDialog,
     ChineseMessageBox,
@@ -406,13 +407,7 @@ class SettingsPanel(QWidget):
 
             interval = self.interval_input.value()
             time_unit = self.time_unit_combo.currentText()
-
-            if time_unit == "s":
-                interval_ms = interval * 1000
-            elif time_unit == "min":
-                interval_ms = interval * 60000
-            else:
-                interval_ms = interval
+            interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = single_loop_time_ms * loop_count + interval_ms * (loop_count - 1)
 
@@ -719,12 +714,7 @@ class StatsPanel(QWidget):
             interval = settings_panel.interval_input.value()
 
             time_unit = settings_panel.time_unit_combo.currentText()
-            if time_unit == "s":
-                interval_ms = interval * 1000
-            elif time_unit == "min":
-                interval_ms = interval * 60000
-            else:
-                interval_ms = interval
+            interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = self.calculate_total_time_ms(single_loop_time_ms, loop_count, interval_ms)
 

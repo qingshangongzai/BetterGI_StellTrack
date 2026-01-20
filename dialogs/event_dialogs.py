@@ -27,7 +27,7 @@ from styles import (
     ChineseMessageBox,
     DialogFactory
 )
-from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file
+from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file, convert_time_to_ms
 
 # =============================================================================
 # 事件编辑对话框相关组件
@@ -737,13 +737,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         try:
             # 获取相对时间并转换为毫秒
             relative_time = self.time_edit.value()
-            
-            # 转换时间单位为毫秒
             time_unit = self.time_unit_combo.currentText()
-            if time_unit == "s":
-                relative_time *= 1000
-            elif time_unit == "min":
-                relative_time *= 60000
+            relative_time_ms = convert_time_to_ms(relative_time, time_unit)
             
             return (
                 self.name_edit.text(),
@@ -751,7 +746,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                str(relative_time)  # 确保返回的是毫秒
+                str(relative_time_ms)  # 确保返回的是毫秒
             )
         except ValueError:
             # 如果转换失败，返回默认值
@@ -1013,14 +1008,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             # 获取当前事件的相对时间（转换为ms）
             relative_time = self.time_edit.value()
             time_unit = self.time_unit_combo.currentText()
-            
-            if time_unit == "s":
-                relative_time *= 1000
-            elif time_unit == "min":
-                relative_time *= 60000
+            relative_time_ms = convert_time_to_ms(relative_time, time_unit)
             
             # 计算绝对偏移时间：前面事件累计时间 + 当前事件相对时间
-            absolute_offset = self.prev_absolute_time + relative_time
+            absolute_offset = self.prev_absolute_time + relative_time_ms
             
             return absolute_offset
         except Exception:

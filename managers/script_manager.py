@@ -34,7 +34,8 @@ from utils import (
     get_script_default_dir,
     load_icon_universal,
     get_current_app_info,
-    generate_key_event_name
+    generate_key_event_name,
+    convert_time_to_ms
 )
 from dialogs.debug_tools import get_global_debug_logger
 
@@ -233,15 +234,8 @@ class GenerateScriptThread(QThread):
             
             # 获取间隔时间
             interval = self.main_window.settings_panel.interval_input.value()
-            
-            # 转换时间单位为毫秒
             time_unit = self.main_window.settings_panel.time_unit_combo.currentText()
-            if time_unit == "s":
-                interval_ms = int(interval * 1000)
-            elif time_unit == "min":
-                interval_ms = int(interval * 60000)
-            else:  # ms
-                interval_ms = int(interval)
+            interval_ms = convert_time_to_ms(interval, time_unit)
             
             # 报告开始生成循环事件
             self.progress_updated.emit(20, "正在生成循环事件...")

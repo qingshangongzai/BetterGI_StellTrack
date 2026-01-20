@@ -23,7 +23,7 @@ from styles import (
     ChineseMessageBox
 )
 from styles.widgets import FadeInWindowMixin
-from utils import KEY_PRESS_EVENTS
+from utils import KEY_PRESS_EVENTS, convert_time_to_ms
 
 
 class BatchEditDialog(FadeInWindowMixin, StyledDialog):
@@ -320,15 +320,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         offset = self.offset_input.value()
         time_unit = self.offset_time_unit_combo.currentText()
         
-        # 根据时间单位转换为毫秒
-        if time_unit == "s":
-            offset_ms = offset * 1000
-        elif time_unit == "min":
-            offset_ms = offset * 60000
-        else:  # ms
-            offset_ms = offset
-            
-        return int(offset_ms)
+        return convert_time_to_ms(offset, time_unit)
     
     def get_unified_rel_time(self):
         """获取统一相对时间值（转换为毫秒）
@@ -341,15 +333,7 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         rel_time = self.rel_time_input.value()
         time_unit = self.rel_time_unit_combo.currentText()
         
-        # 根据时间单位转换为毫秒
-        if time_unit == "s":
-            rel_time_ms = rel_time * 1000
-        elif time_unit == "min":
-            rel_time_ms = rel_time * 60000
-        else:  # ms
-            rel_time_ms = rel_time
-            
-        return int(rel_time_ms)
+        return convert_time_to_ms(rel_time, time_unit)
     
     def get_type_replacement(self):
         """获取类型替换信息
