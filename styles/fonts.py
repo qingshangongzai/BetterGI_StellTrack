@@ -1,10 +1,22 @@
+# 标准库模块导入
 import os
+
+# 第三方模块导入
 from PyQt6.QtGui import QFont, QFontDatabase
+
+# 项目模块导入
 from utils import find_resource_file
 
 
 class GlobalFontManager:
-    """全局字体管理器 - 专门负责字体的加载和管理"""
+    """全局字体管理器，专门负责字体的加载和管理
+
+    单例模式，确保全局只有一个字体管理器实例。
+    提供以下功能：
+    - 加载和管理得意黑字体
+    - 加载和管理思源宋体字体
+    - 检查字体可用性
+    """
 
     _instance = None
     _smiley_font_loaded = False
@@ -14,6 +26,11 @@ class GlobalFontManager:
 
     @classmethod
     def get_instance(cls):
+        """获取全局字体管理器单例实例
+
+        Returns:
+            GlobalFontManager: 字体管理器单例实例
+        """
         if cls._instance is None:
             cls._instance = GlobalFontManager()
         return cls._instance
@@ -23,7 +40,11 @@ class GlobalFontManager:
         pass
 
     def _load_smiley_font(self):
-        """加载得意黑字体"""
+        """加载得意黑字体
+
+        Returns:
+            bool: 是否成功加载字体
+        """
         try:
             font_files = ["SmileySans-Oblique.ttf"]
             for font_file in font_files:
@@ -44,12 +65,20 @@ class GlobalFontManager:
             print("全局字体管理器：未找到得意黑字体文件，将使用备用字体")
             return False
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             print(f"全局字体管理器：加载得意黑字体时出错: {e}")
             return False
 
     def get_smiley_font(self, size=12, weight=QFont.Weight.Normal):
-        """获取得意黑字体"""
+        """获取得意黑字体
+
+        Args:
+            size (int): 字体大小，默认为12
+            weight (QFont.Weight): 字体粗细，默认为Normal
+
+        Returns:
+            QFont: 得意黑字体对象，如果加载失败则返回备用字体
+        """
         if not self._smiley_font_loaded:
             self._load_smiley_font()
 
@@ -63,7 +92,11 @@ class GlobalFontManager:
         return font
 
     def _load_source_han_font(self):
-        """加载SourceHanSerifCN-Regular-1.otf字体"""
+        """加载SourceHanSerifCN-Regular-1.otf字体
+
+        Returns:
+            bool: 是否成功加载字体
+        """
         try:
             font_files = ["SourceHanSerifCN-Regular-1.otf"]
             for font_file in font_files:
@@ -84,12 +117,20 @@ class GlobalFontManager:
             print("全局字体管理器：未找到思源宋体字体文件，将使用备用字体")
             return False
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             print(f"全局字体管理器：加载思源宋体字体时出错: {e}")
             return False
 
     def get_source_han_font(self, size=12, weight=QFont.Weight.Normal):
-        """获取思源宋体字体"""
+        """获取思源宋体字体
+
+        Args:
+            size (int): 字体大小，默认为12
+            weight (QFont.Weight): 字体粗细，默认为Normal
+
+        Returns:
+            QFont: 思源宋体字体对象，如果加载失败则返回备用字体
+        """
         if not self._source_han_loaded:
             self._load_source_han_font()
 
@@ -103,18 +144,30 @@ class GlobalFontManager:
         return font
 
     def is_source_han_font_available(self):
-        """检查思源宋体字体是否可用"""
+        """检查思源宋体字体是否可用
+
+        Returns:
+            bool: 思源宋体字体是否可用
+        """
         if not self._source_han_loaded:
             self._load_source_han_font()
         return self._source_han_loaded
 
     def is_smiley_font_available(self):
-        """检查得意黑字体是否可用"""
+        """检查得意黑字体是否可用
+
+        Returns:
+            bool: 得意黑字体是否可用
+        """
         if not self._smiley_font_loaded:
             self._load_smiley_font()
         return self._smiley_font_loaded
 
 
 def get_global_font_manager():
-    """获取全局字体管理器实例"""
+    """获取全局字体管理器实例
+
+    Returns:
+        GlobalFontManager: 字体管理器单例实例
+    """
     return GlobalFontManager.get_instance()

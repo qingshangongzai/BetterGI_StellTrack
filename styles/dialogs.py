@@ -1,19 +1,27 @@
+# 标准库模块导入
+# 无标准库模块导入
+
+# 第三方模块导入
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
 
+# 项目模块导入
 from .themes import UnifiedStyleHelper
 from .widgets import FadeInWindowMixin, TitleBarThemeMixin, ModernButton
 from utils import load_icon_universal
 
 
 class DialogFactory:
-    """对话框UI组件工厂，封装重复的UI创建模式"""
+    """对话框UI组件工厂，封装重复的UI创建模式
+
+    提供统一的对话框按钮布局创建方法，确保对话框样式的一致性。
+    """
 
     @staticmethod
     def create_ok_cancel_buttons(parent, on_ok, on_cancel, ok_text="确定", cancel_text="取消", button_class=None):
         """创建确定和取消按钮布局
 
-        参数:
+        Args:
             parent: 父窗口组件
             on_ok: 确定按钮点击事件处理函数
             on_cancel: 取消按钮点击事件处理函数
@@ -21,7 +29,7 @@ class DialogFactory:
             cancel_text: 取消按钮文本，默认为"取消"
             button_class: 自定义按钮类，默认为None（使用ModernButton）
 
-        返回:
+        Returns:
             QHBoxLayout: 包含确定和取消按钮的水平布局
         """
         button_layout = QHBoxLayout()
@@ -49,12 +57,12 @@ class DialogFactory:
     def create_close_button(parent, on_close, text="关闭"):
         """创建关闭按钮布局
 
-        参数:
+        Args:
             parent: 父窗口组件
             on_close: 关闭按钮点击事件处理函数
             text: 关闭按钮文本，默认为"关闭"
 
-        返回:
+        Returns:
             QHBoxLayout: 包含关闭按钮的水平布局
         """
         button_layout = QHBoxLayout()
@@ -73,18 +81,47 @@ class DialogFactory:
 
 
 class AnimatedDialog(FadeInWindowMixin, TitleBarThemeMixin, QDialog):
-    """带淡入淡出动画的基础对话框"""
+    """带淡入淡出动画的基础对话框
+
+    继承自 FadeInWindowMixin 和 TitleBarThemeMixin，提供：
+    - 窗口打开/关闭时的淡入淡出动画
+    - Windows 标题栏深色/浅色模式自动切换支持
+
+    Args:
+        parent: 父窗口组件
+    """
 
     def __init__(self, parent=None):
+        """初始化带动画的对话框
+
+        Args:
+            parent: 父窗口组件
+        """
         super().__init__(parent)
 
 
 class ChineseMessageBox:
-    """自定义消息框，确保按钮显示中文"""
+    """自定义消息框，确保按钮显示中文
+
+    提供统一的对话框样式和中文按钮文本，包括：
+    - 警告消息框
+    - 错误消息框
+    - 信息消息框
+    - 询问消息框
+    """
 
     @staticmethod
     def show_warning(parent, title, message):
-        """显示警告消息"""
+        """显示警告消息
+
+        Args:
+            parent: 父窗口组件
+            title: 对话框标题
+            message: 警告消息内容
+
+        Returns:
+            bool: 用户是否点击了确定按钮
+        """
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
@@ -119,7 +156,13 @@ class ChineseMessageBox:
 
     @staticmethod
     def show_error(parent, title, message):
-        """显示错误消息"""
+        """显示错误消息
+
+        Args:
+            parent: 父窗口组件
+            title: 对话框标题
+            message: 错误消息内容
+        """
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
@@ -153,7 +196,13 @@ class ChineseMessageBox:
 
     @staticmethod
     def show_info(parent, title, message):
-        """显示信息消息"""
+        """显示信息消息
+
+        Args:
+            parent: 父窗口组件
+            title: 对话框标题
+            message: 信息消息内容
+        """
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
@@ -187,7 +236,16 @@ class ChineseMessageBox:
 
     @staticmethod
     def show_question(parent, title, message):
-        """显示询问消息"""
+        """显示询问消息
+
+        Args:
+            parent: 父窗口组件
+            title: 对话框标题
+            message: 询问消息内容
+
+        Returns:
+            bool: 用户是否点击了"是"按钮
+        """
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
