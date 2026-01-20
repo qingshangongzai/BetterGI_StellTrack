@@ -6,6 +6,7 @@ import os
 import json
 import ctypes
 import time
+import traceback
 from datetime import datetime
 
 # PyQt6模块导入
@@ -172,7 +173,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             error_msg = f"主窗口初始化错误: {e}"
             self.debug_logger.log_error(error_msg, exc_info=True)
             print(error_msg)
-            import traceback
             traceback.print_exc()
 
     

@@ -608,7 +608,6 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"设置密码对话框UI失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
     
     def verify_password(self):
@@ -630,7 +629,6 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"验证密码失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
             # 显示通用错误消息
             ChineseMessageBox.show_error(self, "错误", "验证过程中发生错误，请重试。")
@@ -689,7 +687,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"初始化调试窗口失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
         
     def setup_ui(self):
@@ -731,7 +728,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"设置调试窗口UI失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
             # 确保状态标志设置为False
             self._is_initialized = False
@@ -797,7 +793,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"创建应用信息区域失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
     
     def create_file_info_section(self, parent_layout):
@@ -859,7 +854,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"创建日志文件信息区域失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
     
     def create_log_display_section(self, parent_layout):
@@ -893,7 +887,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"创建日志显示区域失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
     
     def create_operation_buttons(self, parent_layout):
@@ -965,7 +958,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         except Exception as e:
             print(f"创建操作按钮区域失败: {e}")
             # 记录异常详情
-            import traceback
             traceback.print_exc()
     
     def create_test_functions(self, parent_layout):

@@ -4,6 +4,7 @@ import os
 import sys
 import threading
 import time
+import traceback
 
 # 第三方模块导入
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
@@ -349,7 +350,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 应用程序初始化失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
             
@@ -404,7 +404,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 设置全局样式失败: {e}")
-            import traceback
             traceback.print_exc()
     
     def _setup_windows_specific_features(self):
@@ -432,12 +431,10 @@ class BetterGIApplication:
             return True
         except ImportError as e:
             print(f"[DEBUG] 导入debug_tools模块失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
         except Exception as e:
             print(f"[DEBUG] 初始化全局日志系统失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -466,7 +463,6 @@ class BetterGIApplication:
                     self.debug_logger.log_error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
                 else:
                     print(f"[ERROR] {error_msg}")
-                    import traceback
                     traceback.print_tb(exc_traceback)
                     
             # 设置全局异常钩子
@@ -476,7 +472,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 设置全局异常处理器失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -491,7 +486,6 @@ class BetterGIApplication:
             print("[DEBUG] 应用程序监控器已启动")
         except Exception as e:
             print(f"[DEBUG] 初始化应用监控器失败: {e}")
-            import traceback
             traceback.print_exc()
             # 监控器初始化失败不影响主程序运行
     
@@ -528,14 +522,12 @@ class BetterGIApplication:
             
         except ImportError as e:
             print(f"[DEBUG] 导入用户协议模块失败: {e}")
-            import traceback
             traceback.print_exc()
             # 导入失败时默认允许继续使用
             return True
             
         except Exception as e:
             print(f"[DEBUG] 检查用户协议时发生错误: {e}")
-            import traceback
             traceback.print_exc()
             # 其他异常时默认允许继续使用
             return True
@@ -569,12 +561,10 @@ class BetterGIApplication:
             
         except ImportError as e:
             print(f"[DEBUG] 导入主窗口模块失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
         except Exception as e:
             print(f"[DEBUG] 创建主窗口失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -603,7 +593,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 显示主窗口失败: {e}")
-            import traceback
             traceback.print_exc()
             
             # 记录错误到日志
@@ -658,7 +647,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 运行应用程序时出错: {e}")
-            import traceback
             traceback.print_exc()
             
             # 记录错误信息
@@ -730,7 +718,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 清理应用程序资源时发生错误: {e}")
-            import traceback
             traceback.print_exc()
 
 # =============================================================================
