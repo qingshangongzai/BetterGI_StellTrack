@@ -505,13 +505,14 @@ def load_icon_exe_safe():
 
 
 # =============================================================================
-# 资源管理器 - 从styles.py迁移
+# 资源管理器
 # =============================================================================
 
 # 资源文件搜索路径缓存
 _search_paths_cache = None
 _base_path_cache = None
 _file_find_cache = {}
+_icon_cache = {}
 
 def _build_search_paths(base_path):
     """构建资源文件搜索路径列表
@@ -717,15 +718,26 @@ def load_icon_universal():
 
     Note:
         尝试加载 logo.ico 和 logo.png，如果都失败则创建后备图标
+        使用缓存机制避免重复加载，提升性能
     """
+    global _icon_cache
+
+    # 检查缓存
+    if "app_icon" in _icon_cache:
+        return _icon_cache["app_icon"]
+
     # 尝试多种图标格式和路径
     for icon_file in ICON_FILES:
         icon_path = find_resource_file(icon_file)
         if icon_path and os.path.exists(icon_path):
-            return QIcon(icon_path)
+            icon = QIcon(icon_path)
+            _icon_cache["app_icon"] = icon
+            return icon
 
     # 创建后备图标
-    return create_fallback_icon()
+    fallback_icon = create_fallback_icon()
+    _icon_cache["app_icon"] = fallback_icon
+    return fallback_icon
 
 def load_logo(logo_size=(60, 60)):
     """统一的Logo加载函数，适用于所有环境
