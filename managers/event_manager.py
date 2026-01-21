@@ -519,63 +519,9 @@ class EventManager:
                 f"color: {helper.COLORS['text']}; font-size: 12px;"
             )
         if hasattr(self, "search_input") and self.search_input is not None:
-            # 直接创建样式，确保使用当前主题的颜色值
-            line_edit_style = f""
-            line_edit_style += f"QLineEdit {{ "
-            line_edit_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            line_edit_style += f"    border-radius: 8px; "
-            line_edit_style += f"    padding: 6px 8px; "
-            line_edit_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            line_edit_style += f"    color: {helper.COLORS['text']}; "
-            line_edit_style += f"    font-size: 11px; "
-            line_edit_style += f"    selection-background-color: {helper.COLORS['primary']}; "
-            line_edit_style += f"}} "
-            line_edit_style += f"QLineEdit:focus {{ "
-            line_edit_style += f"    border-color: {helper.COLORS['primary']}; "
-            line_edit_style += f"}} "
-            line_edit_style += f"QLineEdit:hover {{ "
-            line_edit_style += f"    border-color: #a0a0a0; "
-            line_edit_style += f"}} "
-            self.search_input.setStyleSheet(line_edit_style)
+            self.search_input.setStyleSheet(helper.get_line_edit_style())
         if hasattr(self, "filter_type_combo") and self.filter_type_combo is not None:
-            # 直接创建样式，确保使用当前主题的颜色值
-            combo_style = f""
-            combo_style += f"QComboBox {{ "
-            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            combo_style += f"    border-radius: 8px; "
-            combo_style += f"    padding: 6px 8px; "
-            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            combo_style += f"    color: {helper.COLORS['text']}; "
-            combo_style += f"    font-size: 11px; "
-            combo_style += f"    min-width: 80px; "
-            combo_style += f"    text-align: center; "
-            combo_style += f"    padding-left: 15px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox::drop-down {{ "
-            combo_style += f"    border: none; "
-            combo_style += f"    width: 20px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox::down-arrow {{ "
-            combo_style += f"    width: 12px; "
-            combo_style += f"    height: 12px; "
-            combo_style += f"    border: none; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox QAbstractItemView {{ "
-            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            combo_style += f"    border-radius: 8px; "
-            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            combo_style += f"    selection-background-color: {helper.COLORS['primary']}; "
-            combo_style += f"    selection-color: white; "
-            combo_style += f"    font-size: 11px; "
-            combo_style += f"    padding: 4px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox:hover {{ "
-            combo_style += f"    border-color: #a0a0a0; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox:focus {{ "
-            combo_style += f"    border-color: {helper.COLORS['primary']}; "
-            combo_style += f"}} "
-            self.filter_type_combo.setStyleSheet(combo_style)
+            self.filter_type_combo.setStyleSheet(helper.get_combo_box_style())
         if hasattr(self, "search_btn") and self.search_btn is not None:
             self.search_btn.setStyleSheet(helper.get_button_style(accent=True))
         if hasattr(self, "reset_btn") and self.reset_btn is not None:
