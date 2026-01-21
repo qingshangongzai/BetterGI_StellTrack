@@ -28,6 +28,7 @@ from utils import (
     MOUSE_EVENTS,
     check_event_pairing,
     check_simultaneous_events,
+    check_simultaneous_events_strict,
     convert_event_type_num_to_str,
     convert_event_type_str_to_num,
     get_event_data_from_table,
@@ -343,11 +344,12 @@ class CheckEventPairingThread(QThread):
     # 信号定义
     pairing_check_complete = pyqtSignal(bool, list)  # 检查完成信号
     
-    def __init__(self, events_table, check_pairing=True, check_simultaneous=True):
+    def __init__(self, events_table, check_pairing=True, check_simultaneous=True, check_simultaneous_mode='strict'):
         super().__init__()
         self.events_table = events_table
         self.check_pairing = check_pairing
         self.check_simultaneous = check_simultaneous
+        self.check_simultaneous_mode = check_simultaneous_mode
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
@@ -359,7 +361,12 @@ class CheckEventPairingThread(QThread):
             issues.extend(pairing_issues)
         
         if self.check_simultaneous:
-            simultaneous_issues = check_simultaneous_events(self.events_table)
+            # 根据模式选择检查函数
+            if self.check_simultaneous_mode == 'strict':
+                simultaneous_issues = check_simultaneous_events_strict(self.events_table)
+            else:
+                simultaneous_issues = check_simultaneous_events(self.events_table)
+            
             if issues and simultaneous_issues:
                 issues.append("")
             issues.extend(simultaneous_issues)
@@ -486,12 +493,14 @@ class ScriptManager:
             # 获取事件检查设置
             check_pairing = self.main_window.menu_manager.get_check_pairing()
             check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+            check_simultaneous_mode = self.main_window.menu_manager.get_check_simultaneous_mode()
             
             # 创建并启动事件检查线程
             self.check_pairing_thread = CheckEventPairingThread(
                 event_manager.events_table,
                 check_pairing=check_pairing,
-                check_simultaneous=check_simultaneous
+                check_simultaneous=check_simultaneous,
+                check_simultaneous_mode=check_simultaneous_mode
             )
             self.check_pairing_thread.pairing_check_complete.connect(self.on_pairing_check_complete)
             self.check_pairing_thread.start()
@@ -631,6 +640,7 @@ class ScriptManager:
         # 获取事件检查设置
         check_pairing = self.main_window.menu_manager.get_check_pairing()
         check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+        check_simultaneous_mode = self.main_window.menu_manager.get_check_simultaneous_mode()
         
         issues = []
         
@@ -639,7 +649,12 @@ class ScriptManager:
             issues.extend(pairing_issues)
         
         if check_simultaneous:
-            simultaneous_issues = check_simultaneous_events(event_manager.events_table)
+            # 根据模式选择检查函数
+            if check_simultaneous_mode == 'strict':
+                simultaneous_issues = check_simultaneous_events_strict(event_manager.events_table)
+            else:
+                simultaneous_issues = check_simultaneous_events(event_manager.events_table)
+            
             if issues and simultaneous_issues:
                 issues.append("")
             issues.extend(simultaneous_issues)

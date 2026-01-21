@@ -958,7 +958,7 @@ def check_simultaneous_events(events_table):
         list: 包含检查出的问题的列表
 
     Note:
-        检查同一时间存在多个事件的问题
+        检查同一时间存在多个事件的问题（宽松模式）
     """
     time_issues = []
     absolute_time_events = {}
@@ -976,6 +976,44 @@ def check_simultaneous_events(events_table):
             time_issues.append(f"在同一时间内{row_str}被同时执行")
 
     return time_issues
+
+
+def check_simultaneous_events_strict(events_table):
+    """检查同时执行事件（仅同类型）
+
+    Args:
+        events_table: 事件表格对象
+
+    Returns:
+        list: 包含检查出的问题的列表
+
+    Note:
+        检查同一时间下存在同一类型动作的问题
+        只在对同一时间下存在同一类型动作视为同时执行
+    """
+    time_issues = {}
+    for row in range(events_table.rowCount()):
+        abs_time_item = events_table.item(row, 7)
+        event_type_item = events_table.item(row, 2)
+        
+        if abs_time_item and abs_time_item.text() and event_type_item and event_type_item.text():
+            abs_time = abs_time_item.text()
+            event_type = event_type_item.text()
+            
+            # 使用 (时间, 事件类型) 作为键
+            key = (abs_time, event_type)
+            if key not in time_issues:
+                time_issues[key] = []
+            time_issues[key].append(row + 1)
+
+    # 筛选出同一时间下同一类型动作超过1个的情况
+    result = []
+    for (abs_time, event_type), row_numbers in time_issues.items():
+        if len(row_numbers) > 1:
+            row_str = "和".join([f"第{num}行" for num in row_numbers])
+            result.append(f"在同一时间内{row_str}的{event_type}被同时执行")
+
+    return result
 
 
 def set_window_title_bar_theme(window, is_dark=False):

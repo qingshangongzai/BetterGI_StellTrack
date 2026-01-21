@@ -103,6 +103,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         # 事件检查设置初始化
         self.check_pairing = True  # 检查事件成对性
         self.check_simultaneous = True  # 检查同时执行
+        self.check_simultaneous_mode = 'strict'  # 同时执行检查模式（strict=严格模式，loose=宽松模式）
 
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()
