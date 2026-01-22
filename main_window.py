@@ -488,8 +488,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         scroll_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
 
         container = QWidget()
-        container.setMinimumWidth(250)  # 增加最小宽度，确保控件正常显示
-        container.setMaximumWidth(450)
+        container.setMinimumWidth(250)
         container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 
