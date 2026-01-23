@@ -12,7 +12,8 @@ from datetime import datetime
 # 第三方模块导入
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter
+from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter, QScreen
+from PyQt6.QtWidgets import QApplication
 
 # 项目模块导入
 from version import version_manager
@@ -1087,3 +1088,56 @@ def set_window_title_bar_theme(window, is_dark=False):
     except Exception as e:
         print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")
         return False
+
+
+def calculate_adaptive_height(base_height, parent_window=None):
+    """计算自适应窗口/对话框高度，考虑DPI缩放和屏幕可用空间
+    
+    Args:
+        base_height (int): 基础高度（100% DPI下的理想高度）
+        parent_window (QWidget): 父窗口实例，用于获取DPI信息
+    
+    Returns:
+        int: 计算得出的窗口/对话框高度
+    """
+    try:
+        # 获取系统DPI缩放比例
+        scale_percent = 100  # 默认值
+        
+        # 尝试从父窗口获取DPI信息
+        if parent_window and hasattr(parent_window, 'settings_panel'):
+            try:
+                settings_panel = parent_window.settings_panel
+                if settings_panel:
+                    scale_text = settings_panel.scale_combo.currentText()
+                    scale_percent = int(scale_text.strip('%'))
+            except Exception:
+                scale_percent = 100
+        
+        # 获取主屏幕信息
+        screen = QApplication.primaryScreen()
+        if not screen:
+            return base_height  # 返回基础高度
+        
+        # 获取屏幕可用几何尺寸（排除任务栏）
+        available_geometry = screen.availableGeometry()
+        screen_height = available_geometry.height()
+        
+        # 根据DPI缩放调整基础高度
+        dpi_factor = scale_percent / 100.0
+        scaled_height = int(base_height * dpi_factor)
+        
+        # 设置最大高度为屏幕高度的85%，确保窗口不会占满整个屏幕
+        max_height = int(screen_height * 0.85)
+        
+        # 设置最小高度，确保UI可用性
+        min_height = int(base_height * 0.5)
+        
+        # 计算最终高度
+        final_height = min(max(scaled_height, min_height), max_height)
+        
+        return final_height
+        
+    except Exception as e:
+        # 如果计算失败，返回基础高度
+        return base_height

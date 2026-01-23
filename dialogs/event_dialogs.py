@@ -27,7 +27,7 @@ from styles import (
     ChineseMessageBox,
     DialogFactory
 )
-from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file, convert_time_to_ms
+from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file, convert_time_to_ms, calculate_adaptive_height
 
 # =============================================================================
 # 事件编辑对话框相关组件
@@ -248,7 +248,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         try:
             # 计算自适应对话框高度
-            adaptive_height = self.calculate_adaptive_dialog_height()
+            adaptive_height = calculate_adaptive_height(830, self.parent())
             
             # 设置最小尺寸和大小策略
             self.setMinimumSize(605, 415)  # 最小高度为原来的1/2
@@ -268,57 +268,6 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             
         except (OSError, ValueError) as e:
             pass
-
-    def calculate_adaptive_dialog_height(self):
-        """计算自适应对话框高度，考虑DPI缩放和屏幕可用空间
-        
-        Returns:
-            int: 计算得出的对话框高度
-        """
-        try:
-            # 获取系统DPI缩放比例
-            scale_percent = 100  # 默认值
-            
-            # 尝试从父窗口获取DPI信息
-            if self.parent() and hasattr(self.parent(), 'settings_panel'):
-                try:
-                    settings_panel = self.parent().settings_panel
-                    if settings_panel:
-                        scale_text = settings_panel.scale_combo.currentText()
-                        scale_percent = int(scale_text.strip('%'))
-                except Exception:
-                    scale_percent = 100
-            
-            # 获取主屏幕信息
-            screen = QApplication.primaryScreen()
-            if not screen:
-                return 830  # 默认高度
-            
-            # 获取屏幕可用几何尺寸（排除任务栏）
-            available_geometry = screen.availableGeometry()
-            screen_height = available_geometry.height()
-            
-            # 基础高度（100% DPI下的理想高度）
-            base_height = 830
-            
-            # 根据DPI缩放调整基础高度
-            dpi_factor = scale_percent / 100.0
-            scaled_height = int(base_height * dpi_factor)
-            
-            # 设置最大高度为屏幕高度的85%，确保对话框不会占满整个屏幕
-            max_height = int(screen_height * 0.85)
-            
-            # 设置最小高度，确保UI可用性
-            min_height = 415
-            
-            # 计算最终高度
-            final_height = min(max(scaled_height, min_height), max_height)
-            
-            return final_height
-            
-        except Exception as e:
-            # 如果计算失败，返回默认高度
-            return 830  # 默认高度
 
     def setup_ui(self):
         """设置UI界面

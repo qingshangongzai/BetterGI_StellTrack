@@ -37,7 +37,7 @@ from utils import (
     VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
     convert_event_type_num_to_str_with_button, generate_key_event_name,
     load_icon_universal, load_logo, get_current_version,
-    get_current_app_info, get_user_data_dir
+    get_current_app_info, get_user_data_dir, calculate_adaptive_height
 )
 
 # 导入对话框模块
@@ -131,7 +131,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.setMinimumSize(1100, 500)
             
             # 计算自适应窗口高度
-            adaptive_height = self.calculate_adaptive_window_height()
+            adaptive_height = calculate_adaptive_height(790, self)
             self.resize(1200, adaptive_height)
 
             # 设置窗口图标 - 在应用程序创建后立即设置
@@ -189,68 +189,6 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 
-    def calculate_adaptive_window_height(self):
-        """计算自适应窗口高度，考虑DPI缩放和屏幕可用空间
-        
-        Returns:
-            int: 计算得出的窗口高度
-        """
-        try:
-            # 获取系统DPI缩放比例
-            scale_percent = 100  # 默认值
-            
-            # 尝试从设置面板获取DPI信息
-            if hasattr(self, 'settings_panel') and self.settings_panel:
-                try:
-                    scale_text = self.settings_panel.scale_combo.currentText()
-                    scale_percent = int(scale_text.strip('%'))
-                except Exception:
-                    # 如果获取失败，使用get_system_scale方法
-                    try:
-                        scale_text = self.settings_panel.get_system_scale()
-                        scale_percent = int(scale_text.strip('%'))
-                    except Exception:
-                        scale_percent = 100
-            
-            # 获取主屏幕信息
-            screen = QApplication.primaryScreen()
-            if not screen:
-                return 790  # 默认高度
-            
-            # 获取屏幕可用几何尺寸（排除任务栏）
-            available_geometry = screen.availableGeometry()
-            screen_height = available_geometry.height()
-            
-            # 基础高度（100% DPI下的理想高度）
-            base_height = 790
-            
-            # 根据DPI缩放调整基础高度
-            dpi_factor = scale_percent / 100.0
-            scaled_height = int(base_height * dpi_factor)
-            
-            # 设置最大高度为屏幕高度的85%，确保窗口不会占满整个屏幕
-            max_height = int(screen_height * 0.85)
-            
-            # 设置最小高度，确保UI可用性
-            min_height = 500
-            
-            # 计算最终高度
-            final_height = min(max(scaled_height, min_height), max_height)
-            
-            # 记录调试信息
-            self.debug_logger.log_debug(
-                f"窗口高度计算: DPI={scale_percent}%, 屏幕高度={screen_height}, "
-                f"基础高度={base_height}, 缩放后={scaled_height}, "
-                f"最大限制={max_height}, 最终高度={final_height}"
-            )
-            
-            return final_height
-            
-        except Exception as e:
-            # 如果计算失败，返回默认高度并记录错误
-            self.debug_logger.log_error(f"计算自适应窗口高度失败: {e}")
-            return 790  # 默认高度
-
     def adjust_window_size_for_dpi_change(self):
         """响应DPI变化，调整窗口大小"""
         try:
@@ -259,7 +197,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             current_width = current_size.width()
             
             # 计算新的自适应高度
-            new_height = self.calculate_adaptive_window_height()
+            new_height = calculate_adaptive_height(790, self)
             
             # 调整窗口大小，保持当前宽度
             self.resize(current_width, new_height)
