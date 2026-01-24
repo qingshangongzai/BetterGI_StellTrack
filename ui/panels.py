@@ -577,7 +577,7 @@ class OperationsPanel(QWidget):
 
             preview_dialog = AnimatedDialog(self)
             preview_dialog.setWindowTitle("脚本预览")
-            preview_dialog.resize(500, 700)
+            preview_dialog.resize(200, 700)
 
             layout = QVBoxLayout(preview_dialog)
 
