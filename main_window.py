@@ -6,6 +6,7 @@ import os
 import json
 import ctypes
 import time
+import traceback
 from datetime import datetime
 
 # PyQt6模块导入
@@ -17,11 +18,12 @@ from PyQt6.QtWidgets import (
     QMessageBox, QStatusBar, QFileDialog, QDialog, QMenu, QMenuBar,
     QCheckBox
 )
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
 from PyQt6.QtGui import (
     QFont, QPalette, QColor, QIcon, QPixmap, QPainter, QPen, QCursor,
     QKeyEvent, QDesktopServices, QIntValidator, QAction, QActionGroup, QFontDatabase
 )
+from PyQt6.QtCore import Qt, QTimer, QDateTime, QUrl, pyqtSignal, QPoint, QSize
+from PyQt6.QtGui import QScreen
 
 # 导入共享模块
 from styles import (
@@ -35,7 +37,7 @@ from utils import (
     VK_MAPPING, KEY_NAME_MAPPING, EVENT_TYPE_MAP,
     convert_event_type_num_to_str_with_button, generate_key_event_name,
     load_icon_universal, load_logo, get_current_version,
-    get_current_app_info, get_user_data_dir
+    get_current_app_info, get_user_data_dir, calculate_adaptive_height
 )
 
 # 导入对话框模块
@@ -97,6 +99,12 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.paste_logic = 'prompt'  # 粘贴事件逻辑
         self.edit_logic = 'current'  # 编辑事件逻辑
         self.skip_end_events_prompt = True  # 末尾事件操作跳过弹窗
+        self.default_time_unit = 'auto'  # 默认时间单位
+        
+        # 事件检查设置初始化
+        self.check_pairing = True  # 检查事件成对性
+        self.check_simultaneous = True  # 检查同时执行
+        self.check_simultaneous_mode = 'strict'  # 同时执行检查模式（strict=严格模式，loose=宽松模式）
 
         # 初始化调试日志记录器
         self.debug_logger = get_global_debug_logger()
@@ -121,7 +129,10 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.setWindowTitle(f"{app_info['name']} v{version}")
             # 设置主窗口大小
             self.setMinimumSize(1100, 500)
-            self.resize(1200, 790)
+            
+            # 计算自适应窗口高度
+            adaptive_height = calculate_adaptive_height(790, self)
+            self.resize(1200, adaptive_height)
 
             # 设置窗口图标 - 在应用程序创建后立即设置
             self.set_window_icon()
@@ -172,12 +183,32 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             error_msg = f"主窗口初始化错误: {e}"
             self.debug_logger.log_error(error_msg, exc_info=True)
             print(error_msg)
-            import traceback
             traceback.print_exc()
 
     
 
 
+
+    def adjust_window_size_for_dpi_change(self):
+        """响应DPI变化，调整窗口大小"""
+        try:
+            # 获取当前窗口大小
+            current_size = self.size()
+            current_width = current_size.width()
+            
+            # 计算新的自适应高度
+            new_height = calculate_adaptive_height(790, self)
+            
+            # 调整窗口大小，保持当前宽度
+            self.resize(current_width, new_height)
+            
+            # 记录调试信息
+            self.debug_logger.log_debug(
+                f"DPI变化后调整窗口大小: 新高度={new_height}"
+            )
+            
+        except Exception as e:
+            self.debug_logger.log_error(f"DPI变化后调整窗口大小失败: {e}")
 
     def set_delete_logic(self, logic):
         """设置删除事件逻辑"""
@@ -482,8 +513,7 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         scroll_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
 
         container = QWidget()
-        container.setMinimumWidth(250)  # 增加最小宽度，确保控件正常显示
-        container.setMaximumWidth(450)
+        container.setMinimumWidth(250)
         container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         container.setStyleSheet(UnifiedStyleHelper.get_instance().get_container_bg_style())
 

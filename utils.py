@@ -12,7 +12,8 @@ from datetime import datetime
 # 第三方模块导入
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter
+from PyQt6.QtGui import QIcon, QPixmap, QColor, QPainter, QScreen
+from PyQt6.QtWidgets import QApplication
 
 # 项目模块导入
 from version import version_manager
@@ -94,8 +95,40 @@ EVENT_TYPE_MAP = {
     "鼠标滚轮": 6
 }
 
+# 事件类型常量集合（用于快速成员判断）
+KEY_PRESS_EVENTS = {"按键按下", "按键释放"}
+MOUSE_EVENTS = {"左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"}
+
 # 排序提示文本
 SORT_TIP_TEXT = "💡 提示：为避免计算出现异常，若添加事件、编辑事件、粘贴事件后相对时间出现负数，请点击'事件排序'"
+
+# =============================================================================
+# 时间转换函数
+# =============================================================================
+
+def convert_time_to_ms(value: float, unit: str) -> int:
+    """将时间值转换为毫秒
+
+    根据时间单位将时间值统一转换为毫秒，用于事件时间计算。
+
+    Args:
+        value: 时间值
+        unit: 时间单位，可选值为 'ms'、's' 或 'min'
+
+    Returns:
+        int: 转换后的毫秒值
+
+    Examples:
+        >>> convert_time_to_ms(100, 'ms')
+        100
+        >>> convert_time_to_ms(1, 's')
+        1000
+        >>> convert_time_to_ms(1, 'min')
+        60000
+    """
+    multipliers = {'ms': 1, 's': 1000, 'min': 60000}
+    return int(value * multipliers.get(unit, 1))
+
 
 # =============================================================================
 # 事件类型转换和按键名称生成函数
@@ -180,7 +213,7 @@ def generate_key_event_name(event_type_str, keycode):
     Returns:
         str: 生成的事件名称
     """
-    if event_type_str in ["按键按下", "按键释放"] and keycode:
+    if event_type_str in KEY_PRESS_EVENTS and keycode:
         try:
             keycode_int = int(keycode)
             key_name_cn = _COMBINED_KEY_MAPPING.get(keycode_int, keycode)
@@ -189,7 +222,7 @@ def generate_key_event_name(event_type_str, keycode):
             return f"{action}{key_name_cn}"
         except (ValueError, TypeError):
             return event_type_str
-    elif event_type_str in ["左键按下", "左键释放", "右键按下", "右键释放", "中键按下", "中键释放", "指针移动", "平行移动", "鼠标滚轮"]:
+    elif event_type_str in MOUSE_EVENTS:
         return event_type_str
     else:
         return event_type_str
@@ -501,13 +534,14 @@ def load_icon_exe_safe():
 
 
 # =============================================================================
-# 资源管理器 - 从styles.py迁移
+# 资源管理器
 # =============================================================================
 
 # 资源文件搜索路径缓存
 _search_paths_cache = None
 _base_path_cache = None
 _file_find_cache = {}
+_icon_cache = {}
 
 def _build_search_paths(base_path):
     """构建资源文件搜索路径列表
@@ -713,15 +747,26 @@ def load_icon_universal():
 
     Note:
         尝试加载 logo.ico 和 logo.png，如果都失败则创建后备图标
+        使用缓存机制避免重复加载，提升性能
     """
+    global _icon_cache
+
+    # 检查缓存
+    if "app_icon" in _icon_cache:
+        return _icon_cache["app_icon"]
+
     # 尝试多种图标格式和路径
     for icon_file in ICON_FILES:
         icon_path = find_resource_file(icon_file)
         if icon_path and os.path.exists(icon_path):
-            return QIcon(icon_path)
+            icon = QIcon(icon_path)
+            _icon_cache["app_icon"] = icon
+            return icon
 
     # 创建后备图标
-    return create_fallback_icon()
+    fallback_icon = create_fallback_icon()
+    _icon_cache["app_icon"] = fallback_icon
+    return fallback_icon
 
 def load_logo(logo_size=(60, 60)):
     """统一的Logo加载函数，适用于所有环境
@@ -833,16 +878,14 @@ def check_event_pairing(events_table):
         - 鼠标按钮未按下就释放
         - 按键被按下但未释放
         - 鼠标按钮被按下但未释放
-        - 同一时间存在多个事件
     """
-    pressed_keys = {}  # 记录按下的按键，键为键码，值为按下的行号
-    pressed_mouse_buttons = {}  # 记录按下的鼠标按钮，键为按钮名称，值为按下的行号
-    pairing_issues = []  # 成对性问题列表
-    time_issues = []  # 时间问题列表
+    pressed_keys = {}
+    pressed_mouse_buttons = {}
+    pairing_issues = []
 
     for row in range(events_table.rowCount()):
-        type_item = events_table.item(row, 2)  # 事件类型列
-        keycode_item = events_table.item(row, 3)  # 键码列
+        type_item = events_table.item(row, 2)
+        keycode_item = events_table.item(row, 3)
 
         if not type_item:
             continue
@@ -850,7 +893,6 @@ def check_event_pairing(events_table):
         event_type = type_item.text()
         keycode = keycode_item.text() if keycode_item else ""
 
-        # 检查按键事件
         if event_type == "按键按下":
             if keycode in pressed_keys:
                 key_name_cn = _get_key_display_name(keycode)
@@ -864,7 +906,6 @@ def check_event_pairing(events_table):
             else:
                 del pressed_keys[keycode]
 
-        # 检查鼠标事件
         elif event_type == "左键按下":
             if "Left" in pressed_mouse_buttons:
                 pairing_issues.append(f"第{row+1}行: 左键重复按下")
@@ -898,7 +939,6 @@ def check_event_pairing(events_table):
             else:
                 del pressed_mouse_buttons["Middle"]
 
-    # 检查未释放的按键
     for key, row_num in pressed_keys.items():
         key_name_cn = _get_key_display_name(key)
         pairing_issues.append(f"第{row_num}行: 按键{key_name_cn}被按下但未释放")
@@ -906,7 +946,22 @@ def check_event_pairing(events_table):
         button_name = "左键" if button == "Left" else "右键" if button == "Right" else "中键"
         pairing_issues.append(f"第{row_num}行: 鼠标{button_name}按钮被按下但未释放")
 
-    # 检查同一时间存在多个事件
+    return pairing_issues
+
+
+def check_simultaneous_events(events_table):
+    """检查同时执行事件
+
+    Args:
+        events_table: 事件表格对象
+
+    Returns:
+        list: 包含检查出的问题的列表
+
+    Note:
+        检查同一时间存在多个事件的问题（宽松模式）
+    """
+    time_issues = []
     absolute_time_events = {}
     for row in range(events_table.rowCount()):
         abs_time_item = events_table.item(row, 7)
@@ -916,19 +971,50 @@ def check_event_pairing(events_table):
                 absolute_time_events[abs_time] = []
             absolute_time_events[abs_time].append(row + 1)
 
-    # 检查存在多个事件的绝对时间
     for abs_time, row_numbers in absolute_time_events.items():
         if len(row_numbers) > 1:
             row_str = "和".join([f"第{num}行" for num in row_numbers])
             time_issues.append(f"在同一时间内{row_str}被同时执行")
 
-    # 合并问题列表，用空行分隔成对性问题和时间问题
-    issues = pairing_issues
-    if pairing_issues and time_issues:
-        issues.append("")  # 添加空行分隔
-    issues.extend(time_issues)
+    return time_issues
 
-    return issues
+
+def check_simultaneous_events_strict(events_table):
+    """检查同时执行事件（仅同类型）
+
+    Args:
+        events_table: 事件表格对象
+
+    Returns:
+        list: 包含检查出的问题的列表
+
+    Note:
+        检查同一时间下存在同一类型动作的问题
+        只在对同一时间下存在同一类型动作视为同时执行
+    """
+    time_issues = {}
+    for row in range(events_table.rowCount()):
+        abs_time_item = events_table.item(row, 7)
+        event_type_item = events_table.item(row, 2)
+        
+        if abs_time_item and abs_time_item.text() and event_type_item and event_type_item.text():
+            abs_time = abs_time_item.text()
+            event_type = event_type_item.text()
+            
+            # 使用 (时间, 事件类型) 作为键
+            key = (abs_time, event_type)
+            if key not in time_issues:
+                time_issues[key] = []
+            time_issues[key].append(row + 1)
+
+    # 筛选出同一时间下同一类型动作超过1个的情况
+    result = []
+    for (abs_time, event_type), row_numbers in time_issues.items():
+        if len(row_numbers) > 1:
+            row_str = "和".join([f"第{num}行" for num in row_numbers])
+            result.append(f"在同一时间内{row_str}的{event_type}被同时执行")
+
+    return result
 
 
 def set_window_title_bar_theme(window, is_dark=False):
@@ -1002,3 +1088,56 @@ def set_window_title_bar_theme(window, is_dark=False):
     except Exception as e:
         print(f"[DEBUG] 设置窗口标题栏主题失败: {e}")
         return False
+
+
+def calculate_adaptive_height(base_height, parent_window=None):
+    """计算自适应窗口/对话框高度，考虑DPI缩放和屏幕可用空间
+    
+    Args:
+        base_height (int): 基础高度（100% DPI下的理想高度）
+        parent_window (QWidget): 父窗口实例，用于获取DPI信息
+    
+    Returns:
+        int: 计算得出的窗口/对话框高度
+    """
+    try:
+        # 获取系统DPI缩放比例
+        scale_percent = 100  # 默认值
+        
+        # 尝试从父窗口获取DPI信息
+        if parent_window and hasattr(parent_window, 'settings_panel'):
+            try:
+                settings_panel = parent_window.settings_panel
+                if settings_panel:
+                    scale_text = settings_panel.scale_combo.currentText()
+                    scale_percent = int(scale_text.strip('%'))
+            except Exception:
+                scale_percent = 100
+        
+        # 获取主屏幕信息
+        screen = QApplication.primaryScreen()
+        if not screen:
+            return base_height  # 返回基础高度
+        
+        # 获取屏幕可用几何尺寸（排除任务栏）
+        available_geometry = screen.availableGeometry()
+        screen_height = available_geometry.height()
+        
+        # 根据DPI缩放调整基础高度
+        dpi_factor = scale_percent / 100.0
+        scaled_height = int(base_height * dpi_factor)
+        
+        # 设置最大高度为屏幕高度的85%，确保窗口不会占满整个屏幕
+        max_height = int(screen_height * 0.85)
+        
+        # 设置最小高度，确保UI可用性
+        min_height = int(base_height * 0.5)
+        
+        # 计算最终高度
+        final_height = min(max(scaled_height, min_height), max_height)
+        
+        return final_height
+        
+    except Exception as e:
+        # 如果计算失败，返回基础高度
+        return base_height

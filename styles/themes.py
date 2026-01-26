@@ -100,6 +100,435 @@ class UnifiedStyleHelper:
         self._title_bar_theme_windows = []
         self._light_stylesheet = None
         self._dark_stylesheet = None
+        self._style_cache = {}
+        self._current_theme_cache_key = None
+
+    def _get_style_from_cache(self, style_key, generate_func):
+        """从缓存获取样式，如果缓存失效则重新生成
+
+        Args:
+            style_key (str): 样式缓存键
+            generate_func (callable): 样式生成函数
+
+        Returns:
+            str: 样式表字符串
+        """
+        cache_key = f"{self.theme_mode}_{style_key}"
+
+        if self._current_theme_cache_key != self.theme_mode:
+            self._style_cache.clear()
+            self._current_theme_cache_key = self.theme_mode
+
+        if cache_key not in self._style_cache:
+            self._style_cache[cache_key] = generate_func()
+
+        return self._style_cache[cache_key]
+
+    def _generate_button_style(self, accent=False, disabled=False):
+        """生成按钮样式
+
+        Args:
+            accent (bool): 是否使用强调色（主色调），默认为False
+            disabled (bool): 是否为禁用状态，默认为False
+
+        Returns:
+            str: 按钮的样式表字符串
+        """
+        if disabled:
+            return f"""
+                QPushButton {{
+                    background-color: #f5f5f5;
+                    color: #999999;
+                    border: 1px solid {self.COLORS['border']};
+                    border-radius: 8px;
+                    padding: 6px 12px;
+                    font-size: 11px;
+                    min-height: 18px;
+                    max-height: 18px;
+                    {self.SHADOWS['small']}
+                }}
+            """
+
+        if accent:
+            return f"""
+                QPushButton {{
+                    background-color: {self.COLORS['primary']};
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 6px 12px;
+                    font-weight: bold;
+                    font-size: 11px;
+                    min-height: 18px;
+                    max-height: 18px;
+                    {self.SHADOWS['small']}
+                }}
+                QPushButton:hover {{
+                    background-color: {self.COLORS['primary_hover']};
+                }}
+                QPushButton:pressed {{
+                    background-color: {self.COLORS['primary_pressed']};
+                }}
+            """
+        else:
+            return f"""
+                QPushButton {{
+                    background-color: {self.COLORS['secondary']};
+                    color: {self.COLORS['text']};
+                    border: 1px solid {self.COLORS['border']};
+                    border-radius: 8px;
+                    padding: 6px 12px;
+                    font-size: 11px;
+                    min-height: 18px;
+                    max-height: 18px;
+                    {self.SHADOWS['small']}
+                }}
+                QPushButton:hover {{
+                    background-color: {self.COLORS['secondary_hover']};
+                }}
+                QPushButton:pressed {{
+                    background-color: {self.COLORS['secondary_pressed']};
+                }}
+            """
+
+    def _generate_line_edit_style(self):
+        """生成输入框样式
+
+        Returns:
+            str: 输入框的样式表字符串
+        """
+        return f"""
+            QLineEdit {{ 
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 8px;
+                padding: 6px 8px;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
+                font-size: 11px;
+                selection-background-color: {self.COLORS['primary']};
+                {self.SHADOWS['small']}
+                min-height: 18px;
+                max-height: 18px;
+            }}
+            QLineEdit:focus {{ 
+                border-color: {self.COLORS['primary']};
+            }}
+            QLineEdit:hover {{ 
+                border-color: #a0a0a0;
+            }}
+        """
+
+    def _generate_combo_box_style(self):
+        """生成下拉框样式
+
+        Returns:
+            str: 下拉框的样式表字符串
+        """
+        return f"""
+            QComboBox {{ 
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 8px;
+                padding: 6px 8px;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
+                font-size: 11px;
+                min-width: 80px;
+                {self.SHADOWS['small']}
+                min-height: 18px;
+                max-height: 18px;
+            }}
+            QComboBox::drop-down {{ 
+                border: none;
+                width: 20px;
+            }}
+            QComboBox::down-arrow {{ 
+                width: 12px;
+                height: 12px;
+                border: none;
+            }}
+            QComboBox QAbstractItemView {{ 
+                border: 1px solid {self.COLORS['border']}; 
+                border-radius: 8px; 
+                background-color: {self.COLORS['card_bg']}; 
+                selection-background-color: {self.COLORS['primary']}; 
+                selection-color: white; 
+                font-size: 11px; 
+                padding: 0px;
+                {self.SHADOWS['small']} 
+            }}
+            QComboBox:hover {{ 
+                border-color: #a0a0a0;
+            }}
+            QComboBox:focus {{ 
+                border-color: {self.COLORS['primary']};
+            }}
+        """
+
+    def _generate_table_style(self):
+        """生成表格样式
+
+        Returns:
+            str: 表格的样式表字符串
+        """
+        return f"""
+            QTableWidget {{ 
+                border: none;
+                border-radius: 8px;
+                background-color: {self.COLORS['card_bg']};
+                gridline-color: {self.COLORS['grid']};
+                font-size: 11px;
+                outline: none;
+                {self.SHADOWS['medium']}
+            }}
+            QTableWidget::item {{ 
+                padding: 6px 8px;
+                border: none;
+                text-align: center;
+            }}
+            QTableWidget::item:selected {{ 
+                background-color: {self.COLORS['primary']};
+                color: white;
+            }}
+            QTableWidget::item:hover {{ 
+                background-color: #CAE9FF;
+            }}
+            QHeaderView::section {{ 
+                background-color: {self.COLORS['card_bg']};
+                padding: 4px 10px;
+                border: none;
+                border-right: 1px solid {self.COLORS['border_light']};
+                border-bottom: 1px solid {self.COLORS['border_light']};
+                font-weight: bold;
+                font-size: 12px;
+                color: {self.COLORS['text']};
+                text-align: center;
+                min-height: 20px;
+            }}
+            QHeaderView::section:last {{ 
+                border-right: none;
+            }}
+            QTableCornerButton::section {{ 
+                background-color: {self.COLORS['card_bg']};
+                border: none;
+                border-right: 1px solid {self.COLORS['border_light']};
+                border-bottom: 1px solid {self.COLORS['border_light']};
+            }}
+        """
+
+    def _generate_group_box_style(self):
+        """生成分组框样式 - 已去掉灰色底纹
+
+        Returns:
+            str: 分组框的样式表字符串
+        """
+        return f"""
+            QGroupBox {{ 
+                font-size: 12px;
+                font-weight: bold;
+                color: {self.COLORS['primary']};
+                border: 1px solid {self.COLORS['border_light']};
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+                {self.SHADOWS['medium']}
+            }}
+            QGroupBox::title {{ 
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 8px 0 8px;
+            }}
+        """
+
+    def _generate_spin_box_style(self):
+        """生成整数和浮点数输入框样式
+
+        Returns:
+            str: 整数和浮点数输入框的样式表字符串
+        """
+        return f"""
+            QSpinBox, QDoubleSpinBox {{
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 8px;
+                padding: 6px 4px 6px 4px;
+                background-color: {self.COLORS['card_bg']};
+                color: {self.COLORS['text']};
+                font-size: 11px;
+                selection-background-color: {self.COLORS['primary']};
+                text-align: center;
+                {self.SHADOWS['small']}
+                min-height: 18px;
+                max-height: 18px;
+            }}
+            QSpinBox:focus, QDoubleSpinBox:focus {{
+                border-color: {self.COLORS['primary']};
+                border-width: 1.5px;
+            }}
+            QSpinBox:hover, QDoubleSpinBox:hover {{
+                border-color: #a0a0a0;
+            }}
+            QSpinBox::up-button, QDoubleSpinBox::up-button {{
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-top-right-radius: 7px;
+                background-color: transparent;
+                margin: 1px 1px 0px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+            QSpinBox::down-button, QDoubleSpinBox::down-button {{
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-bottom-right-radius: 7px;
+                background-color: transparent;
+                margin: 0px 1px 1px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+        """
+
+    def _generate_time_offset_spin_box_style(self):
+        """生成时间偏移输入框样式
+
+        Returns:
+            str: 时间偏移输入框的样式表字符串
+        """
+        return f"""
+            QSpinBox {{
+                border: 1px solid {self.COLORS['border']};
+                border-radius: 8px;
+                padding: 6px 8px;
+                background-color: {self.COLORS['card_bg']};
+                font-size: 11px;
+                selection-background-color: {self.COLORS['primary']};
+                text-align: center;
+                {self.SHADOWS['small']}
+                min-height: 20px;
+                max-height: 20px;
+            }}
+            QSpinBox:focus {{
+                border-color: {self.COLORS['primary']};
+                background-color: {self.COLORS['secondary_hover']};
+                border-width: 1.5px;
+            }}
+            QSpinBox:hover {{
+                border-color: #a0a0a0;
+                background-color: {self.COLORS['secondary_hover']};
+            }}
+            QSpinBox::up-button {{
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-top-right-radius: 7px;
+                background-color: transparent;
+                margin: 1px 1px 0px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::up-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::up-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+            QSpinBox::down-button {{
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 24px;
+                height: 15px;
+                border: none;
+                border-bottom-right-radius: 7px;
+                background-color: transparent;
+                margin: 0px 1px 1px 0px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+            }}
+            QSpinBox::down-button:hover {{
+                background-color: {self.COLORS['primary_hover']};
+                color: white;
+            }}
+            QSpinBox::down-button:pressed {{
+                background-color: {self.COLORS['primary_pressed']};
+            }}
+        """
+
+    def _generate_explanation_text_edit_style(self):
+        """生成说明文本编辑器样式
+
+        Returns:
+            str: 说明文本编辑器的样式表字符串
+        """
+        return f"""
+            QTextEdit {{
+                background-color: {self.COLORS['card_bg']};
+                border: 1px solid {self.COLORS['border_light']};
+                border-radius: 6px;
+                padding: 6px;
+                font-size: 10px;
+                {self.SHADOWS['small']}
+            }}
+        """
+
+    def _generate_capture_status_style(self, status="inactive"):
+        """生成捕获状态样式
+
+        Args:
+            status (str): 状态类型，可选值为 "active"、"inactive" 或 "bold"，默认为 "inactive"
+
+        Returns:
+            str: 捕获状态的样式表字符串
+        """
+        if status == "active":
+            return f"color: {self.COLORS['primary']};"
+        elif status == "inactive":
+            return f"color: {self.COLORS['text_secondary']};"
+        elif status == "bold":
+            return f"color: {self.COLORS['primary']}; font-weight: bold;"
+        return f"color: {self.COLORS['text_secondary']};"
+
+    def _generate_checkbox_style(self):
+        """生成复选框样式
+
+        Returns:
+            str: 复选框的样式表字符串
+        """
+        return f"""
+            QCheckBox {{
+                color: {self.COLORS['text']};
+                spacing: 6px;
+            }}
+            
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+            }}
+        """
 
     def register_title_bar_theme_callback(self, window):
         """注册标题栏主题更新回调
@@ -169,62 +598,8 @@ class UnifiedStyleHelper:
         Returns:
             str: 按钮的样式表字符串
         """
-        if disabled:
-            return f"""
-                QPushButton {{
-                    background-color: #f5f5f5;
-                    color: #999999;
-                    border: 1px solid {self.COLORS['border']};
-                    border-radius: 8px;
-                    padding: 6px 12px;
-                    font-size: 11px;
-                    min-height: 18px;
-                    max-height: 18px;
-                    {self.SHADOWS['small']}
-                }}
-            """
-
-        if accent:
-            return f"""
-                QPushButton {{
-                    background-color: {self.COLORS['primary']};
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 6px 12px;
-                    font-weight: bold;
-                    font-size: 11px;
-                    min-height: 18px;
-                    max-height: 18px;
-                    {self.SHADOWS['small']}
-                }}
-                QPushButton:hover {{
-                    background-color: {self.COLORS['primary_hover']};
-                }}
-                QPushButton:pressed {{
-                    background-color: {self.COLORS['primary_pressed']};
-                }}
-            """
-        else:
-            return f"""
-                QPushButton {{
-                    background-color: {self.COLORS['secondary']};
-                    color: {self.COLORS['text']};
-                    border: 1px solid {self.COLORS['border']};
-                    border-radius: 8px;
-                    padding: 6px 12px;
-                    font-size: 11px;
-                    min-height: 18px;
-                    max-height: 18px;
-                    {self.SHADOWS['small']}
-                }}
-                QPushButton:hover {{
-                    background-color: {self.COLORS['secondary_hover']};
-                }}
-                QPushButton:pressed {{
-                    background-color: {self.COLORS['secondary_pressed']};
-                }}
-            """
+        style_key = f"button_accent_{accent}_disabled_{disabled}"
+        return self._get_style_from_cache(style_key, lambda: self._generate_button_style(accent, disabled))
 
     def get_line_edit_style(self):
         """获取输入框样式
@@ -232,26 +607,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 输入框的样式表字符串
         """
-        return f"""
-            QLineEdit {{ 
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 8px;
-                padding: 6px 8px;
-                background-color: {self.COLORS['card_bg']};
-                color: {self.COLORS['text']};
-                font-size: 11px;
-                selection-background-color: {self.COLORS['primary']};
-                {self.SHADOWS['small']}
-                min-height: 18px;
-                max-height: 18px;
-            }}
-            QLineEdit:focus {{ 
-                border-color: {self.COLORS['primary']};
-            }}
-            QLineEdit:hover {{ 
-                border-color: #a0a0a0;
-            }}
-        """
+        return self._get_style_from_cache("line_edit", self._generate_line_edit_style)
 
     def get_combo_box_style(self):
         """获取下拉框样式
@@ -259,45 +615,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 下拉框的样式表字符串
         """
-        return f"""
-            QComboBox {{ 
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 8px;
-                padding: 6px 8px;
-                background-color: {self.COLORS['card_bg']};
-                color: {self.COLORS['text']};
-                font-size: 11px;
-                min-width: 80px;
-                {self.SHADOWS['small']}
-                min-height: 18px;
-                max-height: 18px;
-            }}
-            QComboBox::drop-down {{ 
-                border: none;
-                width: 20px;
-            }}
-            QComboBox::down-arrow {{ 
-                width: 12px;
-                height: 12px;
-                border: none;
-            }}
-            QComboBox QAbstractItemView {{ 
-                border: 1px solid {self.COLORS['border']}; 
-                border-radius: 8px; 
-                background-color: {self.COLORS['card_bg']}; 
-                selection-background-color: {self.COLORS['primary']}; 
-                selection-color: white; 
-                font-size: 11px; 
-                padding: 0px;
-                {self.SHADOWS['small']} 
-            }}
-            QComboBox:hover {{ 
-                border-color: #a0a0a0;
-            }}
-            QComboBox:focus {{ 
-                border-color: {self.COLORS['primary']};
-            }}
-        """
+        return self._get_style_from_cache("combo_box", self._generate_combo_box_style)
 
     def get_table_style(self):
         """获取表格样式
@@ -305,50 +623,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 表格的样式表字符串
         """
-        return f"""
-            QTableWidget {{ 
-                border: none;
-                border-radius: 8px;
-                background-color: {self.COLORS['card_bg']};
-                gridline-color: {self.COLORS['grid']};
-                font-size: 11px;
-                outline: none;
-                {self.SHADOWS['medium']}
-            }}
-            QTableWidget::item {{ 
-                padding: 6px 8px;
-                border: none;
-                text-align: center;
-            }}
-            QTableWidget::item:selected {{ 
-                background-color: {self.COLORS['primary']};
-                color: white;
-            }}
-            QTableWidget::item:hover {{ 
-                background-color: #CAE9FF;
-            }}
-            QHeaderView::section {{ 
-                background-color: {self.COLORS['card_bg']};
-                padding: 4px 10px;
-                border: none;
-                border-right: 1px solid {self.COLORS['border_light']};
-                border-bottom: 1px solid {self.COLORS['border_light']};
-                font-weight: bold;
-                font-size: 12px;
-                color: {self.COLORS['text']};
-                text-align: center;
-                min-height: 20px;
-            }}
-            QHeaderView::section:last {{ 
-                border-right: none;
-            }}
-            QTableCornerButton::section {{ 
-                background-color: {self.COLORS['card_bg']};
-                border: none;
-                border-right: 1px solid {self.COLORS['border_light']};
-                border-bottom: 1px solid {self.COLORS['border_light']};
-            }}
-        """
+        return self._get_style_from_cache("table", self._generate_table_style)
 
     def get_group_box_style(self):
         """获取分组框样式 - 已去掉灰色底纹
@@ -356,23 +631,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 分组框的样式表字符串
         """
-        return f"""
-            QGroupBox {{ 
-                font-size: 12px;
-                font-weight: bold;
-                color: {self.COLORS['primary']};
-                border: 1px solid {self.COLORS['border_light']};
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 12px;
-                {self.SHADOWS['medium']}
-            }}
-            QGroupBox::title {{ 
-                subcontrol-origin: margin;
-                subcontrol-position: top center;
-                padding: 0 8px 0 8px;
-            }}
-        """
+        return self._get_style_from_cache("group_box", self._generate_group_box_style)
 
     def get_header_widget_style(self):
         """获取标题栏样式"""
@@ -545,68 +804,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 整数和浮点数输入框的样式表字符串
         """
-        return f"""
-            QSpinBox, QDoubleSpinBox {{
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 8px;
-                padding: 6px 4px 6px 4px;
-                background-color: {self.COLORS['card_bg']};
-                color: {self.COLORS['text']};
-                font-size: 11px;
-                selection-background-color: {self.COLORS['primary']};
-                text-align: center;
-                {self.SHADOWS['small']}
-                min-height: 18px;
-                max-height: 18px;
-            }}
-            QSpinBox:focus, QDoubleSpinBox:focus {{
-                border-color: {self.COLORS['primary']};
-                border-width: 1.5px;
-            }}
-            QSpinBox:hover, QDoubleSpinBox:hover {{
-                border-color: #a0a0a0;
-            }}
-            QSpinBox::up-button, QDoubleSpinBox::up-button {{
-                subcontrol-origin: border;
-                subcontrol-position: top right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-top-right-radius: 7px;
-                background-color: transparent;
-                margin: 1px 1px 0px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-            QSpinBox::down-button, QDoubleSpinBox::down-button {{
-                subcontrol-origin: border;
-                subcontrol-position: bottom right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-bottom-right-radius: 7px;
-                background-color: transparent;
-                margin: 0px 1px 1px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-        """
+        return self._get_style_from_cache("spin_box", self._generate_spin_box_style)
 
     def get_progress_bar_style(self):
         """获取进度条样式"""
@@ -946,69 +1144,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 时间偏移输入框的样式表字符串
         """
-        return f"""
-            QSpinBox {{
-                border: 1px solid {self.COLORS['border']};
-                border-radius: 8px;
-                padding: 6px 8px;
-                background-color: {self.COLORS['card_bg']};
-                font-size: 11px;
-                selection-background-color: {self.COLORS['primary']};
-                text-align: center;
-                {self.SHADOWS['small']}
-                min-height: 20px;
-                max-height: 20px;
-            }}
-            QSpinBox:focus {{
-                border-color: {self.COLORS['primary']};
-                background-color: {self.COLORS['secondary_hover']};
-                border-width: 1.5px;
-            }}
-            QSpinBox:hover {{
-                border-color: #a0a0a0;
-                background-color: {self.COLORS['secondary_hover']};
-            }}
-            QSpinBox::up-button {{
-                subcontrol-origin: border;
-                subcontrol-position: top right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-top-right-radius: 7px;
-                background-color: transparent;
-                margin: 1px 1px 0px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::up-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::up-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-            QSpinBox::down-button {{
-                subcontrol-origin: border;
-                subcontrol-position: bottom right;
-                width: 24px;
-                height: 15px;
-                border: none;
-                border-bottom-right-radius: 7px;
-                background-color: transparent;
-                margin: 0px 1px 1px 0px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #666;
-            }}
-            QSpinBox::down-button:hover {{
-                background-color: {self.COLORS['primary_hover']};
-                color: white;
-            }}
-            QSpinBox::down-button:pressed {{
-                background-color: {self.COLORS['primary_pressed']};
-            }}
-        """
+        return self._get_style_from_cache("time_offset_spin_box", self._generate_time_offset_spin_box_style)
 
     def get_explanation_text_edit_style(self):
         """获取说明文本编辑器样式
@@ -1016,16 +1152,7 @@ class UnifiedStyleHelper:
         Returns:
             str: 说明文本编辑器的样式表字符串
         """
-        return f"""
-            QTextEdit {{
-                background-color: {self.COLORS['card_bg']};
-                border: 1px solid {self.COLORS['border_light']};
-                border-radius: 6px;
-                padding: 6px;
-                font-size: 10px;
-                {self.SHADOWS['small']}
-            }}
-        """
+        return self._get_style_from_cache("explanation_text_edit", self._generate_explanation_text_edit_style)
 
     def get_event_dialog_style(self):
         """获取事件对话框样式
@@ -1056,13 +1183,8 @@ class UnifiedStyleHelper:
         Returns:
             str: 捕获状态的样式表字符串
         """
-        if status == "active":
-            return f"color: {self.COLORS['primary']};"
-        elif status == "inactive":
-            return f"color: {self.COLORS['text_secondary']};"
-        elif status == "bold":
-            return f"color: {self.COLORS['primary']}; font-weight: bold;"
-        return f"color: {self.COLORS['text_secondary']};"
+        style_key = f"capture_status_{status}"
+        return self._get_style_from_cache(style_key, lambda: self._generate_capture_status_style(status))
 
     def get_checkbox_style(self):
         """获取复选框样式
@@ -1070,17 +1192,23 @@ class UnifiedStyleHelper:
         Returns:
             str: 复选框的样式表字符串
         """
-        return f"""
-            QCheckBox {{
-                color: {self.COLORS['text']};
-                spacing: 6px;
-            }}
-            
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-            }}
+        return self._get_style_from_cache("checkbox", self._generate_checkbox_style)
+
+    def get_theme_display_name(self, mode):
+        """获取主题模式的显示名称
+
+        Args:
+            mode (str): 主题模式，可选值为 "light"、"dark" 或 "system"
+
+        Returns:
+            str: 主题模式的显示名称
         """
+        theme_names = {
+            "light": "浅色",
+            "dark": "深色",
+            "system": "跟随系统"
+        }
+        return theme_names.get(mode, mode)
 
     def setup_global_style(self, app=None, theme_mode=None, persist=False):
         """设置全局样式

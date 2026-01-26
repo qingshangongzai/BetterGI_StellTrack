@@ -3,7 +3,7 @@
 
 # 第三方模块导入
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QScrollArea
 
 # 项目模块导入
 from .themes import UnifiedStyleHelper
@@ -125,8 +125,6 @@ class ChineseMessageBox:
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
-        dialog.setMinimumWidth(200)
-        dialog.setMaximumWidth(400)
 
         dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
 
@@ -134,10 +132,22 @@ class ChineseMessageBox:
         layout.setSpacing(15)
         layout.setContentsMargins(15, 15, 15, 15)
 
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setMaximumHeight(200)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
+
+        # 创建消息标签
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
-        layout.addWidget(message_label)
+
+        # 将消息标签放入滚动区域
+        scroll_area.setWidget(message_label)
+        layout.addWidget(scroll_area)
 
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -150,6 +160,10 @@ class ChineseMessageBox:
         button_layout.addWidget(ok_button)
 
         layout.addLayout(button_layout)
+
+        dialog.adjustSize()
+        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setMaximumHeight(310)
 
         result = dialog.exec()
         return result == QDialog.DialogCode.Accepted
@@ -166,8 +180,6 @@ class ChineseMessageBox:
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
-        dialog.setMinimumWidth(200)
-        dialog.setMaximumWidth(400)
 
         dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
 
@@ -175,10 +187,22 @@ class ChineseMessageBox:
         layout.setSpacing(15)
         layout.setContentsMargins(15, 15, 15, 15)
 
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setMaximumHeight(200)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
+
+        # 创建消息标签
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
-        layout.addWidget(message_label)
+
+        # 将消息标签放入滚动区域
+        scroll_area.setWidget(message_label)
+        layout.addWidget(scroll_area)
 
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -191,6 +215,10 @@ class ChineseMessageBox:
         button_layout.addWidget(ok_button)
 
         layout.addLayout(button_layout)
+
+        dialog.adjustSize()
+        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setMaximumHeight(310)
 
         dialog.exec()
 
@@ -206,8 +234,6 @@ class ChineseMessageBox:
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
-        dialog.setMinimumWidth(200)
-        dialog.setMaximumWidth(400)
 
         dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
 
@@ -215,10 +241,22 @@ class ChineseMessageBox:
         layout.setSpacing(15)
         layout.setContentsMargins(15, 15, 15, 15)
 
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setMaximumHeight(200)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
+
+        # 创建消息标签
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
-        layout.addWidget(message_label)
+
+        # 将消息标签放入滚动区域
+        scroll_area.setWidget(message_label)
+        layout.addWidget(scroll_area)
 
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -231,6 +269,10 @@ class ChineseMessageBox:
         button_layout.addWidget(ok_button)
 
         layout.addLayout(button_layout)
+
+        dialog.adjustSize()
+        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setMaximumHeight(310)
 
         dialog.exec()
 
@@ -249,8 +291,6 @@ class ChineseMessageBox:
         dialog = AnimatedDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setWindowIcon(load_icon_universal())
-        dialog.setMinimumWidth(200)
-        dialog.setMaximumWidth(400)
 
         dialog.setStyleSheet(f"QDialog {{ background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; border-radius: 8px; }}")
 
@@ -258,10 +298,22 @@ class ChineseMessageBox:
         layout.setSpacing(15)
         layout.setContentsMargins(15, 15, 15, 15)
 
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setMaximumHeight(200)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
+
+        # 创建消息标签
         message_label = QLabel(message)
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         message_label.setStyleSheet(f"QLabel {{ font-size: 13px; color: {UnifiedStyleHelper.get_instance().COLORS['text']}; }}")
-        layout.addWidget(message_label)
+
+        # 将消息标签放入滚动区域
+        scroll_area.setWidget(message_label)
+        layout.addWidget(scroll_area)
 
         button_layout = QHBoxLayout()
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -281,6 +333,10 @@ class ChineseMessageBox:
         button_layout.addWidget(no_button)
 
         layout.addLayout(button_layout)
+
+        dialog.adjustSize()
+        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setMaximumHeight(310)
 
         result = dialog.exec()
         return result == QDialog.DialogCode.Accepted

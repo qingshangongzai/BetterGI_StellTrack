@@ -9,11 +9,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QComboBox, QDialog, QGroupBox, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget
+    QLineEdit, QPushButton, QScrollArea, QSizePolicy, QTextEdit, QVBoxLayout, QWidget
 )
 
 # 项目模块导入
 from dialogs.debug_tools import get_global_debug_logger
+from utils import convert_time_to_ms
 from styles import (
     AnimatedDialog,
     ChineseMessageBox,
@@ -406,13 +407,7 @@ class SettingsPanel(QWidget):
 
             interval = self.interval_input.value()
             time_unit = self.time_unit_combo.currentText()
-
-            if time_unit == "s":
-                interval_ms = interval * 1000
-            elif time_unit == "min":
-                interval_ms = interval * 60000
-            else:
-                interval_ms = interval
+            interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = single_loop_time_ms * loop_count + interval_ms * (loop_count - 1)
 
@@ -575,14 +570,14 @@ class OperationsPanel(QWidget):
             loop_count = self.parent_window.settings_panel.get_safe_loop_count()
             total_events = event_count * loop_count
 
-            if total_events > 5000:
+            if total_events > 10000:
                 self.debug_logger.log_warning(f"事件总数过多({total_events}个事件)，无法进行预览")
                 ChineseMessageBox.show_warning(self, "警告", "事件总数过多，无法进行预览")
                 return
 
             preview_dialog = AnimatedDialog(self)
             preview_dialog.setWindowTitle("脚本预览")
-            preview_dialog.resize(500, 700)
+            preview_dialog.resize(200, 700)
 
             layout = QVBoxLayout(preview_dialog)
 
@@ -658,7 +653,7 @@ class StatsPanel(QWidget):
         """设置统计信息面板的UI布局和组件
 
         创建并布局统计信息面板的主要组件，包括：
-        - 统计信息显示区域
+        - 统计信息显示区域（带滚动条）
 
         使用垂直布局组织所有统计信息组件。
         """
@@ -680,7 +675,14 @@ class StatsPanel(QWidget):
         UnifiedStyleHelper.get_instance().set_source_han_font(self.stats_label, 8)
         self.stats_label.setText(f"脚本信息将在此显示...\n\n• 总事件数: 0\n• 按键事件: 0\n• 鼠标事件: 0  \n• 总执行时间: 0ms\n• 循环次数: 1\n• 循环间隔: 0ms\n\n窗口设置:\n• 分辨率: 1920x1080\n• 缩放比例: 100%")
 
-        group_layout.addWidget(self.stats_label)
+        self.stats_scroll_area = QScrollArea()
+        self.stats_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.stats_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.stats_scroll_area.setWidgetResizable(True)
+        self.stats_scroll_area.setWidget(self.stats_label)
+        self.stats_scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
+
+        group_layout.addWidget(self.stats_scroll_area)
         layout.addWidget(group)
 
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
@@ -696,6 +698,9 @@ class StatsPanel(QWidget):
 
         if hasattr(self, "stats_label"):
             self.stats_label.setStyleSheet(helper.get_explanation_text_edit_style())
+
+        if hasattr(self, "stats_scroll_area"):
+            self.stats_scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {helper.COLORS['bg']}; }}")
 
     def update_stats(self):
         """更新统计信息"""
@@ -719,12 +724,7 @@ class StatsPanel(QWidget):
             interval = settings_panel.interval_input.value()
 
             time_unit = settings_panel.time_unit_combo.currentText()
-            if time_unit == "s":
-                interval_ms = interval * 1000
-            elif time_unit == "min":
-                interval_ms = interval * 60000
-            else:
-                interval_ms = interval
+            interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = self.calculate_total_time_ms(single_loop_time_ms, loop_count, interval_ms)
 

@@ -5,9 +5,9 @@ import re
 
 # 第三方模块导入
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QScreen
 from PyQt6.QtWidgets import (
-    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QComboBox, QPushButton, QTableWidgetItem, QFrame, QGroupBox,
     QGridLayout, QScrollArea, QFileDialog, QSpinBox, QSizePolicy,
     QTextEdit
@@ -27,7 +27,7 @@ from styles import (
     ChineseMessageBox,
     DialogFactory
 )
-from utils import VK_MAPPING, KEY_NAME_MAPPING, find_resource_file
+from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_file, convert_time_to_ms, calculate_adaptive_height
 
 # =============================================================================
 # 事件编辑对话框相关组件
@@ -247,10 +247,13 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         self.key_capture_active = False
         
         try:
+            # 计算自适应对话框高度
+            adaptive_height = calculate_adaptive_height(830, self.parent())
+            
             # 设置最小尺寸和大小策略
             self.setMinimumSize(605, 415)  # 最小高度为原来的1/2
             self.setMaximumSize(605, 830)  # 最大高度为当前的默认高度
-            self.resize(605, 830)  # 默认高度维持原来的最小高度大小
+            self.resize(605, adaptive_height)  # 使用自适应高度
             self.setFixedWidth(605)  # 固定宽度为605px
             self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
             
@@ -737,13 +740,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         try:
             # 获取相对时间并转换为毫秒
             relative_time = self.time_edit.value()
-            
-            # 转换时间单位为毫秒
             time_unit = self.time_unit_combo.currentText()
-            if time_unit == "s":
-                relative_time *= 1000
-            elif time_unit == "min":
-                relative_time *= 60000
+            relative_time_ms = convert_time_to_ms(relative_time, time_unit)
             
             return (
                 self.name_edit.text(),
@@ -751,7 +749,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 self.keycode_edit.text(),
                 self.x_edit.text(),
                 self.y_edit.text(),
-                str(relative_time)  # 确保返回的是毫秒
+                str(relative_time_ms)  # 确保返回的是毫秒
             )
         except ValueError:
             # 如果转换失败，返回默认值
@@ -793,7 +791,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             int(y_text) if y_text else 0
             
             # 如果是键盘事件，验证键码
-            if self.keycode_edit.text().strip() and self.type_combo.currentText() in ["按键按下", "按键释放"]:
+            if self.keycode_edit.text().strip() and self.type_combo.currentText() in KEY_PRESS_EVENTS:
                 int(self.keycode_edit.text())
         except ValueError:
             ChineseMessageBox.show_warning(self, "警告", "坐标和键码必须为数字")
@@ -838,7 +836,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         
         # 自动生成事件名称
         event_type = self.type_combo.currentText()
-        if event_type in ["按键按下", "按键释放"]:
+        if event_type in KEY_PRESS_EVENTS:
             action = "按下" if event_type == "按键按下" else "释放"
             self.name_edit.setText(f"{action}{key_name}")
 
@@ -908,7 +906,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
                 self.name_edit.setText(event_type)
             # 清空键码（鼠标事件不需要键码）
             self.keycode_edit.clear()
-        elif event_type in ["按键按下", "按键释放"]:
+        elif event_type in KEY_PRESS_EVENTS:
             # 选择按键事件
             # 检查是否需要自动填充
             should_auto_fill = False
@@ -957,7 +955,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         Args:
             keycode (str): 新的键码值
         """
-        if self.type_combo.currentText() in ["按键按下", "按键释放"] and keycode.strip():
+        if self.type_combo.currentText() in KEY_PRESS_EVENTS and keycode.strip():
             try:
                 keycode_int = int(keycode)
                 # 使用虚拟键码映射
@@ -1013,14 +1011,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             # 获取当前事件的相对时间（转换为ms）
             relative_time = self.time_edit.value()
             time_unit = self.time_unit_combo.currentText()
-            
-            if time_unit == "s":
-                relative_time *= 1000
-            elif time_unit == "min":
-                relative_time *= 60000
+            relative_time_ms = convert_time_to_ms(relative_time, time_unit)
             
             # 计算绝对偏移时间：前面事件累计时间 + 当前事件相对时间
-            absolute_offset = self.prev_absolute_time + relative_time
+            absolute_offset = self.prev_absolute_time + relative_time_ms
             
             return absolute_offset
         except Exception:
@@ -1054,7 +1048,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             
             # 自动生成事件名称
             event_type = self.type_combo.currentText()
-            if event_type in ["按键按下", "按键释放"]:
+            if event_type in KEY_PRESS_EVENTS:
                 action = "按下" if event_type == "按键按下" else "释放"
                 self.name_edit.setText(f"{action}{key_name_cn}")
             

@@ -4,6 +4,7 @@ import os
 import sys
 import threading
 import time
+import traceback
 
 # 第三方模块导入
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
@@ -176,15 +177,15 @@ class ApplicationMonitor(QObject):
             print("[DEBUG] 应用程序监控已停止")
     
     def _monitor_loop(self):
-        """监控主循环，定期收集并发送状态信息"""
+        """监控主循环，定期收集并发送状态信息 - 优化版本"""
         while self.monitoring:
             try:
                 status = self.get_application_status()
                 self.status_updated.emit(status)
-                time.sleep(5)  # 每5秒更新一次
+                time.sleep(10)  # 优化: 增加到10秒更新一次，减少监控开销
             except Exception as e:
                 print(f"[DEBUG] 监控循环错误: {e}")
-                time.sleep(10)  # 出错时增加等待时间以避免过度消耗资源
+                time.sleep(15)  # 优化: 出错时增加到15秒，避免过度消耗资源
     
     def get_application_status(self):
         """获取应用程序当前状态信息
@@ -349,7 +350,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 应用程序初始化失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
             
@@ -404,7 +404,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 设置全局样式失败: {e}")
-            import traceback
             traceback.print_exc()
     
     def _setup_windows_specific_features(self):
@@ -432,12 +431,10 @@ class BetterGIApplication:
             return True
         except ImportError as e:
             print(f"[DEBUG] 导入debug_tools模块失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
         except Exception as e:
             print(f"[DEBUG] 初始化全局日志系统失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -466,7 +463,6 @@ class BetterGIApplication:
                     self.debug_logger.log_error(error_msg, exc_info=(exc_type, exc_value, exc_traceback))
                 else:
                     print(f"[ERROR] {error_msg}")
-                    import traceback
                     traceback.print_tb(exc_traceback)
                     
             # 设置全局异常钩子
@@ -476,7 +472,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 设置全局异常处理器失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -491,7 +486,6 @@ class BetterGIApplication:
             print("[DEBUG] 应用程序监控器已启动")
         except Exception as e:
             print(f"[DEBUG] 初始化应用监控器失败: {e}")
-            import traceback
             traceback.print_exc()
             # 监控器初始化失败不影响主程序运行
     
@@ -528,14 +522,12 @@ class BetterGIApplication:
             
         except ImportError as e:
             print(f"[DEBUG] 导入用户协议模块失败: {e}")
-            import traceback
             traceback.print_exc()
             # 导入失败时默认允许继续使用
             return True
             
         except Exception as e:
             print(f"[DEBUG] 检查用户协议时发生错误: {e}")
-            import traceback
             traceback.print_exc()
             # 其他异常时默认允许继续使用
             return True
@@ -569,12 +561,10 @@ class BetterGIApplication:
             
         except ImportError as e:
             print(f"[DEBUG] 导入主窗口模块失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
         except Exception as e:
             print(f"[DEBUG] 创建主窗口失败: {e}")
-            import traceback
             traceback.print_exc()
             return False
     
@@ -603,7 +593,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 显示主窗口失败: {e}")
-            import traceback
             traceback.print_exc()
             
             # 记录错误到日志
@@ -658,7 +647,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 运行应用程序时出错: {e}")
-            import traceback
             traceback.print_exc()
             
             # 记录错误信息
@@ -730,7 +718,6 @@ class BetterGIApplication:
             
         except Exception as e:
             print(f"[DEBUG] 清理应用程序资源时发生错误: {e}")
-            import traceback
             traceback.print_exc()
 
 # =============================================================================

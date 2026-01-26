@@ -24,7 +24,11 @@ from utils import (
     VK_MAPPING,
     KEY_NAME_MAPPING,
     EVENT_TYPE_MAP,
+    KEY_PRESS_EVENTS,
+    MOUSE_EVENTS,
     check_event_pairing,
+    check_simultaneous_events,
+    check_simultaneous_events_strict,
     convert_event_type_num_to_str,
     convert_event_type_str_to_num,
     get_event_data_from_table,
@@ -32,7 +36,8 @@ from utils import (
     get_script_default_dir,
     load_icon_universal,
     get_current_app_info,
-    generate_key_event_name
+    generate_key_event_name,
+    convert_time_to_ms
 )
 from dialogs.debug_tools import get_global_debug_logger
 
@@ -199,15 +204,15 @@ class GenerateScriptThread(QThread):
                     }
                     
                     # 如果是键盘事件，添加keyCode
-                    if event_data[1] in ["按键按下", "按键释放"] and event_data[2]:
+                    if event_data[1] in KEY_PRESS_EVENTS and event_data[2]:
                         script_event["keyCode"] = int(event_data[2])
-                    
+
                     # 如果是鼠标点击事件，添加mouseButton
-                    if event_data[1] in ["左键按下", "左键释放"]:
+                    if event_data[1] in {"左键按下", "左键释放"}:
                         script_event["mouseButton"] = "Left"
-                    elif event_data[1] in ["右键按下", "右键释放"]:
+                    elif event_data[1] in {"右键按下", "右键释放"}:
                         script_event["mouseButton"] = "Right"
-                    elif event_data[1] in ["中键按下", "中键释放"]:
+                    elif event_data[1] in {"中键按下", "中键释放"}:
                         script_event["mouseButton"] = "Middle"
                     
                     events.append(script_event)
@@ -231,15 +236,8 @@ class GenerateScriptThread(QThread):
             
             # 获取间隔时间
             interval = self.main_window.settings_panel.interval_input.value()
-            
-            # 转换时间单位为毫秒
             time_unit = self.main_window.settings_panel.time_unit_combo.currentText()
-            if time_unit == "s":
-                interval_ms = int(interval * 1000)
-            elif time_unit == "min":
-                interval_ms = int(interval * 60000)
-            else:  # ms
-                interval_ms = int(interval)
+            interval_ms = convert_time_to_ms(interval, time_unit)
             
             # 报告开始生成循环事件
             self.progress_updated.emit(20, "正在生成循环事件...")
@@ -346,14 +344,32 @@ class CheckEventPairingThread(QThread):
     # 信号定义
     pairing_check_complete = pyqtSignal(bool, list)  # 检查完成信号
     
-    def __init__(self, events_table):
+    def __init__(self, events_table, check_pairing=True, check_simultaneous=True, check_simultaneous_mode='strict'):
         super().__init__()
         self.events_table = events_table
+        self.check_pairing = check_pairing
+        self.check_simultaneous = check_simultaneous
+        self.check_simultaneous_mode = check_simultaneous_mode
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
         """线程运行方法，执行事件成对性检查逻辑"""
-        issues = check_event_pairing(self.events_table)
+        issues = []
+        
+        if self.check_pairing:
+            pairing_issues = check_event_pairing(self.events_table)
+            issues.extend(pairing_issues)
+        
+        if self.check_simultaneous:
+            # 根据模式选择检查函数
+            if self.check_simultaneous_mode == 'strict':
+                simultaneous_issues = check_simultaneous_events_strict(self.events_table)
+            else:
+                simultaneous_issues = check_simultaneous_events(self.events_table)
+            
+            if issues and simultaneous_issues:
+                issues.append("")
+            issues.extend(simultaneous_issues)
         
         # 发送检查完成信号
         self.pairing_check_complete.emit(len(issues) == 0, issues)
@@ -404,7 +420,7 @@ class ImportScriptThread(QThread):
                 event_type = convert_event_type_num_to_str(event["type"])
 
                 # 获取事件数据
-                keycode = str(event.get("keyCode", "")) if event_type in ["按键按下", "按键释放"] else ""
+                keycode = str(event.get("keyCode", "")) if event_type in KEY_PRESS_EVENTS else ""
                 mouse_x = str(event.get("mouseX", 0))
                 mouse_y = str(event.get("mouseY", 0))
                 time = str(event.get("time", 0))
@@ -465,17 +481,27 @@ class ScriptManager:
     def on_generate_script(self):
         """启动脚本生成流程
         
-        首先检查事件成对性，然后启动脚本生成线程。
+        首先检查事件成对性和同时执行，然后启动脚本生成线程。
         处理脚本生成过程中的异常并显示错误信息。
         """
         try:
             self.debug_logger.log_info("开始生成脚本...")
             
-            # 检查事件成对性
+            # 检查事件成对性和同时执行
             event_manager = self.main_window.event_manager
             
-            # 创建并启动事件成对性检查线程
-            self.check_pairing_thread = CheckEventPairingThread(event_manager.events_table)
+            # 获取事件检查设置
+            check_pairing = self.main_window.menu_manager.get_check_pairing()
+            check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+            check_simultaneous_mode = self.main_window.menu_manager.get_check_simultaneous_mode()
+            
+            # 创建并启动事件检查线程
+            self.check_pairing_thread = CheckEventPairingThread(
+                event_manager.events_table,
+                check_pairing=check_pairing,
+                check_simultaneous=check_simultaneous,
+                check_simultaneous_mode=check_simultaneous_mode
+            )
             self.check_pairing_thread.pairing_check_complete.connect(self.on_pairing_check_complete)
             self.check_pairing_thread.start()
             
@@ -608,9 +634,30 @@ class ScriptManager:
         ChineseMessageBox.show_warning(self.main_window, "警告", error_msg)
     
     def check_event_pairing(self):
-        """检查事件成对性"""
+        """检查事件成对性和同时执行"""
         event_manager = self.main_window.event_manager
-        issues = check_event_pairing(event_manager.events_table)
+        
+        # 获取事件检查设置
+        check_pairing = self.main_window.menu_manager.get_check_pairing()
+        check_simultaneous = self.main_window.menu_manager.get_check_simultaneous()
+        check_simultaneous_mode = self.main_window.menu_manager.get_check_simultaneous_mode()
+        
+        issues = []
+        
+        if check_pairing:
+            pairing_issues = check_event_pairing(event_manager.events_table)
+            issues.extend(pairing_issues)
+        
+        if check_simultaneous:
+            # 根据模式选择检查函数
+            if check_simultaneous_mode == 'strict':
+                simultaneous_issues = check_simultaneous_events_strict(event_manager.events_table)
+            else:
+                simultaneous_issues = check_simultaneous_events(event_manager.events_table)
+            
+            if issues and simultaneous_issues:
+                issues.append("")
+            issues.extend(simultaneous_issues)
 
         if issues:
             # 显示详细的问题信息，并询问是否继续

@@ -2,6 +2,7 @@
 import os
 import sys
 import hashlib
+import traceback
 from datetime import datetime
 
 from PyQt6.QtWidgets import (QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -711,7 +712,6 @@ def check_user_agreement():
             
     except Exception as e:
         print(f"[DEBUG] 检查用户协议时出错: {e}")
-        import traceback
         traceback.print_exc()
         # 出错时默认允许继续使用
         return True
