@@ -55,7 +55,7 @@ class StateManager:
         self.auto_save_timer.start()
 
     def _collect_all_events_data(self):
-        """收集所有事件数据
+        """收集所有事件数据 - 优化版本
 
         从事件表格中逐行逐列收集所有事件数据,跳过行号列。
 
@@ -65,13 +65,14 @@ class StateManager:
         table = self.parent_window.event_manager.events_table
         row_count = table.rowCount()
 
-        all_events = []
-        for row in range(row_count):
-            event_data = []
-            for col in range(1, 8):  # 跳过行号列
-                item = table.item(row, col)
-                event_data.append(item.text() if item else "")
-            all_events.append(event_data)
+        # 使用列表推导式批量收集数据，避免重复调用 item() 方法
+        all_events = [
+            [
+                (item.text() if (item := table.item(row, col)) else "")
+                for col in range(1, 8)
+            ]
+            for row in range(row_count)
+        ]
 
         return all_events
     

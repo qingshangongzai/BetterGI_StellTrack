@@ -198,46 +198,38 @@ class SearchFilterThread(QThread):
         self.debug_logger = get_global_debug_logger()
     
     def run(self):
-        """线程运行方法，执行搜索过滤逻辑"""
+        """线程运行方法，执行搜索过滤逻辑 - 优化版本"""
         try:
             show_rows = []
             hide_rows = []
-            
-            # 遍历所有行，根据条件隐藏或显示
+
             for row in range(self.events_table.rowCount()):
-                # 获取当前行的事件类型
-                type_item = self.events_table.item(row, 2)
-                event_type = type_item.text() if type_item else ""
-                
-                # 获取当前行的事件名称
-                name_item = self.events_table.item(row, 1)
-                event_name = name_item.text().lower() if name_item else ""
-                
-                # 获取当前行的键码
-                keycode_item = self.events_table.item(row, 3)
-                key_code = keycode_item.text().lower() if keycode_item else ""
-                
-                # 搜索条件匹配
+                row_data = []
+                for col in range(1, 4):
+                    item = self.events_table.item(row, col)
+                    row_data.append(item.text() if item else "")
+
+                event_name = row_data[0].lower() if row_data[0] else ""
+                event_type = row_data[1] if row_data[1] else ""
+                key_code = row_data[2].lower() if row_data[2] else ""
+
                 matches_search = True
                 if self.search_text:
                     if self.search_text not in event_name and self.search_text not in event_type.lower() and self.search_text not in key_code:
                         matches_search = False
-                
-                # 类型过滤匹配
+
                 matches_type = True
                 if self.filter_type != "全部事件类型":
                     if event_type != self.filter_type:
                         matches_type = False
-                
-                # 根据匹配结果添加到相应列表
+
                 if matches_search and matches_type:
                     show_rows.append(row)
                 else:
                     hide_rows.append(row)
-            
-            # 发送过滤完成信号
+
             self.filter_complete.emit(show_rows, hide_rows)
-            
+
         except Exception as e:
             error_msg = f"搜索过滤事件失败: {str(e)}"
             self.filter_failed.emit(error_msg)
@@ -527,63 +519,9 @@ class EventManager:
                 f"color: {helper.COLORS['text']}; font-size: 12px;"
             )
         if hasattr(self, "search_input") and self.search_input is not None:
-            # 直接创建样式，确保使用当前主题的颜色值
-            line_edit_style = f""
-            line_edit_style += f"QLineEdit {{ "
-            line_edit_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            line_edit_style += f"    border-radius: 8px; "
-            line_edit_style += f"    padding: 6px 8px; "
-            line_edit_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            line_edit_style += f"    color: {helper.COLORS['text']}; "
-            line_edit_style += f"    font-size: 11px; "
-            line_edit_style += f"    selection-background-color: {helper.COLORS['primary']}; "
-            line_edit_style += f"}} "
-            line_edit_style += f"QLineEdit:focus {{ "
-            line_edit_style += f"    border-color: {helper.COLORS['primary']}; "
-            line_edit_style += f"}} "
-            line_edit_style += f"QLineEdit:hover {{ "
-            line_edit_style += f"    border-color: #a0a0a0; "
-            line_edit_style += f"}} "
-            self.search_input.setStyleSheet(line_edit_style)
+            self.search_input.setStyleSheet(helper.get_line_edit_style())
         if hasattr(self, "filter_type_combo") and self.filter_type_combo is not None:
-            # 直接创建样式，确保使用当前主题的颜色值
-            combo_style = f""
-            combo_style += f"QComboBox {{ "
-            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            combo_style += f"    border-radius: 8px; "
-            combo_style += f"    padding: 6px 8px; "
-            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            combo_style += f"    color: {helper.COLORS['text']}; "
-            combo_style += f"    font-size: 11px; "
-            combo_style += f"    min-width: 80px; "
-            combo_style += f"    text-align: center; "
-            combo_style += f"    padding-left: 15px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox::drop-down {{ "
-            combo_style += f"    border: none; "
-            combo_style += f"    width: 20px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox::down-arrow {{ "
-            combo_style += f"    width: 12px; "
-            combo_style += f"    height: 12px; "
-            combo_style += f"    border: none; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox QAbstractItemView {{ "
-            combo_style += f"    border: 1px solid {helper.COLORS['border']}; "
-            combo_style += f"    border-radius: 8px; "
-            combo_style += f"    background-color: {helper.COLORS['card_bg']}; "
-            combo_style += f"    selection-background-color: {helper.COLORS['primary']}; "
-            combo_style += f"    selection-color: white; "
-            combo_style += f"    font-size: 11px; "
-            combo_style += f"    padding: 4px; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox:hover {{ "
-            combo_style += f"    border-color: #a0a0a0; "
-            combo_style += f"}} "
-            combo_style += f"QComboBox:focus {{ "
-            combo_style += f"    border-color: {helper.COLORS['primary']}; "
-            combo_style += f"}} "
-            self.filter_type_combo.setStyleSheet(combo_style)
+            self.filter_type_combo.setStyleSheet(helper.get_combo_box_style())
         if hasattr(self, "search_btn") and self.search_btn is not None:
             self.search_btn.setStyleSheet(helper.get_button_style(accent=True))
         if hasattr(self, "reset_btn") and self.reset_btn is not None:
