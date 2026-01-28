@@ -162,7 +162,7 @@ class ChineseMessageBox:
         layout.addLayout(button_layout)
 
         dialog.adjustSize()
-        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setFixedWidth(min(dialog.width() + 20, 600))
         dialog.setMaximumHeight(310)
 
         result = dialog.exec()
@@ -217,7 +217,7 @@ class ChineseMessageBox:
         layout.addLayout(button_layout)
 
         dialog.adjustSize()
-        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setFixedWidth(min(dialog.width() + 20, 600))
         dialog.setMaximumHeight(310)
 
         dialog.exec()
@@ -271,7 +271,7 @@ class ChineseMessageBox:
         layout.addLayout(button_layout)
 
         dialog.adjustSize()
-        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setFixedWidth(min(dialog.width() + 20, 600))
         dialog.setMaximumHeight(310)
 
         dialog.exec()
@@ -335,7 +335,7 @@ class ChineseMessageBox:
         layout.addLayout(button_layout)
 
         dialog.adjustSize()
-        dialog.setFixedWidth(min(dialog.width() + 20, 400))
+        dialog.setFixedWidth(min(dialog.width() + 20, 600))
         dialog.setMaximumHeight(310)
 
         result = dialog.exec()
