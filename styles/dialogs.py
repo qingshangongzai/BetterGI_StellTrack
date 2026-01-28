@@ -135,7 +135,7 @@ class ChineseMessageBox:
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setMaximumHeight(200)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
@@ -190,7 +190,7 @@ class ChineseMessageBox:
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setMaximumHeight(200)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
@@ -244,7 +244,7 @@ class ChineseMessageBox:
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setMaximumHeight(200)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
@@ -301,7 +301,7 @@ class ChineseMessageBox:
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setMaximumHeight(200)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {UnifiedStyleHelper.get_instance().COLORS['bg']}; }}")
