@@ -66,7 +66,7 @@ class SafeOutputCapture:
         self._is_recursing = False
 
     def write(self, text):
-        """写入文本到日志，不输出到控制台
+        """写入文本到日志和控制台
         
         Args:
             text: 要写入的文本内容
@@ -76,6 +76,12 @@ class SafeOutputCapture:
             
         self._is_recursing = True
         try:
+            # 先输出到控制台，确保开发调试时能看到日志
+            # 添加None检查，防止打包后original_stream为None导致的错误
+            if self.original_stream is not None:
+                self.original_stream.write(text)
+                self.original_stream.flush()
+            
             if text.strip():
                 timestamp = datetime.now().strftime("%H:%M:%S")
                 formatted_text = f"[{timestamp}] [{self.stream_name}] {text}"
@@ -216,10 +222,22 @@ class SafeDebugLogger:
         
         重定向标准输出和标准错误到日志文件。
         """
-        self.original_stdout = sys.stdout
-        self.original_stderr = sys.stderr
-        
         try:
+            # 保存原始输出流
+            self.original_stdout = sys.stdout
+            self.original_stderr = sys.stderr
+            
+            # 检查原始流是否有效
+            if self.original_stdout is None or self.original_stderr is None:
+                # 如果原始流无效，创建一个简单的写入对象
+                class DummyStream:
+                    def write(self, text):
+                        return None
+                    def flush(self):
+                        return None
+                self.original_stdout = DummyStream()
+                self.original_stderr = DummyStream()
+            
             self.stdout_capture = SafeOutputCapture(
                 self.original_stdout, 
                 self.logger, 
@@ -234,12 +252,35 @@ class SafeDebugLogger:
             )
             sys.stderr = self.stderr_capture
             
-            self.logger.info("安全输出捕获系统已启动")
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.info("安全输出捕获系统已启动")
             
         except Exception as e:
-            sys.stdout = self.original_stdout
-            sys.stderr = self.original_stderr
-            print(f"设置输出捕获失败: {e}")
+            # 确保在异常情况下恢复原始输出流
+            try:
+                if hasattr(self, 'original_stdout') and self.original_stdout is not None:
+                    sys.stdout = self.original_stdout
+                if hasattr(self, 'original_stderr') and self.original_stderr is not None:
+                    sys.stderr = self.original_stderr
+            except:
+                # 如果恢复失败，创建默认输出流
+                class DummyStream:
+                    def write(self, text):
+                        return None
+                    def flush(self):
+                        return None
+                dummy_stream = DummyStream()
+                sys.stdout = dummy_stream
+                sys.stderr = dummy_stream
+            
+            # 尝试记录错误
+            try:
+                if hasattr(self, 'logger') and self.logger:
+                    self.logger.error(f"设置输出捕获失败: {e}")
+                else:
+                    print(f"设置输出捕获失败: {e}")
+            except:
+                pass
     
     def restore_output(self):
         """恢复原始输出流"""
