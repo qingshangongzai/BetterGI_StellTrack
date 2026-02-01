@@ -108,6 +108,7 @@ class CustomInputDialog(FadeInWindowMixin, StyledDialog):
         # 输入框
         self.input_edit = ModernLineEdit()
         self.input_edit.setFixedHeight(32)  # 减少高度
+        self.input_edit.setMaxLength(30)
         self.input_edit.setPlaceholderText("请输入密码或特殊文字...")
         input_layout.addWidget(self.input_edit)
         layout.addLayout(input_layout)

@@ -699,9 +699,9 @@ class ScriptManager:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(self.script, f, ensure_ascii=False, separators=(',', ':'))
 
-            self.main_window.status_bar.showMessage(f"✅ 脚本已保存到: {filename}")
+            self.main_window.status_bar.showMessage(f"✅ 脚本已保存到: {os.path.dirname(filename)}")
             self.debug_logger.log_info(f"脚本已保存到: {filename}")
-            ChineseMessageBox.show_info(self.main_window, "成功", f"脚本已保存到:\n{filename}")
+            ChineseMessageBox.show_info(self.main_window, "成功", f"脚本已保存到:\n{os.path.dirname(filename)}")
 
         except Exception as e:
             error_msg = f"保存脚本失败: {str(e)}"

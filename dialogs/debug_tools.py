@@ -66,7 +66,7 @@ class SafeOutputCapture:
         self._is_recursing = False
 
     def write(self, text):
-        """写入文本到日志，不输出到控制台
+        """写入文本到日志和控制台
         
         Args:
             text: 要写入的文本内容
@@ -76,6 +76,10 @@ class SafeOutputCapture:
             
         self._is_recursing = True
         try:
+            # 先输出到控制台，确保开发调试时能看到日志
+            self.original_stream.write(text)
+            self.original_stream.flush()
+            
             if text.strip():
                 timestamp = datetime.now().strftime("%H:%M:%S")
                 formatted_text = f"[{timestamp}] [{self.stream_name}] {text}"

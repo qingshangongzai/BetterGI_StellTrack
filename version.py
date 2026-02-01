@@ -12,7 +12,7 @@ class VersionManager:
         # 版本号组件
         self.major = 3
         self.minor = 18
-        self.patch = 0
+        self.patch = 1
         self.build = 0
         
         # 核心版本信息
@@ -33,7 +33,7 @@ class VersionManager:
             "name": "BetterGI 星轨",
             "name_en": "BetterGI StellTrack",
             "company": "HXiaoStudio",
-            "copyright": "© 2025 HXiaoStudio",
+            "copyright": "© 2025-2026 HXiaoStudio",
             "description": "BetterGI 星轨 - BetterGI StellTrack",
             "internal_name": "BetterGI_StellTrack",
             "original_filename": "BetterGI_StellTrack.exe"
