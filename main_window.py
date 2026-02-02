@@ -601,7 +601,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         # 循环设置更改时同时更新设置面板的总时间和统计面板的信息
         self.settings_panel.loop_count_input.valueChanged.connect(self.on_loop_settings_changed)
-        self.settings_panel.interval_input.valueChanged.connect(self.on_loop_settings_changed)
+        self.settings_panel.interval_input_double.valueChanged.connect(self.on_loop_settings_changed)
+        self.settings_panel.interval_input_int.valueChanged.connect(self.on_loop_settings_changed)
         self.settings_panel.time_unit_combo.currentTextChanged.connect(self.on_loop_settings_changed)
 
     def on_loop_settings_changed(self):

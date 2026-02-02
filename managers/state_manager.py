@@ -316,12 +316,18 @@ class StateManager:
             self.debug_logger.log_info(f"尝试将状态保存到 {state_file}")
 
             # 构建状态数据
+            time_unit = self.parent_window.settings_panel.time_unit_combo.currentText()
+            if time_unit == "ms":
+                interval = self.parent_window.settings_panel.interval_input_int.value()
+            else:
+                interval = self.parent_window.settings_panel.interval_input_double.value()
+            
             state = {
                 'events': self._collect_all_events_data(),
                 'settings': {
                     'loop_count': self.parent_window.settings_panel.loop_count_input.value(),
-                    'interval': self.parent_window.settings_panel.interval_input.value(),
-                    'time_unit': self.parent_window.settings_panel.time_unit_combo.currentText(),
+                    'interval': interval,
+                    'time_unit': time_unit,
                     'width': self.parent_window.settings_panel.width_input.text(),
                     'height': self.parent_window.settings_panel.height_input.text(),
                     'scale': self.parent_window.settings_panel.scale_combo.currentText()
