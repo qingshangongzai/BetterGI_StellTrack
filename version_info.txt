@@ -17,7 +17,7 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'HXiaoStudio'),
             StringStruct(u'FileDescription', u'BetterGI 星轨 - BetterGI StellTrack'),
-            StringStruct(u'FileVersion', u'2026.2.2'),
+            StringStruct(u'FileVersion', u'2026.2.8'),
             StringStruct(u'InternalName', u'BetterGI_StellTrack'),
             StringStruct(u'LegalCopyright', u'© 2025-2026 HXiaoStudio'),
             StringStruct(u'OriginalFilename', u'BetterGI_StellTrack.exe'),
