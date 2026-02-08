@@ -393,43 +393,114 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
 
 【开源项目使用说明】
-· 本程序LOGO与标题使用了「得意黑」，基于SIL Open Font License 1.1协议授权。
-  设计师：oooooohmygosh
-  版权所有：© atelierAnchor 锚坞
-  项目地址：https://github.com/atelier-anchor/smiley-sans
-  官方网站：https://atelier-anchor.com/typefaces/smiley-sans/
-  许可证地址：https://atelier-anchor.com/typefaces/smiley-sans/license/
 
-· 本程序默认字体使用了「思源宋体」，基于SIL Open Font License 1.1协议授权。
-  版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
-  项目地址：https://github.com/adobe-fonts/source-han-serif
-  许可证地址：http://scripts.sil.org/OFL
+【字体】
+  • 本程序LOGO与标题使用了「得意黑」
+    版权所有：© atelier-anchor
+    许可证：SIL Open Font License 1.1
+    项目地址：https://github.com/atelier-anchor/smiley-sans
+    官方网站：https://atelier-anchor.com/typefaces/smiley-sans/
 
+  • 本程序默认字体使用了「思源宋体」
+    版权所有：© 2014-2023 Adobe (http://www.adobe.com/)
+    许可证：SIL Open Font License 1.1
+    项目地址：https://github.com/adobe-fonts/source-han-serif
 
-· 本程序基于PyQt6架构开发，许可证：GNU General Public License v3.0 (GPLv3)
-  版权所有：Riverbank Computing Limited
-  项目地址：https://www.riverbankcomputing.com/software/pyqt/
-  许可详情：https://www.riverbankcomputing.com/software/pyqt/license/
+【核心框架】
+  • 本程序基于 PyQt6 架构开发
+    版权所有：Riverbank Computing Limited
+    许可证：GNU General Public License v3.0 (GPL-3.0-only)
+    项目地址：https://www.riverbankcomputing.com/software/pyqt/
 
-· 本程序使用了多个第三方库，主要许可证包括：
-  - GPL-3.0-only：PyQt6, PyQt6-WebEngine
-  - BSD 3-Clause License：pandas, lxml, psutil, matplotlib, seaborn
-  - Apache-2.0：requests
-  - MIT License：beautifulsoup4, PyYAML, colorlog, pytest, pytest-qt, pytest-cov, flake8, black, isort, mypy, setuptools, build, wheel, logging_tree
-  - 其他许可证：numpy, json5, cryptography, pycryptodome, pywin32
+【运行时依赖库】
+  • 本程序使用 requests 库进行网络请求
+    版权所有：Kenneth Reitz
+    许可证：Apache License 2.0
+    项目地址：https://github.com/psf/requests
 
-· 本程序使用auto-py-to-exe工具打包为独立的可执行文件。
-  项目地址：https://github.com/brentvollebregt/auto-py-to-exe
+  • 本程序使用 psutil 库进行系统信息获取
+    版权所有：Giampaolo Rodola
+    许可证：BSD 3-Clause License
+    项目地址：https://github.com/giampaolo/psutil
 
-· 本程序使用Inno Setup工具将独立的可执行文件打包为安装程序。
-  官网：https://jrsoftware.org/isinfo.php
+  • 本程序使用 pywin32 库进行 Windows 系统接口调用
+    版权所有：Python Software Foundation
+    许可证：PSF License
+    项目地址：https://github.com/mhammond/pywin32
+
+【开发工具链】
+  • 本程序使用 auto-py-to-exe 工具打包为独立的可执行文件
+    版权所有：Brent Vollebregt
+    许可证：MIT License
+    项目地址：https://github.com/brentvollebregt/auto-py-to-exe
+
+  • 本程序使用 UPX 工具压缩可执行文件体积
+    版权所有：UPX Team
+    许可证：GNU General Public License v2.0 or later (GPL-2.0+)
+    官网：https://upx.github.io/
+
+  • 本程序使用 Inno Setup 工具将独立的可执行文件打包为安装程序
+    版权所有：Jordan Russell
+    许可证：基于修改的 BSD 许可证 (Modified BSD)
+    官网：https://jrsoftware.org/isinfo.php
+
+【开发依赖库】
+  • 本程序使用 pytest 测试框架进行单元测试
+    版权所有：Holger Krekel
+    许可证：MIT License
+    项目地址：https://github.com/pytest-dev/pytest
+
+  • 本程序使用 pytest-qt 插件进行 Qt 应用测试
+    版权所有：Bruno Oliveira
+    许可证：MIT License
+    项目地址：https://github.com/pytest-dev/pytest-qt
+
+  • 本程序使用 pytest-cov 插件进行测试覆盖率分析
+    版权所有：Marc Schlaich
+    许可证：MIT License
+    项目地址：https://github.com/pytest-dev/pytest-cov
+
+  • 本程序使用 flake8 工具进行代码风格检查
+    版权所有：Tarek Ziade
+    许可证：MIT License
+    项目地址：https://github.com/pycqa/flake8
+
+  • 本程序使用 black 工具进行代码格式化
+    版权所有：Łukasz Langa
+    许可证：MIT License
+    项目地址：https://github.com/psf/black
+
+  • 本程序使用 isort 工具进行导入排序
+    版权所有：Timothy Crosley
+    许可证：MIT License
+    项目地址：https://github.com/PyCQA/isort
+
+  • 本程序使用 mypy 工具进行静态类型检查
+    版权所有：Jukka Lehtosalo
+    许可证：MIT License
+    项目地址：https://github.com/python/mypy
+
+  • 本程序使用 setuptools 工具进行包管理
+    版权所有：Python Packaging Authority
+    许可证：MIT License
+    项目地址：https://github.com/pypa/setuptools
+
+  • 本程序使用 build 工具进行项目构建
+    版权所有：Filipe Laíns
+    许可证：MIT License
+    项目地址：https://github.com/pypa/build
+
+  • 本程序使用 wheel 工具进行 wheel 包构建
+    版权所有：Daniel Holth
+    许可证：MIT License
+    项目地址：https://github.com/pypa/wheel
 
 【特别鸣谢】
 · 感谢BetterGI团队开发的原神辅助工具为玩家提供了便利。感谢BetterGI团队开发了这款优秀的原神辅助工具，为玩家提供了便利
   BetterGI团队：https://b23.tv/8rQCOI5
 · 感谢得意黑与思源宋体的版权方设计的开源字体，为项目提供了精美的视觉呈现
 · 感谢深度求索（Deepseek）、阿里巴巴、智谱华章（智谱清言/GML）、字节跳动、腾讯等厂商开发的AI大模型（LLM）和AI IDE工具为零代码基础人群开发程序提供了便利。"""
-    
+
         self.info_edit.setPlainText(content)
     
     def load_icon(self):

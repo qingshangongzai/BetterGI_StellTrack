@@ -235,8 +235,11 @@ class GenerateScriptThread(QThread):
             loop_count = self.main_window.settings_panel.get_safe_loop_count()
             
             # 获取间隔时间
-            interval = self.main_window.settings_panel.interval_input.value()
             time_unit = self.main_window.settings_panel.time_unit_combo.currentText()
+            if time_unit == "ms":
+                interval = self.main_window.settings_panel.interval_input_int.value()
+            else:
+                interval = self.main_window.settings_panel.interval_input_double.value()
             interval_ms = convert_time_to_ms(interval, time_unit)
             
             # 报告开始生成循环事件
