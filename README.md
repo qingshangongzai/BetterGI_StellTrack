@@ -182,11 +182,10 @@ BetterGI 星轨采用现代化的模块化架构设计，基于 PyQt6 框架构�
 |技术/框架 |用途 |版本 |
 |:---|:---|:---|
 |Python |主要开发语言 |3.14.2 |
-|PyQt6 |GUI 应用程序框架 |最新稳定版 |
-|pandas |数据处理与分析（时间分析功能） |最新稳定版 |
-|numpy |数值计算（时间分析功能） |最新稳定版 |
-|matplotlib |数据可视化（时间分析功能） |最新稳定版 |
-|psutil |系统资源监控 |最新稳定版 |
+|PyQt6 |GUI 应用程序框架 |6.10.2 |
+|requests |网络请求库 |2.32.5 |
+|psutil |系统资源监控 |7.2.0 |
+|pywin32 |Windows 平台接口 |311 |
 
 ### 架构设计原则
 
@@ -529,17 +528,36 @@ BetterGI StellTrack 采用 **GNU General Public License v3.0 (GPL 3.0)** 许可�
 
 ### 许可证文件
 
-- **项目完整许可证信息页**：[LICENSE.html](file/LICENSE.html) - 此文件包含了主项目许可证、所使用字体的许可证以及所有第三方库的许可证信息。
+- **项目完整许可证信息页（HTML格式）**：[LICENSE.html](file/LICENSE.html) - 包含主项目许可证、字体许可证以及所有第三方库的完整许可证信息
+- **项目许可证文件（文本格式）**：[LICENSE](LICENSE) - 包含所有许可证的纯文本版本，便于阅读
 - **GPL 3.0 官方文本**：[https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
 
 ### 许可证组成
 
-本项目涉及多种许可证：
+本项目涉及多种开源许可证：
 
+**1. 主项目代码**
+- GNU General Public License v3.0 (GPLv3)
 
-1. **主项目代码**：GNU General Public License v3.0 (GPLv3)
-2. **嵌入式字体**（得意黑、思源宋体）：SIL Open Font License 1.1
-3. **第三方Python库**：包括 GPL-3.0-only, BSD 3-Clause, Apache-2.0, MIT 等多种开源许可证。
+**2. 嵌入式字体**
+- 得意黑 (Smiley Sans)：SIL Open Font License 1.1
+- 思源宋体 (Source Han Serif)：SIL Open Font License 1.1
+
+**3. 运行时依赖库**
+- PyQt6：GPL-3.0-only
+- requests：Apache-2.0
+- psutil：BSD-3-Clause
+- pywin32：PSF License
+
+**4. 开发依赖库**（MIT License）
+- pytest, pytest-qt, pytest-cov（测试框架）
+- flake8, black, isort, mypy（代码质量工具）
+- setuptools, build, wheel（构建工具）
+
+**5. 开发工具链**
+- auto-py-to-exe：MIT License
+- UPX：GPL-2.0+
+- Inno Setup：Modified BSD
 
 ### 应用内访问
 

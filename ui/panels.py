@@ -113,13 +113,21 @@ class SettingsPanel(QWidget):
         time_layout.setContentsMargins(0, 0, 0, 0)
         time_layout.setSpacing(8)
 
-        self.interval_input = ModernDoubleSpinBox()
-        self.interval_input.setMinimum(0)
-        self.interval_input.setMaximum(999999)
-        self.interval_input.setValue(3)
-        self.interval_input.setDecimals(2)
-        self.interval_input.update_step_based_on_unit("s")
-        self.interval_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.interval_input_double = ModernDoubleSpinBox()
+        self.interval_input_double.setMinimum(0)
+        self.interval_input_double.setMaximum(999999)
+        self.interval_input_double.setValue(3)
+        self.interval_input_double.setDecimals(2)
+        self.interval_input_double.update_step_based_on_unit("s")
+        self.interval_input_double.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        self.interval_input_int = ModernSpinBox()
+        self.interval_input_int.setMinimum(0)
+        self.interval_input_int.setMaximum(999999)
+        self.interval_input_int.setValue(3000)
+        self.interval_input_int.setSingleStep(100)
+        self.interval_input_int.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.interval_input_int.hide()
 
         self.time_unit_combo = ModernComboBox()
         self.time_unit_combo.addItems(["ms", "s", "min"])
@@ -127,10 +135,11 @@ class SettingsPanel(QWidget):
         self.time_unit_combo.setFixedWidth(60)
         self.time_unit_combo.setStyleSheet(UnifiedStyleHelper.get_instance().get_centered_combo_box_style())
         self.time_unit_combo.currentTextChanged.connect(
-            lambda unit: self.interval_input.update_step_based_on_unit(unit)
+            self.on_time_unit_changed
         )
 
-        time_layout.addWidget(self.interval_input)
+        time_layout.addWidget(self.interval_input_double)
+        time_layout.addWidget(self.interval_input_int)
         time_layout.addWidget(self.time_unit_combo)
         layout.addLayout(time_layout, 1, 1)
 
@@ -145,6 +154,29 @@ class SettingsPanel(QWidget):
         layout.addWidget(self.total_time_display, 2, 1)
 
         parent_layout.addWidget(group)
+
+    def on_time_unit_changed(self, unit):
+        """时间单位改变时的处理函数
+
+        根据时间单位动态切换输入框类型：
+        - ms: 使用整数输入框
+        - s/min: 使用浮点数输入框
+
+        Args:
+            unit (str): 时间单位，可以是 'ms', 's', 'min'
+        """
+        if unit == "ms":
+            current_value = self.interval_input_double.value()
+            self.interval_input_double.hide()
+            self.interval_input_int.show()
+            self.interval_input_int.setValue(int(current_value * 1000))
+            self.interval_input_int.setSingleStep(100)
+        else:
+            current_value = self.interval_input_int.value()
+            self.interval_input_int.hide()
+            self.interval_input_double.show()
+            self.interval_input_double.setValue(current_value / 1000)
+            self.interval_input_double.update_step_based_on_unit(unit)
 
     def get_safe_loop_count(self):
         """安全获取循环次数，确保总是返回有效值
@@ -237,7 +269,8 @@ class SettingsPanel(QWidget):
     def reset_settings(self):
         """重置设置"""
         self.loop_count_input.setValue(1)
-        self.interval_input.setValue(3)
+        self.interval_input_double.setValue(3)
+        self.interval_input_int.setValue(3000)
         self.time_unit_combo.setCurrentText("s")
         self.width_input.setText("1920")
         self.height_input.setText("1080")
@@ -258,11 +291,37 @@ class SettingsPanel(QWidget):
 
         try:
             interval = float(state.get('interval', '3'))
-            self.interval_input.setValue(interval)
+            time_unit = state.get('time_unit', 's')
+            
+            # 先断开信号，避免触发 on_time_unit_changed
+            self.time_unit_combo.currentTextChanged.disconnect(self.on_time_unit_changed)
+            
+            # 设置时间单位
+            self.time_unit_combo.setCurrentText(time_unit)
+            
+            # 根据时间单位手动切换输入框显示状态并设置值
+            if time_unit == "ms":
+                self.interval_input_double.hide()
+                self.interval_input_int.show()
+                self.interval_input_int.setValue(int(interval))
+                self.interval_input_int.setSingleStep(100)
+            else:
+                self.interval_input_int.hide()
+                self.interval_input_double.show()
+                self.interval_input_double.setValue(interval)
+                self.interval_input_double.update_step_based_on_unit(time_unit)
+            
+            # 重新连接信号
+            self.time_unit_combo.currentTextChanged.connect(self.on_time_unit_changed)
         except (ValueError, TypeError):
-            self.interval_input.setValue(3)
-
-        self.time_unit_combo.setCurrentText(state.get('time_unit', 's'))
+            self.time_unit_combo.setCurrentText("s")
+            self.interval_input_double.setValue(3)
+            self.interval_input_int.setValue(3000)
+            # 确保信号已重新连接
+            try:
+                self.time_unit_combo.currentTextChanged.connect(self.on_time_unit_changed)
+            except:
+                pass
         self.width_input.setText(state.get('width', '1920'))
         self.height_input.setText(state.get('height', '1080'))
         self.scale_combo.setCurrentText(state.get('scale', '100%'))
@@ -405,8 +464,11 @@ class SettingsPanel(QWidget):
 
             loop_count = self.get_safe_loop_count()
 
-            interval = self.interval_input.value()
             time_unit = self.time_unit_combo.currentText()
+            if time_unit == "ms":
+                interval = self.interval_input_int.value()
+            else:
+                interval = self.interval_input_double.value()
             interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = single_loop_time_ms * loop_count + interval_ms * (loop_count - 1)
@@ -430,8 +492,10 @@ class SettingsPanel(QWidget):
 
         if hasattr(self, "loop_count_input"):
             self.loop_count_input.setStyleSheet(helper.get_spin_box_style())
-        if hasattr(self, "interval_input"):
-            self.interval_input.setStyleSheet(helper.get_spin_box_style())
+        if hasattr(self, "interval_input_double"):
+            self.interval_input_double.setStyleSheet(helper.get_spin_box_style())
+        if hasattr(self, "interval_input_int"):
+            self.interval_input_int.setStyleSheet(helper.get_spin_box_style())
 
         if hasattr(self, "time_unit_combo"):
             self.time_unit_combo.setStyleSheet(helper.get_centered_combo_box_style())
@@ -721,9 +785,12 @@ class StatsPanel(QWidget):
 
             loop_count = settings_panel.get_safe_loop_count()
 
-            interval = settings_panel.interval_input.value()
-
             time_unit = settings_panel.time_unit_combo.currentText()
+            if time_unit == "ms":
+                interval = settings_panel.interval_input_int.value()
+            else:
+                interval = settings_panel.interval_input_double.value()
+
             interval_ms = convert_time_to_ms(interval, time_unit)
 
             total_time_ms = self.calculate_total_time_ms(single_loop_time_ms, loop_count, interval_ms)

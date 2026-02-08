@@ -1,36 +1,15 @@
 # BetterGI StellTrack 依赖项
-# 最后更新日期: 2025-12-28
+# 最后更新日期: 2026-02-08
 
 # 图形界面框架
 PyQt6==6.10.2
-PyQt6-WebEngine==6.10.0
 
-# 数据处理与分析
-pandas==2.3.3
-numpy==2.4.0
-matplotlib==3.10.8
-seaborn==0.13.2
-
-# 工具库
+# 网络请求
 requests==2.32.5
-beautifulsoup4==4.14.3
-lxml==6.0.2
-
-# 数据序列化
-PyYAML==6.0.3
-json5==0.12.1
-
-# 加密与安全
-cryptography==46.0.3
-pycryptodome==3.23.0
 
 # 操作系统接口
 psutil==7.2.0
 pywin32==311;platform_system=="Windows"
-
-# 日志处理
-colorlog==6.10.1
-logging_tree==1.10
 
 # 测试框架（开发依赖）
 pytest==9.0.2
@@ -47,3 +26,4 @@ mypy==1.19.1
 setuptools==80.9.0
 build==1.3.0
 wheel==0.45.1
+

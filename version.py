@@ -12,7 +12,7 @@ class VersionManager:
         # 版本号组件
         self.major = 3
         self.minor = 18
-        self.patch = 1
+        self.patch = 2
         self.build = 0
         
         # 核心版本信息
