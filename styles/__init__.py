@@ -44,6 +44,7 @@ from .widgets import (
 from .dialogs import (
     DialogFactory,
     AnimatedDialog,
+    BaseFramelessDialog,
     ChineseMessageBox
 )
 

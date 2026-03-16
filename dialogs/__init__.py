@@ -2,6 +2,7 @@
 
 # 统一导出所有对话框类
 
+from styles import BaseFramelessDialog
 from .batch_dialog import BatchEditDialog
 from .debug_dialog import CustomInputDialog
 from .event_dialogs import (EventEditDialog, PasteOptionsDialog, 
@@ -17,6 +18,7 @@ from .about_window import (AboutWindowQt,
                            UserAgreementWindow as AboutUserAgreementWindow)
 
 __all__ = [
+    'BaseFramelessDialog',
     'BatchEditDialog',
     'CustomInputDialog',
     'EventEditDialog',
