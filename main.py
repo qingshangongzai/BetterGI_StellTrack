@@ -171,9 +171,6 @@ class ApplicationMonitor(QObject):
         """停止监控线程，不再收集状态信息"""
         self.monitoring = False
         if self.monitor_thread and self.monitor_thread.is_alive():
-            print("[DEBUG] 正在停止应用程序监控...")
-            # 等待线程结束（最多等待2秒）
-            self.monitor_thread.join(timeout=2.0)
             print("[DEBUG] 应用程序监控已停止")
     
     def _monitor_loop(self):

@@ -172,7 +172,7 @@ class ChineseMessageBox:
                 button = QPushButton(text)
                 button.setFixedWidth(100)
                 button.setStyleSheet(style_helper.get_button_style(accent=accent))
-                button.clicked.connect(slot)
+                button.clicked.connect(getattr(dialog, slot))
                 button_layout.addWidget(button)
 
         layout.addLayout(button_layout)

@@ -228,11 +228,6 @@ class UserAgreementDialog(BaseFramelessDialog, WindowIconMixin):
                     self.move(geo.topLeft())
             except Exception:
                 pass
-            # 确保动画从完全透明开始
-            try:
-                self.setWindowOpacity(0.0)
-            except Exception:
-                pass
         super().showEvent(event)
     
     def setup_ui(self):
