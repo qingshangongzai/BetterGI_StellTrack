@@ -6,41 +6,33 @@
 
 # 标准库模块导入
 import os
-import sys
 
 # 第三方模块导入
 from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QFont, QDesktopServices
 from PyQt6.QtWidgets import (
-    QMainWindow, QDialog, QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QPushButton, QTextEdit, QFrame, QGroupBox, 
+    QWidget, QVBoxLayout, QHBoxLayout, 
+    QLabel, QPushButton, QFrame, 
     QTextBrowser, QPlainTextEdit
 )
 
 # 项目模块导入
-from version import version_manager
 from styles import (
     UnifiedStyleHelper,
     get_global_font_manager,
-    FadeInWindowMixin,
-    StyledMainWindow,
-    StyledDialog,
-    DialogFactory,
-    WindowIconMixin
+    BaseFramelessDialog,
+    DialogFactory
 )
 from .user_agreement import load_user_agreement_html
 from .debug_tools import PasswordDialog, DebugWindow
 from utils import (
-    get_resource_path,
     find_resource_file,
-    load_icon_universal,
     load_logo,
-    get_current_version,
-    get_current_app_info
+    get_current_version
 )
 
 
-class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
+class UserAgreementWindow(BaseFramelessDialog):
     """用户协议窗口
     
     显示用户服务协议与免责声明内容。
@@ -53,17 +45,13 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
             parent: 父窗口对象
         """
         super().__init__(
-            parent,
+            parent=parent,
             title="用户服务协议与免责声明",
-            size=(800, 600),
-            window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
+            size=(800, 600)
         )
         
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(15, 40, 15, 15)  # 顶部40px为标题栏留空间
         main_layout.setSpacing(10)
         
         self.create_header(main_layout)
@@ -153,17 +141,12 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow):
     
     def refresh_theme_styles(self):
         """刷新主题样式，重新加载HTML内容以应用当前主题"""
-        self.set_agreement_content()
-        
-        style_helper = UnifiedStyleHelper.get_instance()
-        
-        if hasattr(self, '_separator') and self._separator is not None:
-            self._separator.setStyleSheet(f"color: {style_helper.COLORS['border']};")
-        
-        self.agreement_browser.setStyleSheet(style_helper.get_agreement_browser_style())
+        super().refresh_theme_styles()  # 调用基类的样式刷新
+        self.set_agreement_content()  # 重新加载HTML内容
+        self.agreement_browser.setStyleSheet(UnifiedStyleHelper.get_instance().get_agreement_browser_style())
 
 
-class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
+class AboutWindowQt(BaseFramelessDialog):
     """关于窗口
     
     显示应用程序信息、版本信息、开发团队信息
@@ -181,19 +164,13 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         """
         self.version = version if version is not None else get_current_version()
         super().__init__(
-            parent,
+            parent=parent,
             title=f"关于 BetterGI 星轨",
-            size=(600, 530),
-            window_flags=Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint
+            size=(600, 530)
         )
         
-        self.setup_icon_fixing()
-        
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(15, 40, 15, 15)  # 顶部40px为标题栏留空间
         main_layout.setSpacing(8)
         
         self.create_header(main_layout)
@@ -209,20 +186,6 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.create_copyright(main_layout)
         
         self.setup_connections()
-        
-    def showEvent(self, event):
-        """关于窗口显示事件 - 首次显示时居中并触发淡入动画"""
-        if not hasattr(self, "_about_first_show_done"):
-            self._about_first_show_done = True
-            try:
-                self.center()
-            except Exception:
-                pass
-            try:
-                self.setWindowOpacity(0.0)
-            except Exception:
-                pass
-        super().showEvent(event)
         
     def setup_connections(self):
         """设置信号连接"""
@@ -241,7 +204,7 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         header_layout = QHBoxLayout()
         
         logo_label = QLabel()
-        logo_pixmap = self.load_logo()
+        logo_pixmap = load_logo()
         if logo_pixmap:
             logo_label.setPixmap(logo_pixmap)
         else:
@@ -503,22 +466,6 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
         self.info_edit.setPlainText(content)
     
-    def load_icon(self):
-        """加载窗口图标
-        
-        Returns:
-            QIcon: 加载的图标对象
-        """
-        return load_icon_universal()
-    
-    def load_logo(self):
-        """加载Logo图片
-        
-        Returns:
-            QPixmap: 加载的Logo图片对象
-        """
-        return load_logo()
-    
     def open_url(self, url):
         """打开URL链接
         
@@ -555,10 +502,3 @@ class AboutWindowQt(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                 return
         
         self.manual_requested.emit("LICENSE.html")
-    
-    def center(self):
-        """将窗口居中显示"""
-        screen_geometry = self.screen().geometry()
-        window_geometry = self.frameGeometry()
-        window_geometry.moveCenter(screen_geometry.center())
-        self.move(window_geometry.topLeft())
