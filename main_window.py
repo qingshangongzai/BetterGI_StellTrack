@@ -11,7 +11,7 @@ from datetime import datetime
 
 # PyQt6模块导入
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QComboBox, QPushButton, QTableWidget,
     QTableWidgetItem, QTextEdit, QFrame, QGroupBox, QGridLayout,
     QHeaderView, QScrollArea, QSizePolicy, QSplitter,
@@ -351,20 +351,6 @@ class MainWindow(FadeInWindowMixin, StyledFramelessMainWindow, WindowIconMixin):
             print(error_msg)
 
     def showEvent(self, event):
-
-        """主窗口显示事件 - 首次显示时触发淡入动画"""
-        if not hasattr(self, "_main_first_show_done"):
-
-            self._main_first_show_done = True
-
-            try:
-
-                self.setWindowOpacity(0.0)
-
-            except Exception:
-
-                pass
-
         super().showEvent(event)
 
     def fix_taskbar_icon(self):

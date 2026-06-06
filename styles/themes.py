@@ -654,28 +654,13 @@ class UnifiedStyleHelper:
             }}
         """
 
-    def get_dialog_bg_style(self):
-        """获取对话框背景样式"""
-        return f"""
-            QDialog {{
-                background-color: {self.COLORS['bg']};
-            }}
-            QGroupBox {{ 
-                font-size: 12px;
-                font-weight: bold;
-                color: {self.COLORS['primary']};
-                border: 1px solid {self.COLORS['border_light']};
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 12px;
-            }}
-            QGroupBox::title {{ 
-                subcontrol-origin: margin;
-                subcontrol-position: top center;
-                padding: 0 8px 0 8px;
-                background-color: {self.COLORS['bg']};
-            }}
+    def get_absolute_time_info_style(self):
+        """获取绝对时间信息标签样式
+
+        Returns:
+            str: 绝对时间信息标签的样式表字符串
         """
+        return f"color: {self.COLORS['text_secondary']}; font-size: 9px;"
 
     def get_logo_label_style(self):
         """获取Logo标签样式"""
@@ -1154,18 +1139,6 @@ class UnifiedStyleHelper:
         """
         return self._get_style_from_cache("explanation_text_edit", self._generate_explanation_text_edit_style)
 
-    def get_event_dialog_style(self):
-        """获取事件对话框样式
-
-        Returns:
-            str: 事件对话框的样式表字符串
-        """
-        return f"""
-            QDialog {{ 
-                background-color: {self.COLORS['bg']}; 
-            }}
-        """
-
     def get_absolute_time_info_style(self):
         """获取绝对时间信息标签样式
 
@@ -1250,14 +1223,6 @@ class UnifiedStyleHelper:
             scroll_bar_style = self.get_scroll_bar_style()
             
             global_stylesheet = f"""
-                QMainWindow {{
-                        background-color: {self.COLORS['bg']};
-                        color: {self.COLORS['text']};
-                    }}
-                    QDialog {{
-                        background-color: {self.COLORS['bg']};
-                        color: {self.COLORS['text']};
-                    }}
                     QWidget {{
                         background-color: {self.COLORS['bg']};
                         color: {self.COLORS['text']};

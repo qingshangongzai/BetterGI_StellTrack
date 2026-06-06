@@ -5,7 +5,7 @@ import os
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QRectF, QPropertyAnimation
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QPainterPath, QPen, QRegion, QBitmap, QPalette, QColor
 from PyQt6.QtWidgets import (QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox,
-                           QListView, QPushButton, QWidget, QDialog, QMainWindow,
+                           QListView, QPushButton, QWidget, QDialog,
                            QMenu, QMenuBar, QLabel)
 
 # 项目模块导入
@@ -397,36 +397,6 @@ class StyledDialog(BaseFramelessDialog):
         # BaseFramelessDialog 已处理 title、size、icon_path
         super().__init__(parent=parent, title=title, size=size, icon_path=icon_path)
         # font_manager 已在 BaseFramelessDialog 中初始化
-
-
-class StyledMainWindow(TitleBarThemeMixin, QMainWindow):
-    """基础样式主窗口类，自动初始化字体管理器和窗口基本设置"""
-
-    def __init__(self, parent=None, title="", size=None, window_flags=None, icon=None):
-        super().__init__(parent)
-        self.font_manager = get_global_font_manager()
-
-        if title:
-            self.setWindowTitle(title)
-
-        if size:
-            if isinstance(size, tuple) and len(size) == 2:
-                width, height = size
-                if width > 0 and height > 0:
-                    self.setFixedSize(width, height)
-
-        if window_flags:
-            self.setWindowFlags(window_flags)
-
-        if icon:
-            self.setWindowIcon(icon)
-        elif hasattr(self, 'load_icon'):
-            try:
-                icon = self.load_icon()
-                if icon:
-                    self.setWindowIcon(icon)
-            except Exception:
-                pass
 
 
 class StyledFramelessMainWindow(TitleBarThemeMixin, FramelessMainWindow):

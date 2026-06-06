@@ -9,7 +9,7 @@ from .event_dialogs import (EventEditDialog, PasteOptionsDialog,
                             SimpleCoordinateCapture, DeleteOptionsDialog)
 from .update_dialog import UpdateDialog
 from .time_analysis import EventTimeAnalyzerDialog
-from .user_agreement import (UserAgreementDialog, UserAgreementWindow, 
+from .user_agreement import (UserAgreementDialog, 
                              check_user_agreement, load_user_agreement_html)
 from .debug_tools import (PasswordDialog, SafeDebugWindow, DebugWindow, 
                          SafeDebugLogger, get_global_debug_logger, 
@@ -28,7 +28,6 @@ __all__ = [
     'UpdateDialog',
     'EventTimeAnalyzerDialog',
     'UserAgreementDialog',
-    'UserAgreementWindow',
     'check_user_agreement',
     'load_user_agreement_html',
     'PasswordDialog',
