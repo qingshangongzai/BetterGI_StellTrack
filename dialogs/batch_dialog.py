@@ -7,7 +7,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QDialog, QCheckBox, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout
+    QCheckBox, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout
 )
 
 # 项目模块导入
@@ -18,15 +18,14 @@ from styles import (
     ModernLineEdit,
     ModernComboBox,
     ModernDoubleSpinBox,
-    StyledDialog,
+    BaseFramelessDialog,
     DialogFactory,
     ChineseMessageBox
 )
-from styles.widgets import FadeInWindowMixin
 from utils import KEY_PRESS_EVENTS, convert_time_to_ms
 
 
-class BatchEditDialog(FadeInWindowMixin, StyledDialog):
+class BatchEditDialog(BaseFramelessDialog):
     """批量编辑对话框，用于批量修改事件的属性
     
     提供以下批量编辑功能：
@@ -49,7 +48,11 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
             selected_rows: 选中的行列表
             events_table: 事件表格控件
         """
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="批量编辑事件",
+            size=(500, 400)
+        )
         self.selected_rows = selected_rows or []
         self.events_table = events_table
 
@@ -59,24 +62,14 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
         """设置UI界面
         
         创建批量编辑对话框的界面布局，包括：
-        - 标题区域
         - 操作选项组（增减偏移时间、统一相对时间、事件类型替换、统一坐标）
         - 提示信息
         - 按钮区域
         """
-        self.setWindowTitle("批量编辑事件")
-        self.setFixedSize(500, 400)
-        
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
-        layout.setContentsMargins(20, 15, 20, 15)
-        
-        # 标题区域
-        title_label = QLabel("批量编辑事件")
-        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
-        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 10px;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
+        # 顶部边距40px为标题栏留出空间
+        layout.setContentsMargins(20, 40, 20, 20)
         
         # 操作选项组
         operation_group = ModernGroupBox("⚙️ 操作选项")
@@ -395,3 +388,14 @@ class BatchEditDialog(FadeInWindowMixin, StyledDialog):
             y = 0
         
         return apply_coords, x, y
+    
+    def refresh_theme_styles(self):
+        """刷新控件的样式，应用当前主题"""
+        # 调用父类的刷新方法（更新标题栏样式）
+        super().refresh_theme_styles()
+        
+        # 刷新所有子控件
+        from PyQt6.QtWidgets import QWidget
+        for child in self.findChildren(QWidget):
+            if hasattr(child, 'refresh_theme_styles'):
+                child.refresh_theme_styles()

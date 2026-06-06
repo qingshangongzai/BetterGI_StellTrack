@@ -12,8 +12,8 @@ from PyQt6.QtGui import QFont, QPixmap, QDesktopServices
 
 from version import version_manager
 
-from styles import (UnifiedStyleHelper, StyledDialog, StyledMainWindow, 
-                   get_global_font_manager, FadeInWindowMixin, 
+from styles import (UnifiedStyleHelper, BaseFramelessDialog, StyledMainWindow, 
+                   get_global_font_manager, 
                    WindowIconMixin, ChineseMessageBox, DialogFactory)
 
 from utils import (load_icon_universal, load_logo, get_base_path, 
@@ -201,11 +201,15 @@ def load_user_agreement_html():
 # 用户协议确认对话框
 # =============================================================================
 
-class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
+class UserAgreementDialog(BaseFramelessDialog, WindowIconMixin):
     """用户协议确认对话框"""
     
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="用户协议与免责声明",
+            size=(800, 600)
+        )
         print("[DEBUG] 初始化用户协议对话框")
         self.setup_ui()
         # 设置图标修复 - 在窗口显示后调用
@@ -233,19 +237,10 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
     
     def setup_ui(self):
         """设置UI界面"""
-        self.setWindowTitle("用户协议与免责声明")
-        self.setFixedSize(800, 600)
-        
-        # 设置窗口标志，删除最小化和最大化按钮
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                           Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-        
-        # 设置窗口图标
-        self.setWindowIcon(load_icon_universal())
-        
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        # 顶部边距40px为标题栏留出空间
+        layout.setContentsMargins(20, 40, 20, 20)
         
         # 创建头部区域
         self.create_header(layout)
@@ -406,7 +401,7 @@ class UserAgreementDialog(FadeInWindowMixin, StyledDialog, WindowIconMixin):
 # 用户协议窗口
 # =============================================================================
 
-class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
+class UserAgreementWindow(StyledMainWindow, WindowIconMixin):
     """用户协议窗口"""
     
     def __init__(self, parent=None):
@@ -417,7 +412,7 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
         self.setup_icon_fixing()
         
     def showEvent(self, event):
-        """用户协议窗口显示事件 - 首次显示时居中并触发淡入动画"""
+        """用户协议窗口显示事件 - 首次显示时居中"""
         if not hasattr(self, "_ua_window_first_show_done"):
             self._ua_window_first_show_done = True
             # 首次显示前进行居中
@@ -427,11 +422,6 @@ class UserAgreementWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
                     geo = self.frameGeometry()
                     geo.moveCenter(screen.geometry().center())
                     self.move(geo.topLeft())
-            except Exception:
-                pass
-            # 确保动画从完全透明开始
-            try:
-                self.setWindowOpacity(0.0)
             except Exception:
                 pass
         super().showEvent(event)

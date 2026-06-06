@@ -20,9 +20,7 @@ from styles import (
     CenteredLineEdit,
     TimeOffsetSpinBox,
     EventEditButton,
-    StyledDialog,
-    FadeInWindowMixin,
-    AnimatedDialog,
+    BaseFramelessDialog,
     ModernGroupBox,
     ChineseMessageBox,
     DialogFactory
@@ -33,7 +31,7 @@ from utils import VK_MAPPING, KEY_NAME_MAPPING, KEY_PRESS_EVENTS, find_resource_
 # 事件编辑对话框相关组件
 # =============================================================================
 
-class SimpleCoordinateCapture(StyledDialog):
+class SimpleCoordinateCapture(BaseFramelessDialog):
     """简化版坐标捕获对话框，用于从图片中选择坐标
     
     提供图片显示和鼠标交互功能，允许用户通过点击图片选择坐标点。
@@ -55,7 +53,11 @@ class SimpleCoordinateCapture(StyledDialog):
         Args:
             image_path (str): 图片文件路径
         """
-        super().__init__()
+        super().__init__(
+            parent=None,
+            title="坐标捕获 - 点击图片选择坐标 (ESC取消)",
+            size=(800, 600)
+        )
         self.image_path = image_path
         self.pixmap = None
         self.selected_x = 0
@@ -64,10 +66,9 @@ class SimpleCoordinateCapture(StyledDialog):
         
     def init_ui(self):
         """初始化UI界面"""
-        self.setWindowTitle("坐标捕获 - 点击图片选择坐标 (ESC取消)")
-        self.setMinimumSize(800, 600)
-        
         layout = QVBoxLayout(self)
+        # 顶部边距40px为标题栏留出空间
+        layout.setContentsMargins(0, 40, 0, 0)
         
         # 创建图片显示标签
         self.image_label = QLabel()
@@ -199,7 +200,7 @@ class SimpleCoordinateCapture(StyledDialog):
 
 
 
-class EventEditDialog(FadeInWindowMixin, StyledDialog):
+class EventEditDialog(BaseFramelessDialog):
     """事件编辑对话框，用于添加和编辑各种类型的键鼠事件
     
     支持的事件类型包括：按键按下/释放、指针移动、平行移动、鼠标按键按下/释放、鼠标滚轮。
@@ -232,9 +233,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             default_time_unit: 默认时间单位（'auto', 'ms', 's', 'min'），默认为 'auto'
         """
         # 使用基类初始化方法设置窗口属性
-        super().__init__(parent,
-                       title="编辑事件" if is_edit_mode else "添加事件",
-                       window_flags=Qt.WindowType.Dialog)
+        super().__init__(
+            parent=parent,
+            title="编辑事件" if is_edit_mode else "添加事件"
+        )
         
         self.event_data = event_data
         self.is_edit_mode = is_edit_mode
@@ -252,13 +254,10 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
             
             # 设置最小尺寸和大小策略
             self.setMinimumSize(605, 415)  # 最小高度为原来的1/2
-            self.setMaximumSize(605, 830)  # 最大高度为当前的默认高度
-            self.resize(605, adaptive_height)  # 使用自适应高度
+            self.setMaximumSize(605, 870)  # 最大高度增加40px为标题栏留出空间
+            self.resize(605, adaptive_height + 40)  # 使用自适应高度，增加40px为标题栏留出空间
             self.setFixedWidth(605)  # 固定宽度为605px
             self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
-            
-            # 应用对话框背景样式
-            self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             self.setup_ui()
             self.setup_connections()
@@ -282,7 +281,8 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
         """
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(12)
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        # 顶部边距40px为标题栏留出空间
+        main_layout.setContentsMargins(20, 40, 20, 20)
         
         # 创建滚动区域
         scroll_area = QScrollArea()
@@ -1090,7 +1090,7 @@ class EventEditDialog(FadeInWindowMixin, StyledDialog):
 # 粘贴选项对话框
 # =============================================================================
 
-class PasteOptionsDialog(AnimatedDialog):
+class PasteOptionsDialog(BaseFramelessDialog):
     """粘贴选项对话框，用于设置事件粘贴时的选项
     
     允许用户选择粘贴事件时的时间处理方式，以适应不同的场景需求。
@@ -1109,30 +1109,25 @@ class PasteOptionsDialog(AnimatedDialog):
         Args:
             parent: 父窗口实例
         """
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="粘贴选项",
+            size=(400, 300)
+        )
         self.setup_ui()
         
     def setup_ui(self):
         """设置UI界面
         
         创建粘贴选项对话框的所有UI组件，包括：
-        - 标题标签
         - 时间修改选项下拉框
         - 选项说明文本框
         - 确定和取消按钮
         """
-        self.setWindowTitle("粘贴选项")
-        self.setMinimumWidth(400)
-        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())
-        
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # 标题
-        title_label = QLabel("请选择粘贴选项")
-        title_label.setStyleSheet(f"font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 14px;")
-        layout.addWidget(title_label)
+        # 顶部边距40px为标题栏留出空间
+        layout.setContentsMargins(20, 40, 20, 20)
         
         # 时间修改选项
         time_option_label = QLabel("时间修改选项:")
@@ -1183,7 +1178,7 @@ class PasteOptionsDialog(AnimatedDialog):
 # 删除选项对话框
 # =============================================================================
 
-class DeleteOptionsDialog(AnimatedDialog):
+class DeleteOptionsDialog(BaseFramelessDialog):
     """删除选项对话框，用于设置事件删除时的选项
     
     允许用户选择删除事件后如何处理后续事件的时间。
@@ -1202,30 +1197,25 @@ class DeleteOptionsDialog(AnimatedDialog):
         Args:
             parent: 父窗口实例
         """
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="删除选项",
+            size=(400, 300)
+        )
         self.setup_ui()
         
     def setup_ui(self):
         """设置UI界面
         
         创建删除选项对话框的所有UI组件，包括：
-        - 标题标签
         - 时间修改选项下拉框
         - 选项说明文本框
         - 确定和取消按钮
         """
-        self.setWindowTitle("删除选项")
-        self.setMinimumWidth(400)
-        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_event_dialog_style())
-        
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # 标题
-        title_label = QLabel("请选择删除选项")
-        title_label.setStyleSheet(f"font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; font-size: 14px;")
-        layout.addWidget(title_label)
+        # 顶部边距40px为标题栏留出空间
+        layout.setContentsMargins(20, 40, 20, 20)
         
         # 时间修改选项
         time_option_label = QLabel("时间修改选项:")

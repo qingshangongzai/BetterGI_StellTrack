@@ -24,9 +24,8 @@ from PyQt6.QtWidgets import (
 from styles import (
     UnifiedStyleHelper,
     get_global_font_manager,
-    StyledDialog,
+    BaseFramelessDialog,
     DialogFactory,
-    FadeInWindowMixin,
     ModernGroupBox,
     ChineseMessageBox
 )
@@ -573,7 +572,7 @@ class SafeLogMonitorThread(QThread):
 # 密码验证对话框
 # =============================================================================
 
-class PasswordDialog(FadeInWindowMixin, StyledDialog):
+class PasswordDialog(BaseFramelessDialog):
     """安全调试工具的密码验证对话框
     
     该对话框用于保护调试工具的访问权限，只有输入正确密码的用户才能使用调试功能。
@@ -590,13 +589,11 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
             parent: 父窗口组件
         """
         # 使用基类初始化方法设置窗口属性
-        super().__init__(parent,
-                       title="调试工具 - 密码验证",
-                       size=(350, 150),
-                       window_flags=Qt.WindowType.Dialog)
-        
-        # 应用对话框背景样式
-        self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
+        super().__init__(
+            parent=parent,
+            title="调试工具 - 密码验证",
+            size=(350, 150)
+        )
         
         self.setup_ui()
     
@@ -610,7 +607,8 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
             # 创建主布局
             layout = QVBoxLayout(self)
             layout.setSpacing(15)
-            layout.setContentsMargins(20, 20, 20, 20)
+            # 顶部边距40px为标题栏留出空间
+            layout.setContentsMargins(20, 40, 20, 20)
             
             # 标题标签
             title_label = QLabel("请输入调试工具访问密码")
@@ -681,7 +679,7 @@ class PasswordDialog(FadeInWindowMixin, StyledDialog):
 # 调试窗口
 # =============================================================================
 
-class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
+class SafeDebugWindow(BaseFramelessDialog):
     """安全的调试窗口，用于显示和管理应用程序的日志和调试信息
     
     该窗口提供了实时日志监控、系统信息展示、日志文件管理等功能，
@@ -700,15 +698,13 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             version = get_current_version()
             
             # 使用基类初始化方法设置窗口属性
-            super().__init__(parent,
-                           title=f"安全调试工具 - {app_info['name']} v{version}",
-                           window_flags=Qt.WindowType.Dialog)
+            super().__init__(
+                parent=parent,
+                title=f"安全调试工具 - {app_info['name']} v{version}"
+            )
             
             # 设置最小尺寸
             self.setMinimumSize(900, 700)
-            
-            # 应用对话框背景样式
-            self.setStyleSheet(UnifiedStyleHelper.get_instance().get_dialog_bg_style())
             
             # 初始化调试日志记录器
             self.debug_logger = SafeDebugLogger()
@@ -734,7 +730,6 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
         """设置调试窗口的UI界面
         
         配置窗口标题、大小、窗口标志，并创建各个功能区域：
-        - 标题区域
         - 应用信息显示区域
         - 文件信息区域
         - 日志显示区域
@@ -747,15 +742,8 @@ class SafeDebugWindow(FadeInWindowMixin, StyledDialog):
             # 创建主布局
             layout = QVBoxLayout(self)
             layout.setSpacing(12)
-            layout.setContentsMargins(15, 15, 15, 15)
-            
-            # 创建标题
-            title_label = QLabel("安全调试工具")
-            # 使用UnifiedStyleHelper统一设置字体
-            UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 18, QFont.Weight.Bold)
-            title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin: 5px;")
-            title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            layout.addWidget(title_label)
+            # 顶部边距40px为标题栏留出空间
+            layout.setContentsMargins(15, 40, 15, 15)
             
             # 创建各个功能区域
             self.create_app_info_section(layout)

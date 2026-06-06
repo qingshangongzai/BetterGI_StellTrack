@@ -15,13 +15,12 @@ from styles import (
     ChineseMessageBox,
     ModernGroupBox,
     CenteredComboBox,
-    StyledDialog,
-    get_global_font_manager,
-    FadeInWindowMixin
+    BaseFramelessDialog,
+    get_global_font_manager
 )
 
 
-class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
+class EventTimeAnalyzerDialog(BaseFramelessDialog):
     """事件时间分析对话框，用于分析事件之间的时间间隔
     
     提供以下功能：
@@ -42,14 +41,12 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
             parent: 父窗口组件
             events_table: 事件表格控件
         """
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="事件时间分析",
+            size=(500, 480)
+        )
         self.events_table = events_table
-        self.setWindowTitle("事件时间分析")
-        self.setFixedSize(500, 480)  # 大幅增加窗口大小以确保内容完全显示
-        
-        # 设置窗口标志，删除最小化和最大化按钮
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                           Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
         
         self.setup_ui()
     
@@ -57,7 +54,6 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         """设置UI界面
         
         创建对话框的用户界面，包括：
-        - 标题区域
         - 事件选择区域（起始事件和结束事件）
         - 分析按钮
         - 结果显示区域（总时间、平均时间、重复次数）
@@ -65,14 +61,8 @@ class EventTimeAnalyzerDialog(FadeInWindowMixin, StyledDialog):
         """
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
-        main_layout.setContentsMargins(25, 20, 25, 20)
-        
-        # 标题区域
-        title_label = QLabel("事件时间分析")
-        UnifiedStyleHelper.get_instance().set_smiley_font(title_label, 16, QFont.Weight.Bold)
-        title_label.setStyleSheet(f"color: {UnifiedStyleHelper.get_instance().COLORS['primary']}; margin-bottom: 8px;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
+        # 顶部边距40px为标题栏留出空间
+        main_layout.setContentsMargins(25, 40, 25, 20)
         
         # 事件选择区域
         event_selection_group = ModernGroupBox("📋 事件选择")
