@@ -639,11 +639,13 @@ class OperationsPanel(QWidget):
                 ChineseMessageBox.show_warning(self, "警告", "事件总数过多，无法进行预览")
                 return
 
-            preview_dialog = AnimatedDialog(self)
-            preview_dialog.setWindowTitle("脚本预览")
+            preview_dialog = AnimatedDialog(parent=self, title="脚本预览")
+            # 移除 setWindowTitle，已在构造函数中设置
             preview_dialog.resize(200, 700)
 
             layout = QVBoxLayout(preview_dialog)
+            # 顶部边距需要为标题栏留出空间
+            layout.setContentsMargins(10, 40, 10, 10)
 
             script_text = QTextEdit()
             script_text.setReadOnly(True)

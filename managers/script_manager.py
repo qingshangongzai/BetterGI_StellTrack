@@ -46,31 +46,28 @@ from dialogs.debug_tools import get_global_debug_logger
 # =============================================================================
 
 class ScriptGenerationProgressDialog(FadeInWindowMixin, StyledDialog):
-    """脚本生成进度对话框,显示脚本生成过程的进度"""
+    """脚本生成进度对话框，显示脚本生成过程的进度
+    
+    继承自 FadeInWindowMixin 和 StyledDialog（已改造为 BaseFramelessDialog），提供：
+    - 窗口打开/关闭时的淡入淡出动画
+    - 无边框设计和自定义标题栏
+    - Windows 标题栏深色/浅色模式自动切换支持
+    """
     
     # 定义信号
     cancel_requested = pyqtSignal()  # 取消请求信号
     
     def __init__(self, parent=None):
-        super().__init__(parent)
+        # 使用 StyledDialog 的新构造函数，传入 title 和 size
+        super().__init__(parent=parent, title="生成脚本", size=(500, 220))
         self.is_cancelled = False
         self.setup_ui()
         
     def setup_ui(self):
         """设置UI界面"""
-        self.setWindowTitle("生成脚本")
-        self.setFixedSize(500, 220)
-        
-        # 设置窗口标志,保留关闭按钮
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | 
-                           Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-        
-        # 设置窗口图标
-        self.setWindowIcon(load_icon_universal())
-        
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
-        layout.setContentsMargins(25, 20, 25, 20)
+        layout.setContentsMargins(25, 40, 25, 20)
         
         # 标题区域
         title_label = QLabel("正在生成脚本...")
