@@ -3,15 +3,18 @@ import os
 
 # PyQt6模块导入
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QRectF, QPropertyAnimation
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QPainterPath, QPen, QRegion, QBitmap
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QPainterPath, QPen, QRegion, QBitmap, QPalette, QColor
 from PyQt6.QtWidgets import (QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox,
                            QListView, QPushButton, QWidget, QDialog, QMainWindow,
-                           QMenu, QMenuBar)
+                           QMenu, QMenuBar, QLabel)
 
 # 项目模块导入
 from .themes import UnifiedStyleHelper, COLORS, SHADOWS
 from .fonts import get_global_font_manager
-from utils import fix_windows_taskbar_icon_for_window
+from utils import fix_windows_taskbar_icon_for_window, load_icon_universal
+
+# 第三方模块导入
+from qframelesswindow import FramelessMainWindow, TitleBar
 
 
 class StyledWidget(QWidget):
@@ -148,6 +151,155 @@ class StyledMainWindow(TitleBarThemeMixin, QMainWindow):
                     self.setWindowIcon(icon)
             except Exception:
                 pass
+
+
+class StyledFramelessMainWindow(TitleBarThemeMixin, FramelessMainWindow):
+    """无边框主窗口基类，提供自定义标题栏和主题适配功能"""
+
+    TITLE_BAR_HEIGHT = 32  # qframelesswindow 标题栏默认高度
+
+    def __init__(self, parent=None, title="", size=None):
+        super().__init__(parent)
+        self.font_manager = get_global_font_manager()
+        self._title_label = None
+
+        if title:
+            self.setWindowTitle(title)
+
+        if size:
+            if isinstance(size, tuple) and len(size) == 2:
+                width, height = size
+                if width > 0 and height > 0:
+                    self.setFixedSize(width, height)
+
+        # 设置窗口图标
+        icon_obj = load_icon_universal()
+        if icon_obj:
+            self.setWindowIcon(icon_obj)
+
+        # 使用基础 TitleBar + 自定义布局（与 BaseFramelessDialog 一致）
+        self.setTitleBar(TitleBar(self))
+        self._setup_title_bar()
+        # 手动调整标题栏大小（setTitleBar 后 resizeEvent 不会立即触发）
+        self.titleBar.resize(self.width(), self.titleBar.height())
+        self.titleBar.raise_()
+
+        # 设置标题栏样式
+        self._update_styles()
+
+    def _setup_title_bar(self):
+        """设置自定义标题栏布局"""
+        title_bar = self.titleBar
+        title_bar.setObjectName("titleBar")
+
+        h_layout = title_bar.layout()
+        if not h_layout:
+            return
+
+        text_color = self._get_text_color()
+
+        h_layout.insertSpacing(0, 10)
+
+        logo_label = QLabel(title_bar)
+        pixmap = QPixmap("logo/logo.png")
+        if not pixmap.isNull():
+            logo_label.setPixmap(pixmap.scaled(
+                20, 20,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            ))
+        h_layout.insertWidget(1, logo_label)
+        h_layout.setAlignment(logo_label, Qt.AlignmentFlag.AlignVCenter)
+
+        h_layout.insertSpacing(2, 8)
+
+        title_label = QLabel(self.windowTitle(), title_bar)
+        title_label.setFont(self.font_manager.get_source_han_font(11, QFont.Weight.Medium))
+        title_label.setStyleSheet(
+            f"color: {text_color.name()}; font-size: 13px; font-weight: 500;"
+        )
+        h_layout.insertWidget(3, title_label)
+        h_layout.setAlignment(title_label, Qt.AlignmentFlag.AlignVCenter)
+
+        self._title_label = title_label
+
+    def _is_dark_theme(self):
+        """检测当前是否为深色主题"""
+        helper = UnifiedStyleHelper.get_instance()
+        if helper.theme_mode == "dark":
+            return True
+        elif helper.theme_mode == "light":
+            return False
+        else:
+            palette = self.palette()
+            window_color = palette.color(QPalette.ColorRole.Window)
+            brightness = (window_color.red() * 299 +
+                         window_color.green() * 587 +
+                         window_color.blue() * 114) / 1000
+            return brightness < 128
+
+    def _get_text_color(self):
+        """获取当前主题文本颜色"""
+        return QColor(255, 255, 255) if self._is_dark_theme() else QColor(40, 40, 40)
+
+    def _get_bg_color(self):
+        """获取当前主题背景颜色"""
+        return QColor(32, 32, 32) if self._is_dark_theme() else QColor(255, 255, 255)
+
+    def _update_styles(self):
+        """更新样式以适配主题"""
+        text_color = self._get_text_color()
+        bg_color = self._get_bg_color()
+
+        # 使用 QPalette 设置窗口背景色（样式表对 FramelessWindow 不生效）
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, bg_color)
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
+        # 更新标题栏样式
+        self._update_title_bar_style(bg_color, text_color)
+
+    def _update_title_bar_style(self, bg_color, text_color):
+        """更新标题栏样式
+
+        使用 #titleBar 选择器只设置标题栏本身的背景色，不影响子控件（按钮）。
+        """
+        # 只设置标题栏背景色，不影响按钮
+        self.titleBar.setStyleSheet(f"#titleBar {{ background-color: {bg_color.name()}; }}")
+
+        # 更新标题标签颜色（使用 !important 强制覆盖全局样式表）
+        if self._title_label:
+            self._title_label.setStyleSheet(
+                f"color: {text_color.name()} !important; font-size: 13px; font-weight: 500;"
+            )
+
+        # 更新标题栏按钮颜色以适配主题
+        self._update_title_bar_buttons_color(text_color)
+
+    def _update_title_bar_buttons_color(self, text_color):
+        """更新标题栏按钮颜色以适配主题"""
+        title_bar = self.titleBar
+        title_bar.minBtn.setNormalColor(text_color)
+        title_bar.maxBtn.setNormalColor(text_color)
+        title_bar.closeBtn.setNormalColor(text_color)
+        title_bar.closeBtn.setHoverColor(QColor(255, 255, 255))
+        title_bar.closeBtn.setHoverBackgroundColor(QColor(196, 43, 28))
+        title_bar.closeBtn.setPressedColor(QColor(255, 255, 255))
+
+    def setCentralWidget(self, widget):
+        """设置中央部件，确保标题栏始终在最上层"""
+        super().setCentralWidget(widget)
+        self.titleBar.raise_()
+
+    def refresh_theme_styles(self):
+        """刷新控件的样式，应用当前主题"""
+        self._update_styles()
+
+        # 递归刷新所有子控件
+        for child in self.findChildren(QWidget):
+            if hasattr(child, 'refresh_theme_styles'):
+                child.refresh_theme_styles()
 
 
 class StyleManager:
@@ -459,7 +611,7 @@ class ModernMenuBar(QMenuBar):
             f"    color: {helper.COLORS['text']};\n"
             f"    border: none;\n"
             f"    border-radius: 8px;\n"
-            f"    padding: 4px;\n"
+            f"    padding: 0px 4px 4px 4px;\n"
             f"}}\n"
             f"QMenuBar::item {{\n"
             f"    padding: 4px 8px;\n"

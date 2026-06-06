@@ -1270,7 +1270,7 @@ class UnifiedStyleHelper:
                         color: {self.COLORS['text']};
                         border: none;
                         border-radius: 8px;
-                        padding: 4px;
+                        padding: 0px 4px 4px 4px;
                     }}
                     QMenuBar::item {{
                         padding: 4px 8px;

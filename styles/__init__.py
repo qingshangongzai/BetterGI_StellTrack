@@ -21,6 +21,7 @@ from .widgets import (
     StyledWidget,
     StyledDialog,
     StyledMainWindow,
+    StyledFramelessMainWindow,
     StyleManager,
     TitleBarThemeMixin,
     FadeInWindowMixin,

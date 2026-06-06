@@ -51,20 +51,25 @@ class MenuManager:
         self.strict_mode_action = None
         self.loose_mode_action = None
     
-    def create_menu_bar(self):
+    def create_menu_bar(self, use_set_menu_bar=True):
         """创建应用程序菜单栏
-        
+
         构建包含文件、编辑、时间逻辑、工具、主题和帮助等菜单的菜单栏，
         并为每个菜单项连接相应的操作。
-        
+
         使用 ModernMenuBar 以修复 Windows 系统下菜单圆角显示问题。
-        
+
+        Args:
+            use_set_menu_bar: 是否通过 setMenuBar() 设置到主窗口，默认为 True。
+                无边框窗口应设为 False，将 MenuBar 作为布局控件添加。
+
         Returns:
             ModernMenuBar: 创建的菜单栏实例
         """
         # 创建现代化菜单栏，自动为所有菜单应用无边框样式
         menubar = ModernMenuBar(self.parent_window)
-        self.parent_window.setMenuBar(menubar)
+        if use_set_menu_bar:
+            self.parent_window.setMenuBar(menubar)
 
         # 文件菜单
         self._create_file_menu(menubar)

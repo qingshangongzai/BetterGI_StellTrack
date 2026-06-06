@@ -29,7 +29,7 @@ from PyQt6.QtGui import QScreen
 from styles import (
     UnifiedStyleHelper, get_global_font_manager, ChineseMessageBox,
     ModernGroupBox, ModernLineEdit, ModernComboBox, ModernDoubleSpinBox,
-    StyledMainWindow, StyledDialog, ModernMenuBar, FadeInWindowMixin,
+    StyledFramelessMainWindow, StyledDialog, ModernMenuBar, FadeInWindowMixin,
     WindowIconMixin, DialogFactory
 )
 
@@ -58,14 +58,14 @@ from managers import EventManager, ScriptManager, MenuManager, StateManager
 
 
 
-class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
+class MainWindow(FadeInWindowMixin, StyledFramelessMainWindow, WindowIconMixin):
     """应用程序主窗口类
-    
+
     作为应用程序的核心界面，管理所有UI组件、事件处理和功能模块。
     负责整合事件管理、脚本生成、面板显示等核心功能。
-    
+
     继承关系：
-    - StyledMainWindow: 提供基础样式和布局支持
+    - StyledFramelessMainWindow: 提供无边框窗口基础样式和布局支持
     - WindowIconMixin: 提供窗口图标设置功能
     """
 
@@ -123,16 +123,23 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             app_info = get_current_app_info()
             version = get_current_version()
 
-            # 设置窗口标志为标准主窗口样式，允许移动和调整大小
-            self.setWindowFlags(Qt.WindowType.Window)
-
             self.setWindowTitle(f"{app_info['name']} v{version}")
+            # 更新标题栏标题文本（_setup_title_bar 在 super().__init__ 中调用时 windowTitle 为空）
+            self._title_label.setText(self.windowTitle())
             # 设置主窗口大小
             self.setMinimumSize(1100, 500)
             
             # 计算自适应窗口高度
             adaptive_height = calculate_adaptive_height(790, self)
             self.resize(1200, adaptive_height)
+
+            # 居中窗口（无边框窗口不会自动居中）
+            screen = QApplication.primaryScreen()
+            if screen:
+                geometry = screen.availableGeometry()
+                x = (geometry.width() - self.width()) // 2
+                y = (geometry.height() - self.height()) // 2
+                self.move(x, y)
 
             # 设置窗口图标 - 在应用程序创建后立即设置
             self.set_window_icon()
@@ -146,11 +153,14 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
             # 创建主布局
             main_layout = QVBoxLayout(central_widget)
-            main_layout.setSpacing(8)
-            main_layout.setContentsMargins(12, 12, 12, 12)
+            main_layout.setSpacing(4)
+            # 顶部边距紧贴标题栏底部（标题栏是浮动的，不需要额外间距）
+            main_layout.setContentsMargins(12, StyledFramelessMainWindow.TITLE_BAR_HEIGHT, 12, 12)
 
             # 创建界面
-            self.menu_manager.create_menu_bar()
+            # 菜单栏作为布局控件添加（不通过 setMenuBar，避免与浮动标题栏重叠）
+            self._menu_bar_widget = self.menu_manager.create_menu_bar(use_set_menu_bar=False)
+            main_layout.addWidget(self._menu_bar_widget)
             self.create_header(main_layout)
             self.create_content_area(main_layout)
             self.create_status_bar()
@@ -375,6 +385,9 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
 
     def _refresh_theme_styles(self):
         """刷新主窗口及主要面板的样式以应用当前主题"""
+        # 先调用父类的刷新（更新标题栏背景、标题颜色、按钮颜色）
+        super().refresh_theme_styles()
+
         from styles import UnifiedStyleHelper
         helper = UnifiedStyleHelper.get_instance()
 
@@ -390,8 +403,8 @@ class MainWindow(FadeInWindowMixin, StyledMainWindow, WindowIconMixin):
             self.header_widget.setStyleSheet(helper.get_header_widget_style())
 
         # 菜单栏样式
-        if hasattr(self, "menuBar") and hasattr(self.menuBar(), "refresh_theme_styles"):
-            self.menuBar().refresh_theme_styles()
+        if hasattr(self, "_menu_bar_widget") and hasattr(self._menu_bar_widget, "refresh_theme_styles"):
+            self._menu_bar_widget.refresh_theme_styles()
 
         # 中央部件样式（大容器）
         central_widget = self.centralWidget()
