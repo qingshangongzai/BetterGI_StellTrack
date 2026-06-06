@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (QGroupBox, QLineEdit, QComboBox, QSpinBox, QDoubleS
 # 项目模块导入
 from .themes import UnifiedStyleHelper, COLORS, SHADOWS
 from .fonts import get_global_font_manager
-from utils import fix_windows_taskbar_icon_for_window, load_icon_universal
+from utils import fix_windows_taskbar_icon_for_window, load_icon_universal, load_logo
 
 # 第三方模块导入
 from qframelesswindow import FramelessMainWindow, TitleBar, FramelessDialog
@@ -122,16 +122,12 @@ class BaseFramelessDialog(FramelessDialog):
 
         # 如果没有指定 icon_path 或加载失败，尝试加载默认 logo
         if not pixmap or pixmap.isNull():
-            pixmap = QPixmap("logo/logo.png")
+            pixmap = load_logo((20, 20))
 
         # 如果成功加载 pixmap，创建 logo_label
         if pixmap and not pixmap.isNull():
             logo_label = QLabel(title_bar)
-            logo_label.setPixmap(pixmap.scaled(
-                20, 20,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            ))
+            logo_label.setPixmap(pixmap)
 
         # 3. Logo和标题之间的间距
         spacer_label = QLabel(title_bar)
@@ -447,13 +443,9 @@ class StyledFramelessMainWindow(TitleBarThemeMixin, FramelessMainWindow):
         h_layout.insertSpacing(0, 10)
 
         logo_label = QLabel(title_bar)
-        pixmap = QPixmap("logo/logo.png")
-        if not pixmap.isNull():
-            logo_label.setPixmap(pixmap.scaled(
-                20, 20,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            ))
+        pixmap = load_logo((20, 20))
+        if pixmap and not pixmap.isNull():
+            logo_label.setPixmap(pixmap)
         h_layout.insertWidget(1, logo_label)
         h_layout.setAlignment(logo_label, Qt.AlignmentFlag.AlignVCenter)
 

@@ -28,7 +28,7 @@ DWMWA_USE_IMMERSIVE_DARK_MODE = 20  # Windows DWM API 沉浸式深色模式标�
 # 资源相关常量
 RESOURCE_DIRS = ["assets", "fonts", "file", "logo"]  # 资源目录列表
 ICON_FILES = ["logo.ico", "logo.png"]  # 图标文件列表
-LOGO_FILE = "logo.png"  # Logo文件名
+LOGO_FILES = ["logo.ico", "logo.png"]  # Logo文件名列表（优先ico）
 
 # 应用程序信息常量
 APP_NAME = "BetterGI StellTrack"  # 应用程序名称
@@ -781,14 +781,15 @@ def load_logo(logo_size=(60, 60)):
         使用平滑变换模式进行缩放，保持宽高比
     """
     try:
-        # 查找logo文件
-        logo_path = find_resource_file(LOGO_FILE)
-        if logo_path and os.path.exists(logo_path):
-            pixmap = QPixmap(logo_path)
-            if not pixmap.isNull():
-                return pixmap.scaled(logo_size[0], logo_size[1],
-                                   Qt.AspectRatioMode.KeepAspectRatio,
-                                   Qt.TransformationMode.SmoothTransformation)
+        # 依次查找logo文件（优先ico）
+        for logo_file in LOGO_FILES:
+            logo_path = find_resource_file(logo_file)
+            if logo_path and os.path.exists(logo_path):
+                pixmap = QPixmap(logo_path)
+                if not pixmap.isNull():
+                    return pixmap.scaled(logo_size[0], logo_size[1],
+                                       Qt.AspectRatioMode.KeepAspectRatio,
+                                       Qt.TransformationMode.SmoothTransformation)
         return None
     except Exception as e:
         print(f"[ERROR] 加载Logo失败: {e}")
